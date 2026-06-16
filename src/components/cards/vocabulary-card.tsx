@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Volume2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VocabularyItem, MemoryStatus } from "@/types";
 import { LevelBadge } from "@/components/ui/level-badge";
-import { speak, isSpeechSynthesisSupported } from "@/lib/speech";
+import { ListenButton } from "@/components/ui/listen-button";
 
 const articleColor: Record<string, string> = {
   der: "text-der",
@@ -32,7 +32,6 @@ export function VocabularyCard({
 }) {
   const [flipped, setFlipped] = useState(false);
   const style = statusStyle[status];
-  const canSpeak = isSpeechSynthesisSupported();
 
   return (
     <div className="card-base flex flex-col p-4 transition-shadow hover:shadow-glow">
@@ -53,15 +52,7 @@ export function VocabularyCard({
             )}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => canSpeak && speak(item.german, "de-DE", 0.95)}
-          disabled={!canSpeak}
-          aria-label={`Putar audio ${item.german}`}
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-elevated text-primary transition-colors hover:bg-primary-soft focusable disabled:opacity-40"
-        >
-          <Volume2 className="h-4 w-4" />
-        </button>
+        <ListenButton text={item.german} variant="icon" />
       </div>
 
       <button

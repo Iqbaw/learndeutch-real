@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Volume2, ArrowLeft, Bot, User, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Bot, User, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppGuard } from "@/components/app-guard";
 import { RoleplayCard } from "@/components/cards/roleplay-card";
 import { CTAButton } from "@/components/ui/cta-button";
 import { AIInsightCard } from "@/components/cards/ai-insight-card";
 import { SpeechPractice } from "@/components/learning/speech-practice";
+import { ListenButton } from "@/components/ui/listen-button";
 import { roleplays } from "@/data/roleplays";
-import { speak, isSpeechSynthesisSupported } from "@/lib/speech";
+import { isSpeechSynthesisSupported } from "@/lib/speech";
 import { useAppStore } from "@/lib/store";
 import type { Roleplay } from "@/types";
 import { cn } from "@/lib/utils";
@@ -97,14 +98,9 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
                 </div>
 
                 {isAI ? (
-                  <button
-                    onClick={() => synthOk && speak(turn.text, "de-DE", 0.95)}
-                    disabled={!synthOk}
-                    className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline focusable rounded disabled:opacity-40 disabled:no-underline"
-                    aria-label="Dengarkan ucapan AI"
-                  >
-                    <Volume2 className="h-3.5 w-3.5" /> Dengarkan
-                  </button>
+                  <div className="mt-1">
+                    <ListenButton text={turn.text} label="Dengarkan" />
+                  </div>
                 ) : (
                   <div className="mt-1 flex items-center justify-end">
                     <button

@@ -195,22 +195,141 @@ export function useSpeechRecognition(
   return { supported, listening, transcript, interim, error, start, stop, reset };
 }
 
-/** Speak a text aloud using the browser SpeechSynthesis API. */
-export function speak(text: string, lang = "de-DE", rate = 1): boolean {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
+// ============================================================
+// Text-to-speech: pick the most natural German voice available
+// and speak at a natural pace. Browsers load voices lazily, so
+// we wait for them before speaking (otherwise the first click is
+// silent or uses a wrong-language default voice).
+// ============================================================
+
+let cachedVoices: SpeechSynthesisVoice[] = [];
+
+function refreshVoices(): SpeechSynthesisVoice[] {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return [];
+  const v = window.speechSynthesis.getVoices();
+  if (v.length) cachedVoices = v;
+  return cachedVoices;
+}
+
+// warm the voice list as soon as this module loads on the client
+if (typeof window !== "undefined" && "speechSynthesis" in window) {
+  refreshVoices();
+  window.speechSynthesis.addEventListener?.("voiceschanged", refreshVoices);
+}
+
+/** Run a callback once the browser's voice list is ready. */
+function ensureVoicesLoaded(cb: () => void): void {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    cb();
+    return;
+  }
   const synth = window.speechSynthesis;
-  synth.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
-  utterance.rate = rate;
-  // Prefer a German voice if one is installed
-  const voices = synth.getVoices();
-  const german = voices.find((v) => v.lang?.toLowerCase().startsWith("de"));
-  if (german) utterance.voice = german;
-  synth.speak(utterance);
+  if (refreshVoices().length) {
+    cb();
+    return;
+  }
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    refreshVoices();
+    cb();
+  };
+  synth.addEventListener?.("voiceschanged", finish, { once: true } as AddEventListenerOptions);
+  // fallback in case the event never fires
+  setTimeout(finish, 350);
+}
+
+/** Choose the most natural-sounding German voice from the installed set. */
+export function getGermanVoice(): SpeechSynthesisVoice | null {
+  const voices = cachedVoices.length ? cachedVoices : refreshVoices();
+  const german = voices.filter((v) => v.lang?.toLowerCase().startsWith("de"));
+  if (!german.length) return null;
+
+  const score = (v: SpeechSynthesisVoice): number => {
+    const name = v.name.toLowerCase();
+    let s = 0;
+    // higher-quality cloud/neural voices sound the most natural
+    if (name.includes("google")) s += 6;
+    if (name.includes("natural") || name.includes("neural")) s += 6;
+    if (name.includes("premium") || name.includes("enhanced")) s += 4;
+    if (!v.localService) s += 3; // online voices are usually higher quality
+    if (v.lang?.toLowerCase() === "de-de") s += 2; // standard German over de-AT/de-CH
+    return s;
+  };
+
+  return [...german].sort((a, b) => score(b) - score(a))[0];
+}
+
+export interface SpeakOptions {
+  lang?: string;
+  rate?: number;
+  pitch?: number;
+  onStart?: () => void;
+  onEnd?: () => void;
+}
+
+/** Speak text aloud with the best German voice, at a natural pace. */
+export function speak(text: string, options: SpeakOptions = {}): boolean {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
+  const { lang = "de-DE", rate = 0.92, pitch = 1, onStart, onEnd } = options;
+  const synth = window.speechSynthesis;
+
+  ensureVoicesLoaded(() => {
+    synth.cancel(); // stop anything currently playing
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = rate;
+    utterance.pitch = pitch;
+    const voice = getGermanVoice();
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    }
+    if (onStart) utterance.onstart = onStart;
+    if (onEnd) {
+      utterance.onend = onEnd;
+      utterance.onerror = onEnd;
+    }
+    synth.speak(utterance);
+  });
+
   return true;
 }
 
 export function isSpeechSynthesisSupported(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window;
+}
+
+/** React hook for text-to-speech with a live "speaking" state. */
+export function useTextToSpeech(defaultLang = "de-DE") {
+  const [supported, setSupported] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+
+  useEffect(() => {
+    setSupported(isSpeechSynthesisSupported());
+    ensureVoicesLoaded(() => {});
+    return () => {
+      if (isSpeechSynthesisSupported()) window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  const speakText = useCallback(
+    (text: string, opts: Omit<SpeakOptions, "onStart" | "onEnd"> = {}) => {
+      speak(text, {
+        lang: defaultLang,
+        ...opts,
+        onStart: () => setSpeaking(true),
+        onEnd: () => setSpeaking(false),
+      });
+    },
+    [defaultLang]
+  );
+
+  const stop = useCallback(() => {
+    if (isSpeechSynthesisSupported()) window.speechSynthesis.cancel();
+    setSpeaking(false);
+  }, []);
+
+  return { supported, speaking, speak: speakText, stop };
 }

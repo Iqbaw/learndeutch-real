@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Mic, Square, Volume2, Sparkles, NotebookPen, RotateCcw, AlertTriangle } from "lucide-react";
+import { Mic, Square, Sparkles, NotebookPen, RotateCcw, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSpeechRecognition, speak, isSpeechSynthesisSupported } from "@/lib/speech";
+import { useSpeechRecognition } from "@/lib/speech";
 import { speakingFeedbackService, type SpeakingFeedback } from "@/services/ai";
 import { ProgressRing } from "@/components/ui/progress-ring";
+import { ListenButton } from "@/components/ui/listen-button";
 
 interface SpeechPracticeProps {
   expected: string;
@@ -79,8 +80,6 @@ export function SpeechPractice({
     reset();
   }
 
-  const synthOk = isSpeechSynthesisSupported();
-
   if (!supported) {
     return (
       <div className={cn("rounded-2xl border border-warning/30 bg-warning/10 p-4", className)}>
@@ -89,10 +88,13 @@ export function SpeechPractice({
         </p>
         <p className="mt-1 text-sm text-ink/80">
           Fitur bicara memakai pengenalan suara browser. Coba pakai Google Chrome atau Microsoft
-          Edge terbaru di perangkatmu.
+          Edge terbaru di perangkatmu. Kamu tetap bisa mendengarkan contohnya:
         </p>
-        {showListen && synthOk && (
-          <ListenButton text={expected} className="mt-3" />
+        {showListen && (
+          <div className="mt-3 flex flex-col gap-1.5">
+            <p className="font-body text-sm text-ink">{expected}</p>
+            <ListenButton text={expected} className="w-fit" />
+          </div>
         )}
       </div>
     );
@@ -138,7 +140,15 @@ export function SpeechPractice({
           </p>
         )}
 
-        {showListen && synthOk && <ListenButton text={expected} />}
+        {showListen && (
+          <div className="flex flex-col items-center gap-1.5">
+            <p className="text-center font-body text-sm">
+              <span className="text-muted">Contoh: </span>
+              <span className="font-bold text-ink">{expected}</span>
+            </p>
+            <ListenButton text={expected} />
+          </div>
+        )}
       </div>
 
       {error && (
@@ -195,21 +205,6 @@ export function SpeechPractice({
         <p className="mt-3 rounded-xl bg-elevated p-3 text-sm text-muted">{feedback.feedback}</p>
       )}
     </div>
-  );
-}
-
-function ListenButton({ text, className }: { text: string; className?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={() => speak(text, "de-DE", 0.95)}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg bg-primary-soft px-3 py-1.5 text-xs font-bold text-primary hover:brightness-95 focusable",
-        className
-      )}
-    >
-      <Volume2 className="h-3.5 w-3.5" /> Dengarkan contoh
-    </button>
   );
 }
 
