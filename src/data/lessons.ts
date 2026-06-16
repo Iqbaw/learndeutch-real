@@ -108,8 +108,8 @@ export const lessons: Lesson[] = [
         type: "drill",
         title: "Susun kalimat",
         exercise: {
-          prompt: "Pilih urutan yang benar untuk 'Nama saya Iqbal.'",
-          options: ["Heiße ich Iqbal.", "Ich heiße Iqbal.", "Ich Iqbal heiße."],
+          prompt: "Pilih urutan yang benar untuk 'Nama saya Max.'",
+          options: ["Heiße ich Max.", "Ich heiße Max.", "Ich Max heiße."],
           correctIndex: 1,
           explanation: "Subjek (Ich) lalu kata kerja (heiße) di posisi kedua, baru nama.",
         },
@@ -118,7 +118,7 @@ export const lessons: Lesson[] = [
         type: "speaking",
         title: "Perkenalkan dirimu",
         prompt: "Ucapkan: 'Hallo, ich heiße ...' (sebut namamu).",
-        expected: "Hallo, ich heiße Iqbal.",
+        expected: "Hallo, ich heiße Max.",
       },
       {
         type: "mistake",
@@ -336,7 +336,7 @@ export const lessons: Lesson[] = [
       {
         type: "drill",
         title: "Soal 1 — Perkenalan",
-        exercise: { prompt: "'Nama saya Iqbal.'", options: ["Ich heiße Iqbal.", "Ich bin heiße Iqbal.", "Heiße Iqbal ich."], correctIndex: 0, explanation: "Ich + heiße + nama." },
+        exercise: { prompt: "'Nama saya Max.'", options: ["Ich heiße Max.", "Ich bin heiße Max.", "Heiße Max ich."], correctIndex: 0, explanation: "Ich + heiße + nama." },
       },
       {
         type: "drill",

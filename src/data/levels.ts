@@ -1,4 +1,4 @@
-import type { Level, RoadmapDay } from "@/types";
+import type { Level } from "@/types";
 
 // Full CEFR level system — every level is a 30-day sprint (PRD section 8)
 export const levels: Level[] = [
@@ -116,8 +116,17 @@ export const methodPillars = [
   },
 ];
 
-// A1 30-day roadmap (PRD section 9) with statuses reflecting demo user at day 4
-const a1Themes: { day: number; subLevel: "A1.1" | "A1.2"; theme: string; skill: string }[] = [
+// A1 30-day curriculum structure (PRD section 9). This is course CONTENT only —
+// per-user day statuses are derived from real progress (see lib/derive.ts).
+export interface A1Day {
+  day: number;
+  subLevel: "A1.1" | "A1.2";
+  theme: string;
+  skill: string;
+  estimatedMinutes: number;
+}
+
+export const a1Days: A1Day[] = [
   { day: 1, subLevel: "A1.1", theme: "Cara baca huruf Jerman", skill: "Pronunciation dasar" },
   { day: 2, subLevel: "A1.1", theme: "Salam dan perkenalan", skill: "Speaking" },
   { day: 3, subLevel: "A1.1", theme: "Ich bin, du bist", skill: "Sein" },
@@ -148,21 +157,4 @@ const a1Themes: { day: number; subLevel: "A1.1" | "A1.2"; theme: string; skill: 
   { day: 28, subLevel: "A1.2", theme: "Simulasi A1", skill: "Mock test" },
   { day: 29, subLevel: "A1.2", theme: "Remedial otomatis", skill: "Latihan kelemahan" },
   { day: 30, subLevel: "A1.2", theme: "Final A1 Test", skill: "Sertifikat internal" },
-];
-
-const CURRENT_DAY = 4;
-
-export const a1Roadmap: RoadmapDay[] = a1Themes.map((d) => {
-  let status: RoadmapDay["status"];
-  if (d.day < CURRENT_DAY) status = "done";
-  else if (d.day === CURRENT_DAY) status = "active";
-  else if (d.day === 15 || d.day === 30 || d.day === 28) status = "exam";
-  else if (d.day === 7 || d.day === 14 || d.day === 21) status = "review";
-  else if (d.day === 29) status = "remedial";
-  else status = "locked";
-  return {
-    ...d,
-    status,
-    estimatedMinutes: d.day === 4 ? 45 : 38 + (d.day % 5) * 3,
-  };
-});
+].map((d) => ({ ...d, estimatedMinutes: 35 + (d.day % 5) * 3 } as A1Day));

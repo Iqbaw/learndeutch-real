@@ -8,9 +8,13 @@ import type { DrillExercise } from "@/types";
 interface ExerciseCardProps {
   exercise: DrillExercise;
   onResult?: (correct: boolean) => void;
+  onAnswered?: (
+    correct: boolean,
+    info: { userAnswer: string; correctAnswer: string; explanation: string }
+  ) => void;
 }
 
-export function ExerciseCard({ exercise, onResult }: ExerciseCardProps) {
+export function ExerciseCard({ exercise, onResult, onAnswered }: ExerciseCardProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [shake, setShake] = useState(false);
   const answered = selected !== null;
@@ -25,6 +29,11 @@ export function ExerciseCard({ exercise, onResult }: ExerciseCardProps) {
       setTimeout(() => setShake(false), 450);
     }
     onResult?.(correct);
+    onAnswered?.(correct, {
+      userAnswer: exercise.options[i],
+      correctAnswer: exercise.options[exercise.correctIndex],
+      explanation: exercise.explanation,
+    });
   }
 
   return (

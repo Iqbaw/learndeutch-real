@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { Volume2, ArrowLeft, Bot, User, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { AppGuard } from "@/components/app-guard";
 import { RoleplayCard } from "@/components/cards/roleplay-card";
 import { CTAButton } from "@/components/ui/cta-button";
 import { AIInsightCard } from "@/components/cards/ai-insight-card";
 import { SpeechPractice } from "@/components/learning/speech-practice";
 import { roleplays } from "@/data/roleplays";
 import { speak, isSpeechSynthesisSupported } from "@/lib/speech";
+import { useAppStore } from "@/lib/store";
 import type { Roleplay } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -17,23 +19,24 @@ export default function SpeakingPage() {
 
   return (
     <AppShell title="Speaking Lab" subtitle="Latihan bicara pakai mikrofon asli. Feedback ramah dan spesifik.">
-      {!active ? (
-        <>
-          <AIInsightCard className="mb-5">
-            Speaking kamu masih pasif. Ketuk mikrofon dan ucapkan kalimatnya — pengenalan suara
-            akan mendengar bahasa Jermanmu dan memberi skor pengucapan. Pilih satu roleplay untuk
-            mulai bicara.
-          </AIInsightCard>
-          <h2 className="mb-3 font-heading text-lg font-extrabold text-ink">Pilih Roleplay</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {roleplays.map((r) => (
-              <RoleplayCard key={r.id} roleplay={r} onSelect={() => setActive(r)} />
-            ))}
-          </div>
-        </>
-      ) : (
-        <RoleplaySession roleplay={active} onBack={() => setActive(null)} />
-      )}
+      <AppGuard>
+        {!active ? (
+          <>
+            <AIInsightCard className="mb-5">
+              Ketuk mikrofon dan ucapkan kalimatnya — pengenalan suara akan mendengar bahasa
+              Jermanmu dan memberi skor pengucapan. Pilih satu roleplay untuk mulai bicara.
+            </AIInsightCard>
+            <h2 className="mb-3 font-heading text-lg font-extrabold text-ink">Pilih Roleplay</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {roleplays.map((r) => (
+                <RoleplayCard key={r.id} roleplay={r} onSelect={() => setActive(r)} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <RoleplaySession roleplay={active} onBack={() => setActive(null)} />
+        )}
+      </AppGuard>
     </AppShell>
   );
 }
@@ -41,6 +44,14 @@ export default function SpeakingPage() {
 function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () => void }) {
   const [openTurn, setOpenTurn] = useState<number | null>(null);
   const synthOk = isSpeechSynthesisSupported();
+  const recordSpeaking = useAppStore((s) => s.recordSpeaking);
+  const recordAnswer = useAppStore((s) => s.recordAnswer);
+
+  function handleSpoken(passed: boolean) {
+    recordSpeaking();
+    recordAnswer("Speaking", passed);
+    recordAnswer("Pronunciation", passed);
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -107,7 +118,7 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
 
                 {!isAI && isOpen && (
                   <div className="mt-2 text-left">
-                    <SpeechPractice expected={turn.text} allowSave showListen />
+                    <SpeechPractice expected={turn.text} allowSave showListen onResult={handleSpoken} />
                   </div>
                 )}
               </div>

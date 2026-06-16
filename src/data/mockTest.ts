@@ -96,7 +96,7 @@ export const a1MockTest: MockTest = {
       questions: [
         {
           prompt: "Pilih jawaban lisan terbaik untuk 'Wie heißt du?'",
-          options: ["Ich heiße Iqbal.", "Ich bin gut.", "Danke schön."],
+          options: ["Ich heiße Max.", "Ich bin gut.", "Danke schön."],
           correctIndex: 0,
           explanation: "Pertanyaan menanyakan nama, jawab dengan 'Ich heiße ...'.",
         },

@@ -4,12 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sidebarNav } from "./nav-config";
 import { cn } from "@/lib/utils";
-import { demoUser } from "@/data/user";
+import { useAppStore } from "@/lib/store";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { Flame } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const profile = useAppStore((s) => s.profile);
+  const streak = useAppStore((s) => s.streak);
+  const name = profile?.name ?? "Pelajar";
 
   return (
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 border-r border-border bg-card">
@@ -53,14 +56,14 @@ export function Sidebar() {
       <div className="m-3 rounded-2xl bg-elevated p-3.5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-heading font-bold text-white dark:text-bg">
-            {demoUser.name.charAt(0)}
+            {name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-heading text-sm font-bold text-ink">{demoUser.name}</p>
+            <p className="truncate font-heading text-sm font-bold text-ink">{name}</p>
             <div className="flex items-center gap-1.5">
-              <LevelBadge level={demoUser.currentLevel} />
+              <LevelBadge level={profile?.startLevel ?? "A1.1"} />
               <span className="inline-flex items-center gap-0.5 text-xs font-bold text-secondary">
-                <Flame className="h-3.5 w-3.5" /> {demoUser.streak}
+                <Flame className="h-3.5 w-3.5" /> {streak}
               </span>
             </div>
           </div>

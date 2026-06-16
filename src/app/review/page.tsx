@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   RefreshCw,
   BookText,
-  Network,
   AlertTriangle,
   Gauge,
   Check,
@@ -13,36 +12,85 @@ import {
   ArrowRight,
   Play,
   RotateCcw,
+  Library,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { AppGuard } from "@/components/app-guard";
 import { StatCard } from "@/components/cards/stat-card";
 import { CTAButton } from "@/components/ui/cta-button";
-import { reviewQueue, reviewSummary } from "@/data/review";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useAppStore } from "@/lib/store";
+import { buildReviewQueue, deriveStats } from "@/lib/derive";
 import { cn } from "@/lib/utils";
 import type { ReviewCard } from "@/types";
 
 export default function ReviewPage() {
   const [started, setStarted] = useState(false);
+  const vocabStatus = useAppStore((s) => s.vocabStatus);
+  const errors = useAppStore((s) => s.errors);
+
+  const queue = useMemo(() => buildReviewQueue(vocabStatus), [vocabStatus]);
+  const mistakeDue = errors.filter((e) => e.status === "new" || e.status === "relapsed").length;
 
   return (
     <AppShell title="Review" subtitle="Spaced repetition: ulang di waktu yang tepat agar tidak lupa.">
-      {!started ? (
-        <ReviewOverview onStart={() => setStarted(true)} />
-      ) : (
-        <ReviewSession onExit={() => setStarted(false)} />
-      )}
+      <AppGuard>
+        {queue.length === 0 ? (
+          <EmptyState
+            icon={<Library className="h-6 w-6" />}
+            title="Belum ada kartu untuk direview"
+            description="Kartu review muncul dari kata yang sudah mulai kamu pelajari. Selesaikan sebuah pelajaran atau tandai kata di halaman Vocabulary untuk mengisi antrean review."
+            action={
+              <div className="flex gap-3">
+                <CTAButton href="/lesson">Mulai Belajar</CTAButton>
+                <CTAButton href="/vocabulary" variant="outline">Buka Vocabulary</CTAButton>
+              </div>
+            }
+          />
+        ) : !started ? (
+          <ReviewOverview queueLength={queue.length} mistakeDue={mistakeDue} onStart={() => setStarted(true)} />
+        ) : (
+          <ReviewSession queue={queue} onExit={() => setStarted(false)} />
+        )}
+      </AppGuard>
     </AppShell>
   );
 }
 
-function ReviewOverview({ onStart }: { onStart: () => void }) {
+function ReviewOverview({
+  queueLength,
+  mistakeDue,
+  onStart,
+}: {
+  queueLength: number;
+  mistakeDue: number;
+  onStart: () => void;
+}) {
+  const vocabStatus = useAppStore((s) => s.vocabStatus);
+  const completedDays = useAppStore((s) => s.completedDays);
+  const skillStats = useAppStore((s) => s.skillStats);
+  const grammarStats = useAppStore((s) => s.grammarStats);
+  const profile = useAppStore((s) => s.profile);
+  const speakingAttempts = useAppStore((s) => s.speakingAttempts);
+  const currentDay = useAppStore((s) => s.currentDay);
+
+  const stats = deriveStats({
+    startLevel: profile?.startLevel ?? "A1.1",
+    currentDay,
+    completedDays,
+    skillStats,
+    grammarStats,
+    vocabStatus,
+    speakingAttempts,
+  });
+
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Perlu direview" value={reviewSummary.dueToday} hint="kartu hari ini" icon={<RefreshCw className="h-5 w-5" />} />
-        <StatCard label="Vocabulary" value={reviewSummary.vocabularyDue} hint="kata" accent="secondary" icon={<BookText className="h-5 w-5" />} />
-        <StatCard label="Grammar" value={reviewSummary.grammarDue} hint="topik" icon={<Network className="h-5 w-5" />} />
-        <StatCard label="Kesalahan" value={reviewSummary.mistakeDue} hint="dari Error Notebook" accent="danger" icon={<AlertTriangle className="h-5 w-5" />} />
+        <StatCard label="Perlu direview" value={queueLength} hint="kartu hari ini" icon={<RefreshCw className="h-5 w-5" />} />
+        <StatCard label="Vocabulary" value={queueLength} hint="kata dalam antrean" accent="secondary" icon={<BookText className="h-5 w-5" />} />
+        <StatCard label="Kesalahan aktif" value={mistakeDue} hint="dari Error Notebook" accent="danger" icon={<AlertTriangle className="h-5 w-5" />} />
+        <StatCard label="Retention" value={`${stats.retention}%`} hint="kekuatan ingatan" icon={<Gauge className="h-5 w-5" />} />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
@@ -50,17 +98,17 @@ function ReviewOverview({ onStart }: { onStart: () => void }) {
           <div>
             <h2 className="font-heading text-xl font-extrabold text-ink">Siap untuk review hari ini?</h2>
             <p className="mt-2 text-muted">
-              Kartu disusun otomatis berdasarkan kesalahanmu dan jadwal pengulangan (hari ke-1, 3, 7,
-              14, 30). Yang sering salah muncul lebih cepat; yang sudah kuat muncul lebih jarang.
+              Kartu disusun dari kata yang sudah mulai kamu pelajari. Jawaban benar membuat kata
+              naik status (learning → almost → mastered); jawaban salah mengembalikannya ke antrean.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {["Pilih arti", "Ketik arti", "Pilih artikel", "Susun kalimat", "Dengarkan & pilih", "Perbaiki kalimat"].map((t) => (
+              {["Pilih arti", "Pilih artikel"].map((t) => (
                 <span key={t} className="rounded-lg bg-elevated px-2.5 py-1 text-xs font-bold text-muted">{t}</span>
               ))}
             </div>
           </div>
           <CTAButton onClick={onStart} size="lg" className="mt-6 w-fit">
-            <Play className="h-5 w-5" /> Mulai Review 10 Menit
+            <Play className="h-5 w-5" /> Mulai Review ({queueLength} kartu)
           </CTAButton>
         </div>
 
@@ -69,10 +117,10 @@ function ReviewOverview({ onStart }: { onStart: () => void }) {
             <Gauge className="h-5 w-5 text-primary" />
             <h3 className="font-heading font-bold text-ink">Retention Score</h3>
           </div>
-          <p className="mt-3 font-heading text-4xl font-extrabold text-ink">{reviewSummary.retention}%</p>
-          <p className="text-sm text-muted">Seberapa kuat kamu mengingat materi 14 hari terakhir.</p>
+          <p className="mt-3 font-heading text-4xl font-extrabold text-ink">{stats.retention}%</p>
+          <p className="text-sm text-muted">Bagian kata yang sudah mencapai status hampir/dikuasai.</p>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-elevated">
-            <div className="h-full rounded-full bg-primary" style={{ width: `${reviewSummary.retention}%` }} />
+            <div className="h-full rounded-full bg-primary" style={{ width: `${stats.retention}%` }} />
           </div>
         </div>
       </div>
@@ -80,16 +128,19 @@ function ReviewOverview({ onStart }: { onStart: () => void }) {
   );
 }
 
-function ReviewSession({ onExit }: { onExit: () => void }) {
+function ReviewSession({ queue, onExit }: { queue: ReviewCard[]; onExit: () => void }) {
+  const reviewVocab = useAppStore((s) => s.reviewVocab);
   const [index, setIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  const card = reviewQueue[index];
-  const total = reviewQueue.length;
+  const card = queue[index];
+  const total = queue.length;
 
   function handleResult(correct: boolean) {
     if (correct) setCorrectCount((c) => c + 1);
+    // card.id is the vocabulary id — update its real memory status
+    reviewVocab(card.id, correct);
   }
 
   function next() {
@@ -108,7 +159,7 @@ function ReviewSession({ onExit }: { onExit: () => void }) {
           <h2 className="mt-4 font-heading text-2xl font-extrabold text-ink">Review selesai!</h2>
           <p className="mt-2 text-muted">
             Kamu menjawab benar <span className="font-bold text-ink">{correctCount} dari {total}</span> kartu ({pct}%).
-            Kartu yang masih salah akan muncul lagi besok.
+            Status hafalan kata sudah diperbarui sesuai jawabanmu.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <CTAButton onClick={onExit} size="lg" className="flex-1">
@@ -130,14 +181,14 @@ function ReviewSession({ onExit }: { onExit: () => void }) {
           <X className="h-5 w-5" />
         </button>
         <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-elevated">
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${((index) / total) * 100}%` }} />
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(index / total) * 100}%` }} />
         </div>
         <span className="font-mono text-xs font-bold text-muted">{index + 1}/{total}</span>
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={card.id}
+          key={card.id + index}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -16 }}
@@ -162,11 +213,7 @@ function ReviewCardView({
   isLast: boolean;
 }) {
   const [picked, setPicked] = useState<number | null>(null);
-  const [typed, setTyped] = useState("");
-  const [revealed, setRevealed] = useState(false);
-
-  const isChoice = card.options && typeof card.correctIndex === "number";
-  const answered = isChoice ? picked !== null : revealed;
+  const answered = picked !== null;
 
   function choose(i: number) {
     if (picked !== null) return;
@@ -174,72 +221,39 @@ function ReviewCardView({
     onResult(i === card.correctIndex);
   }
 
-  function reveal() {
-    if (revealed) return;
-    setRevealed(true);
-    // self-graded text answers count as correct attempt for demo
-    onResult(typed.trim().length > 0);
-  }
-
   return (
     <div className="card-base p-6">
-      <span className="rounded-lg bg-elevated px-2.5 py-1 text-xs font-bold text-muted">
-        {card.due}
-      </span>
+      <span className="rounded-lg bg-elevated px-2.5 py-1 text-xs font-bold text-muted">{card.due}</span>
       <p className="mt-3 font-heading text-xl font-extrabold text-ink">{card.question}</p>
 
-      {isChoice ? (
-        <div className="mt-5 grid gap-2.5">
-          {card.options!.map((opt, i) => {
-            const isAnswer = i === card.correctIndex;
-            const isPicked = i === picked;
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => choose(i)}
-                disabled={picked !== null}
-                className={cn(
-                  "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left font-body text-ink transition-all focusable",
-                  picked === null && "border-border bg-card hover:border-primary hover:bg-primary-soft/40",
-                  picked !== null && isAnswer && "border-success bg-success/10",
-                  picked !== null && isPicked && !isAnswer && "border-danger bg-danger/10",
-                  picked !== null && !isAnswer && !isPicked && "opacity-60"
-                )}
-              >
-                <span>{opt}</span>
-                {picked !== null && isAnswer && <Check className="h-5 w-5 text-success" />}
-                {picked !== null && isPicked && !isAnswer && <X className="h-5 w-5 text-danger" />}
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="mt-5">
-          <input
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            placeholder="Ketik jawabanmu..."
-            disabled={revealed}
-            className="w-full rounded-xl border border-border bg-card p-3 font-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          />
-          {!revealed && (
-            <CTAButton onClick={reveal} variant="outline" size="sm" className="mt-2">
-              Cek jawaban
-            </CTAButton>
-          )}
-          {revealed && (
-            <div className="mt-3 rounded-xl border border-success/30 bg-success/10 p-3 text-sm text-ink animate-fade-up">
-              <span className="font-bold text-success">Jawaban: </span>{card.answer}
-            </div>
-          )}
-        </div>
-      )}
+      <div className="mt-5 grid gap-2.5">
+        {card.options!.map((opt, i) => {
+          const isAnswer = i === card.correctIndex;
+          const isPicked = i === picked;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => choose(i)}
+              disabled={answered}
+              className={cn(
+                "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left font-body text-ink transition-all focusable",
+                !answered && "border-border bg-card hover:border-primary hover:bg-primary-soft/40",
+                answered && isAnswer && "border-success bg-success/10",
+                answered && isPicked && !isAnswer && "border-danger bg-danger/10",
+                answered && !isAnswer && !isPicked && "opacity-60"
+              )}
+            >
+              <span>{opt}</span>
+              {answered && isAnswer && <Check className="h-5 w-5 text-success" />}
+              {answered && isPicked && !isAnswer && <X className="h-5 w-5 text-danger" />}
+            </button>
+          );
+        })}
+      </div>
 
       {answered && (
-        <p className="mt-4 rounded-xl bg-elevated p-3 text-sm text-muted animate-fade-up">
-          {card.explanation}
-        </p>
+        <p className="mt-4 rounded-xl bg-elevated p-3 text-sm text-muted animate-fade-up">{card.explanation}</p>
       )}
 
       {answered && (

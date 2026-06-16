@@ -130,7 +130,7 @@ export interface VocabularyItem {
   exampleTranslation: string;
   mnemonic?: string;
   level: CEFRLevel;
-  status: MemoryStatus;
+  status?: MemoryStatus; // derived per-user from the store, not baked into content
   category: string;
   emoji: string;
 }
@@ -147,7 +147,7 @@ export interface GrammarTopic {
   whyWrong: string;
   realLife: string;
   mnemonic: string;
-  mastery: number; // 0-100
+  mastery?: number; // 0-100, derived per-user from the store
   level: CEFRLevel;
   icon: string;
 }
@@ -258,15 +258,21 @@ export interface ReviewCard {
 
 // ---------- User ----------
 
+export type Skill =
+  | "Listening"
+  | "Reading"
+  | "Speaking"
+  | "Writing"
+  | "Grammar"
+  | "Vocabulary"
+  | "Pronunciation"
+  | "Retention";
+
 export interface UserProfile {
   name: string;
-  currentLevel: CEFRLevel;
-  day: number;
-  streak: number;
-  activeLevel: CEFRLevel;
-  passiveLevel: CEFRLevel;
   goal: string;
-  dailyTargetMinutes: number;
-  xp: number;
-  badges: string[];
+  startLevel: CEFRLevel;
+  weakSkill: string;
+  learningStyle: string;
+  createdAt: string;
 }

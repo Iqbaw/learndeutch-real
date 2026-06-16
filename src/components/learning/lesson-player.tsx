@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,12 +18,37 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
-import type { Lesson, LessonStep, LessonStepType } from "@/types";
+import type { Lesson, LessonStep, LessonStepType, Skill, ErrorCategory } from "@/types";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/lib/store";
 import { CTAButton } from "@/components/ui/cta-button";
 import { ExerciseCard } from "./exercise-card";
 import { TokenSentence } from "./token-sentence";
 import { SpeechPractice } from "./speech-practice";
+
+function stepSkill(type: LessonStepType): Skill {
+  switch (type) {
+    case "listening":
+      return "Listening";
+    case "speaking":
+      return "Speaking";
+    case "writing":
+      return "Writing";
+    default:
+      return "Grammar";
+  }
+}
+
+function stepCategory(type: LessonStepType): ErrorCategory {
+  switch (type) {
+    case "listening":
+      return "Listening";
+    case "speaking":
+      return "Pronunciation";
+    default:
+      return "Grammar";
+  }
+}
 
 const stepIcon: Record<LessonStepType, typeof BookOpen> = {
   story: BookOpen,
@@ -41,10 +66,41 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState(false);
 
+  const recordAnswer = useAppStore((s) => s.recordAnswer);
+  const recordError = useAppStore((s) => s.recordError);
+  const recordSpeaking = useAppStore((s) => s.recordSpeaking);
+  const completeLesson = useAppStore((s) => s.completeLesson);
+  const completedRef = useRef(false);
+
   const total = lesson.steps.length;
   const step = lesson.steps[index];
   const progress = Math.round(((index + (done ? 1 : 0)) / total) * 100);
   const isLast = index === total - 1;
+
+  // record the completed lesson exactly once when the user reaches the end
+  useEffect(() => {
+    if (done && !completedRef.current) {
+      completedRef.current = true;
+      completeLesson(lesson.day, { xp: 50, subLevel: lesson.subLevel });
+    }
+  }, [done, completeLesson, lesson.day, lesson.subLevel]);
+
+  function handleExercise(
+    type: LessonStepType,
+    correct: boolean,
+    info: { userAnswer: string; correctAnswer: string; explanation: string }
+  ) {
+    recordAnswer(stepSkill(type), correct);
+    if (!correct) {
+      recordError({ ...info, category: stepCategory(type) });
+    }
+  }
+
+  function handleSpeak(passed: boolean) {
+    recordSpeaking();
+    recordAnswer("Speaking", passed);
+    recordAnswer("Pronunciation", passed);
+  }
 
   function next() {
     if (isLast) {
@@ -88,7 +144,11 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
               exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.25 }}
             >
-              <StepView step={step} />
+              <StepView
+                step={step}
+                onExercise={(correct, info) => handleExercise(step.type, correct, info)}
+                onSpeak={handleSpeak}
+              />
             </motion.div>
           ) : (
             <VictoryView lesson={lesson} />
@@ -130,7 +190,18 @@ function StepBadge({ type, title }: { type: LessonStepType; title: string }) {
   );
 }
 
-function StepView({ step }: { step: LessonStep }) {
+function StepView({
+  step,
+  onExercise,
+  onSpeak,
+}: {
+  step: LessonStep;
+  onExercise?: (
+    correct: boolean,
+    info: { userAnswer: string; correctAnswer: string; explanation: string }
+  ) => void;
+  onSpeak?: (passed: boolean) => void;
+}) {
   return (
     <div>
       <StepBadge type={step.type} title={step.title} />
@@ -163,17 +234,15 @@ function StepView({ step }: { step: LessonStep }) {
 
       {step.exercise && (
         <div className="mt-5">
-          <ExerciseCard exercise={step.exercise} />
+          <ExerciseCard exercise={step.exercise} onAnswered={onExercise} />
         </div>
       )}
 
       {(step.type === "speaking" || step.type === "writing") && step.prompt && (
-        <InputStep step={step} />
+        <InputStep step={step} onSpeak={onSpeak} />
       )}
 
-      {step.type === "mistake" && (
-        <MistakeStep step={step} />
-      )}
+      {step.type === "mistake" && <MistakeStep step={step} />}
 
       {step.type === "victory" && step.achievements && (
         <VictoryInline achievements={step.achievements} body={step.body} />
@@ -182,7 +251,7 @@ function StepView({ step }: { step: LessonStep }) {
   );
 }
 
-function InputStep({ step }: { step: LessonStep }) {
+function InputStep({ step, onSpeak }: { step: LessonStep; onSpeak?: (passed: boolean) => void }) {
   const [value, setValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const speaking = step.type === "speaking";
@@ -195,10 +264,7 @@ function InputStep({ step }: { step: LessonStep }) {
       {step.body && <p className="mt-2 text-sm text-muted">{step.body}</p>}
 
       {speaking ? (
-        <SpeechPractice
-          expected={step.expected ?? step.prompt ?? ""}
-          className="mt-4"
-        />
+        <SpeechPractice expected={step.expected ?? step.prompt ?? ""} onResult={onSpeak} className="mt-4" />
       ) : (
         <div className="mt-4">
           <textarea

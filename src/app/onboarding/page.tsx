@@ -99,33 +99,64 @@ const questions: Question[] = [
   },
 ];
 
+// step 0 = name, steps 1..N = option questions
+const TOTAL_STEPS = questions.length + 1;
+
 export default function OnboardingPage() {
   const { onboarding, setOnboardingAnswer, completeOnboarding, setDailyTarget } = useAppStore();
   const [step, setStep] = useState(0);
+  const [name, setName] = useState(onboarding.name ?? "");
   const [showResult, setShowResult] = useState(false);
 
-  const total = questions.length;
-  const current = questions[step];
-  const selected = onboarding[current?.key];
-  const progress = showResult ? 100 : Math.round((step / total) * 100);
+  const progress = showResult ? 100 : Math.round((step / TOTAL_STEPS) * 100);
 
-  function pick(value: string) {
-    setOnboardingAnswer(current.key, value);
-    if (current.key === "dailyTime") setDailyTarget(parseInt(value, 10));
+  function finish() {
+    setDailyTarget(parseInt(onboarding.dailyTime ?? "30", 10));
+    completeOnboarding({
+      name: (onboarding.name ?? name).trim() || "Pelajar",
+      goal: onboarding.goal ?? "Hobi",
+      startLevel: "A1.1",
+      weakSkill: onboarding.weakSkill ?? "Belum tahu",
+      learningStyle: onboarding.learningStyle ?? "Campuran",
+      createdAt: new Date().toISOString(),
+    });
+    setShowResult(true);
+  }
+
+  function submitName() {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setOnboardingAnswer("name", trimmed);
+    setStep(1);
+  }
+
+  function pick(question: Question, value: string) {
+    setOnboardingAnswer(question.key, value);
     setTimeout(() => {
-      if (step < total - 1) {
+      if (step < TOTAL_STEPS - 1) {
         setStep((s) => s + 1);
       } else {
-        completeOnboarding();
+        // last question answered — build the profile from these real answers
+        setDailyTarget(parseInt((question.key === "dailyTime" ? value : onboarding.dailyTime) ?? "30", 10));
+        completeOnboarding({
+          name: (onboarding.name ?? name).trim() || "Pelajar",
+          goal: question.key === "goal" ? value : onboarding.goal ?? "Hobi",
+          startLevel: "A1.1",
+          weakSkill: question.key === "weakSkill" ? value : onboarding.weakSkill ?? "Belum tahu",
+          learningStyle:
+            question.key === "learningStyle" ? value : onboarding.learningStyle ?? "Campuran",
+          createdAt: new Date().toISOString(),
+        });
         setShowResult(true);
       }
-    }, 220);
+    }, 200);
   }
+
+  const currentQuestion = step >= 1 ? questions[step - 1] : null;
 
   return (
     <div className="min-h-screen bg-bg">
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 py-8 sm:px-6">
-        {/* header */}
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 focusable rounded-lg">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-heading text-lg font-extrabold text-white dark:text-bg">
@@ -134,11 +165,10 @@ export default function OnboardingPage() {
             <span className="font-heading text-sm font-extrabold text-ink">Deutsch 30</span>
           </Link>
           <span className="text-sm text-muted">
-            {showResult ? "Selesai" : `Langkah ${step + 1} dari ${total}`}
+            {showResult ? "Selesai" : `Langkah ${step + 1} dari ${TOTAL_STEPS}`}
           </span>
         </div>
 
-        {/* progress */}
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-elevated">
           <motion.div
             className="h-full rounded-full bg-primary"
@@ -149,7 +179,43 @@ export default function OnboardingPage() {
 
         <div className="flex flex-1 flex-col justify-center py-8">
           <AnimatePresence mode="wait">
-            {!showResult ? (
+            {showResult ? (
+              <ResultCard answers={onboarding} fallbackName={name} />
+            ) : step === 0 ? (
+              <motion.div
+                key="name"
+                initial={{ opacity: 0, x: 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -24 }}
+                transition={{ duration: 0.25 }}
+              >
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary">
+                  <Sparkles className="h-3.5 w-3.5" /> Konsultasi dengan mentor
+                </span>
+                <h1 className="mt-3 font-heading text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+                  Siapa namamu?
+                </h1>
+                <p className="mt-1 text-muted">Kami ingin menyapamu dengan benar selama belajar.</p>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    submitName();
+                  }}
+                  className="mt-6"
+                >
+                  <input
+                    autoFocus
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Tulis namamu..."
+                    className="w-full rounded-2xl border border-border bg-card px-4 py-4 font-heading text-lg font-bold text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  />
+                  <CTAButton type="submit" size="lg" className="mt-4 w-full">
+                    Lanjut <ArrowRight className="h-5 w-5" />
+                  </CTAButton>
+                </form>
+              </motion.div>
+            ) : currentQuestion ? (
               <motion.div
                 key={step}
                 initial={{ opacity: 0, x: 24 }}
@@ -161,19 +227,19 @@ export default function OnboardingPage() {
                   <Sparkles className="h-3.5 w-3.5" /> Konsultasi dengan mentor
                 </span>
                 <h1 className="mt-3 font-heading text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
-                  {current.title}
+                  {currentQuestion.title}
                 </h1>
-                <p className="mt-1 text-muted">{current.subtitle}</p>
+                <p className="mt-1 text-muted">{currentQuestion.subtitle}</p>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {current.options.map((opt) => {
+                  {currentQuestion.options.map((opt) => {
                     const Icon = opt.icon;
-                    const active = selected === opt.value;
+                    const active = onboarding[currentQuestion.key] === opt.value;
                     return (
                       <button
                         key={opt.value}
                         type="button"
-                        onClick={() => pick(opt.value)}
+                        onClick={() => pick(currentQuestion, opt.value)}
                         className={cn(
                           "flex items-center gap-3 rounded-2xl border px-4 py-4 text-left font-heading font-bold transition-all focusable",
                           active
@@ -188,19 +254,15 @@ export default function OnboardingPage() {
                   })}
                 </div>
 
-                {step > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setStep((s) => s - 1)}
-                    className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink focusable rounded-lg"
-                  >
-                    <ArrowLeft className="h-4 w-4" /> Kembali
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setStep((s) => s - 1)}
+                  className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink focusable rounded-lg"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Kembali
+                </button>
               </motion.div>
-            ) : (
-              <ResultCard answers={onboarding} />
-            )}
+            ) : null}
           </AnimatePresence>
         </div>
       </div>
@@ -208,11 +270,13 @@ export default function OnboardingPage() {
   );
 }
 
-function ResultCard({ answers }: { answers: OnboardingAnswers }) {
-  const time = answers.dailyTime ?? "45";
-  const weak = answers.weakSkill && answers.weakSkill !== "Belum tahu"
-    ? answers.weakSkill.toLowerCase()
-    : "speaking";
+function ResultCard({ answers, fallbackName }: { answers: OnboardingAnswers; fallbackName: string }) {
+  const time = answers.dailyTime ?? "30";
+  const weak =
+    answers.weakSkill && answers.weakSkill !== "Belum tahu"
+      ? answers.weakSkill.toLowerCase()
+      : "speaking";
+  const name = answers.name ?? fallbackName ?? "Pelajar";
 
   return (
     <motion.div
@@ -226,7 +290,7 @@ function ResultCard({ answers }: { answers: OnboardingAnswers }) {
         <CheckCircle2 className="h-7 w-7" />
       </div>
       <h2 className="mt-4 font-heading text-2xl font-extrabold tracking-tight text-ink">
-        Personal German Roadmap-mu siap!
+        {name}, Personal German Roadmap-mu siap!
       </h2>
       <p className="mt-2 text-muted">
         Kamu cocok mulai dari <span className="font-bold text-primary">A1.1</span>. Target

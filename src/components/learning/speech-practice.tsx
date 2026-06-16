@@ -14,6 +14,8 @@ interface SpeechPracticeProps {
   showListen?: boolean;
   /** offer the "save to Error Notebook" action */
   allowSave?: boolean;
+  /** fired once per attempt with whether the pronunciation passed */
+  onResult?: (passed: boolean) => void;
   className?: string;
 }
 
@@ -21,6 +23,7 @@ export function SpeechPractice({
   expected,
   showListen = true,
   allowSave = false,
+  onResult,
   className,
 }: SpeechPracticeProps) {
   const [feedback, setFeedback] = useState<SpeakingFeedback | null>(null);
@@ -28,28 +31,35 @@ export function SpeechPractice({
   const [saved, setSaved] = useState(false);
   const expectedRef = useRef(expected);
   expectedRef.current = expected;
+  const onResultRef = useRef(onResult);
+  onResultRef.current = onResult;
+
+  async function evaluate(text: string) {
+    setEvaluating(true);
+    const result = await speakingFeedbackService.evaluate(text, expectedRef.current);
+    setFeedback(result);
+    setEvaluating(false);
+    if (!result.noSpeech) {
+      const passed =
+        result.pronunciation >= 60 && result.matchedWords / Math.max(1, result.totalWords) >= 0.6;
+      onResultRef.current?.(passed);
+    }
+  }
 
   const { supported, listening, transcript, interim, error, start, stop, reset } =
     useSpeechRecognition({
       lang: "de-DE",
-      onFinal: async (text) => {
-        setEvaluating(true);
-        const result = await speakingFeedbackService.evaluate(text, expectedRef.current);
-        setFeedback(result);
-        setEvaluating(false);
+      onFinal: (text) => {
+        void evaluate(text);
       },
     });
 
   // Safety net: if recognition stops without a final result, still evaluate interim text.
   useEffect(() => {
     if (!listening && transcript && !feedback && !evaluating) {
-      (async () => {
-        setEvaluating(true);
-        const result = await speakingFeedbackService.evaluate(transcript, expectedRef.current);
-        setFeedback(result);
-        setEvaluating(false);
-      })();
+      void evaluate(transcript);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listening, transcript, feedback, evaluating]);
 
   function handleMic() {

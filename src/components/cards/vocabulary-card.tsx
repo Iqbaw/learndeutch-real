@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Volume2 } from "lucide-react";
+import { Volume2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VocabularyItem, MemoryStatus } from "@/types";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { speak, isSpeechSynthesisSupported } from "@/lib/speech";
 
 const articleColor: Record<string, string> = {
   der: "text-der",
@@ -13,16 +14,25 @@ const articleColor: Record<string, string> = {
 };
 
 const statusStyle: Record<MemoryStatus, { label: string; cls: string }> = {
-  new: { label: "Baru", cls: "bg-elevated text-muted" },
+  new: { label: "Belum dipelajari", cls: "bg-elevated text-muted" },
   learning: { label: "Dipelajari", cls: "bg-secondary-soft text-secondary" },
   review: { label: "Perlu review", cls: "bg-warning/15 text-warning" },
   almost: { label: "Hampir hafal", cls: "bg-primary-soft text-primary" },
   mastered: { label: "Dikuasai", cls: "bg-success/15 text-success" },
 };
 
-export function VocabularyCard({ item }: { item: VocabularyItem }) {
+export function VocabularyCard({
+  item,
+  status = "new",
+  onLearn,
+}: {
+  item: VocabularyItem;
+  status?: MemoryStatus;
+  onLearn?: (id: string) => void;
+}) {
   const [flipped, setFlipped] = useState(false);
-  const status = statusStyle[item.status];
+  const style = statusStyle[status];
+  const canSpeak = isSpeechSynthesisSupported();
 
   return (
     <div className="card-base flex flex-col p-4 transition-shadow hover:shadow-glow">
@@ -45,8 +55,10 @@ export function VocabularyCard({ item }: { item: VocabularyItem }) {
         </div>
         <button
           type="button"
+          onClick={() => canSpeak && speak(item.german, "de-DE", 0.95)}
+          disabled={!canSpeak}
           aria-label={`Putar audio ${item.german}`}
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-elevated text-primary transition-colors hover:bg-primary-soft focusable"
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-elevated text-primary transition-colors hover:bg-primary-soft focusable disabled:opacity-40"
         >
           <Volume2 className="h-4 w-4" />
         </button>
@@ -79,10 +91,20 @@ export function VocabularyCard({ item }: { item: VocabularyItem }) {
 
       <div className="mt-3 flex items-center justify-between">
         <LevelBadge level={item.level} />
-        <span className={cn("rounded-lg px-2 py-1 text-xs font-bold", status.cls)}>
-          {status.label}
+        <span className={cn("rounded-lg px-2 py-1 text-xs font-bold", style.cls)}>
+          {style.label}
         </span>
       </div>
+
+      {status === "new" && onLearn && (
+        <button
+          type="button"
+          onClick={() => onLearn(item.id)}
+          className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-primary-soft/50 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary-soft focusable"
+        >
+          <Plus className="h-4 w-4" /> Pelajari kata ini
+        </button>
+      )}
     </div>
   );
 }

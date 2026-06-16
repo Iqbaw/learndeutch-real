@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ClipboardCheck,
@@ -17,10 +17,13 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { AppGuard } from "@/components/app-guard";
 import { CTAButton } from "@/components/ui/cta-button";
 import { ExerciseCard } from "@/components/learning/exercise-card";
 import { a1MockTest } from "@/data/mockTest";
+import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import type { ErrorCategory, Skill } from "@/types";
 
 const sectionIcon: Record<string, typeof BookOpen> = {
   reading: BookOpen,
@@ -36,6 +39,19 @@ const flatQuestions = a1MockTest.sections.flatMap((s) =>
   s.questions.map((q) => ({ ...q, sectionId: s.id, sectionName: s.name, skill: s.skill }))
 );
 
+function categoryFromSkill(skill: string): ErrorCategory {
+  switch (skill) {
+    case "Listening":
+      return "Listening";
+    case "Vocabulary":
+      return "Vocabulary";
+    case "Speaking":
+      return "Pronunciation";
+    default:
+      return "Grammar";
+  }
+}
+
 type Phase = "intro" | "test" | "result";
 
 export default function MockTestPage() {
@@ -43,11 +59,15 @@ export default function MockTestPage() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, boolean>>({});
 
+  const recordAnswer = useAppStore((s) => s.recordAnswer);
+  const recordError = useAppStore((s) => s.recordError);
+
   const total = flatQuestions.length;
   const current = flatQuestions[index];
 
   function answer(correct: boolean) {
     setAnswers((a) => ({ ...a, [index]: correct }));
+    recordAnswer(current.skill as Skill, correct);
   }
 
   function next() {
@@ -57,45 +77,53 @@ export default function MockTestPage() {
 
   return (
     <AppShell title="Mock Test" subtitle="Simulasi ujian A1 untuk mengukur kesiapanmu — Reading, Listening, Grammar, Vocabulary, Writing, Speaking.">
-      {phase === "intro" && <Intro onStart={() => setPhase("test")} />}
+      <AppGuard>
+        {phase === "intro" && <Intro onStart={() => setPhase("test")} />}
 
-      {phase === "test" && current && (
-        <div className="mx-auto max-w-2xl">
-          <div className="mb-4 flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary-soft px-2.5 py-1.5 text-xs font-bold text-primary">
-              {(() => {
-                const Icon = sectionIcon[current.sectionId] ?? BookOpen;
-                return <Icon className="h-4 w-4" />;
-              })()}
-              {current.sectionName}
-            </span>
-            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-elevated">
-              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(index / total) * 100}%` }} />
+        {phase === "test" && current && (
+          <div className="mx-auto max-w-2xl">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary-soft px-2.5 py-1.5 text-xs font-bold text-primary">
+                {(() => {
+                  const Icon = sectionIcon[current.sectionId] ?? BookOpen;
+                  return <Icon className="h-4 w-4" />;
+                })()}
+                {current.sectionName}
+              </span>
+              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-elevated">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(index / total) * 100}%` }} />
+              </div>
+              <span className="font-mono text-xs font-bold text-muted">{index + 1}/{total}</span>
             </div>
-            <span className="font-mono text-xs font-bold text-muted">{index + 1}/{total}</span>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.22 }}
+                className="card-base p-6"
+              >
+                <ExerciseCard
+                  exercise={current}
+                  onResult={answer}
+                  onAnswered={(correct, info) => {
+                    if (!correct) recordError({ ...info, category: categoryFromSkill(current.skill) });
+                  }}
+                />
+                {index in answers && (
+                  <CTAButton onClick={next} className="mt-5 w-full">
+                    {index === total - 1 ? "Lihat Hasil" : "Soal Berikutnya"} <ArrowRight className="h-4 w-4" />
+                  </CTAButton>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
+        )}
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.22 }}
-              className="card-base p-6"
-            >
-              <ExerciseCard exercise={current} onResult={answer} />
-              {index in answers && (
-                <CTAButton onClick={next} className="mt-5 w-full">
-                  {index === total - 1 ? "Lihat Hasil" : "Soal Berikutnya"} <ArrowRight className="h-4 w-4" />
-                </CTAButton>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      )}
-
-      {phase === "result" && <Result answers={answers} total={total} />}
+        {phase === "result" && <Result answers={answers} total={total} />}
+      </AppGuard>
     </AppShell>
   );
 }
@@ -110,7 +138,8 @@ function Intro({ onStart }: { onStart: () => void }) {
         <h2 className="mt-4 font-heading text-2xl font-extrabold text-ink">{a1MockTest.title}</h2>
         <p className="mt-2 text-muted">
           Test ini meniru format kemampuan CEFR A1. Selesaikan semua bagian untuk mendapat estimasi
-          level, score per skill, dan rekomendasi langkah berikutnya.
+          level, score per skill, dan rekomendasi langkah berikutnya. Hasilnya tercatat di
+          statistikmu.
         </p>
 
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -126,7 +155,6 @@ function Intro({ onStart }: { onStart: () => void }) {
           })}
         </div>
 
-        {/* Honesty disclaimer (PRD) */}
         <div className="mt-5 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm text-ink">
           <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <p>
@@ -144,9 +172,13 @@ function Intro({ onStart }: { onStart: () => void }) {
 }
 
 function Result({ answers, total }: { answers: Record<number, boolean>; total: number }) {
+  const recordMock = useAppStore((s) => s.recordMock);
+  const recordedRef = useRef(false);
+
   const correct = Object.values(answers).filter(Boolean).length;
   const pct = Math.round((correct / total) * 100);
   const passed = pct >= 60;
+  const confidence = Math.min(95, 55 + Math.floor(pct / 3));
 
   // per-skill breakdown
   const skillScores = a1MockTest.sections.map((s) => {
@@ -158,6 +190,23 @@ function Result({ answers, total }: { answers: Record<number, boolean>; total: n
     }
     return { name: s.name, skill: s.skill, value: Math.round((right / count) * 100) };
   });
+
+  // persist the result once
+  useEffect(() => {
+    if (recordedRef.current) return;
+    recordedRef.current = true;
+    recordMock({
+      id:
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `mock${Date.now()}`,
+      level: passed ? "A1.2" : "A1.1",
+      score: pct,
+      date: new Date().toISOString().slice(0, 10),
+      perSkill: skillScores.map((s) => ({ skill: s.skill, value: s.value })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -185,7 +234,7 @@ function Result({ answers, total }: { answers: Record<number, boolean>; total: n
           </div>
           <div className="rounded-xl bg-elevated p-4">
             <p className="text-xs text-muted">Confidence</p>
-            <p className="font-heading text-xl font-extrabold text-ink">{Math.min(95, 55 + pct / 3 | 0)}%</p>
+            <p className="font-heading text-xl font-extrabold text-ink">{confidence}%</p>
           </div>
         </div>
 

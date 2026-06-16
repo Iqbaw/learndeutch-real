@@ -1,14 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X, ChevronDown, Dumbbell } from "lucide-react";
+import { Check, X, ChevronDown, Dumbbell, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { GrammarTopic } from "@/types";
 import { LevelBadge } from "@/components/ui/level-badge";
-import { CTAButton } from "@/components/ui/cta-button";
 
-export function GrammarCard({ topic }: { topic: GrammarTopic }) {
+export function GrammarCard({
+  topic,
+  mastery = 0,
+  onPractice,
+}: {
+  topic: GrammarTopic;
+  mastery?: number;
+  onPractice?: (correct: boolean) => void;
+}) {
   const [open, setOpen] = useState(false);
+  const [practicing, setPracticing] = useState(false);
+  const [picked, setPicked] = useState<number | null>(null);
+
+  // quick practice: pick the correct sentence between correct vs wrong
+  // deterministic order so SSR/CSR match: correct first for even-length titles
+  const correctFirst = topic.title.length % 2 === 0;
+  const options = correctFirst
+    ? [{ text: topic.correct, correct: true }, { text: topic.wrong, correct: false }]
+    : [{ text: topic.wrong, correct: false }, { text: topic.correct, correct: true }];
+
+  function choose(i: number) {
+    if (picked !== null) return;
+    setPicked(i);
+    onPractice?.(options[i].correct);
+  }
 
   return (
     <div className="card-base overflow-hidden">
@@ -26,24 +48,17 @@ export function GrammarCard({ topic }: { topic: GrammarTopic }) {
           <p className="mt-1 text-sm text-muted">{topic.simpleExplanation}</p>
         </div>
         <ChevronDown
-          className={cn(
-            "mt-1 h-5 w-5 shrink-0 text-muted transition-transform",
-            open && "rotate-180"
-          )}
+          className={cn("mt-1 h-5 w-5 shrink-0 text-muted transition-transform", open && "rotate-180")}
         />
       </button>
 
       <div className="px-5 pb-4">
-        {/* mastery bar */}
         <div className="mb-1 flex items-center justify-between text-xs">
           <span className="font-bold text-muted">Penguasaan</span>
-          <span className="font-bold text-primary">{topic.mastery}%</span>
+          <span className="font-bold text-primary">{mastery}%</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-elevated">
-          <div
-            className="h-full rounded-full bg-primary transition-all"
-            style={{ width: `${topic.mastery}%` }}
-          />
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${mastery}%` }} />
         </div>
       </div>
 
@@ -85,9 +100,48 @@ export function GrammarCard({ topic }: { topic: GrammarTopic }) {
             </p>
           </div>
 
-          <CTAButton href="/lesson" variant="outline" size="sm">
-            <Dumbbell className="h-4 w-4" /> Latihan topik ini
-          </CTAButton>
+          {!practicing ? (
+            <button
+              type="button"
+              onClick={() => setPracticing(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-bold text-ink hover:bg-elevated focusable"
+            >
+              <Dumbbell className="h-4 w-4" /> Latihan cepat
+            </button>
+          ) : (
+            <div className="rounded-xl border border-border bg-card p-3">
+              <p className="font-heading text-sm font-bold text-ink">Mana kalimat yang benar?</p>
+              <div className="mt-2 grid gap-2">
+                {options.map((opt, i) => {
+                  const answered = picked !== null;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => choose(i)}
+                      disabled={answered}
+                      className={cn(
+                        "flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-all focusable",
+                        !answered && "border-border bg-card hover:border-primary",
+                        answered && opt.correct && "border-success bg-success/10",
+                        answered && i === picked && !opt.correct && "border-danger bg-danger/10",
+                        answered && !opt.correct && i !== picked && "opacity-60"
+                      )}
+                    >
+                      <span>{opt.text}</span>
+                      {answered && opt.correct && <Check className="h-4 w-4 text-success" />}
+                      {answered && i === picked && !opt.correct && <X className="h-4 w-4 text-danger" />}
+                    </button>
+                  );
+                })}
+              </div>
+              {picked !== null && (
+                <p className="mt-2 flex items-start gap-1.5 text-xs text-muted animate-fade-up">
+                  <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /> {topic.whyWrong}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
