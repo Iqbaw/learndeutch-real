@@ -84,6 +84,7 @@ export type SoundName =
   | "select"
   | "correct"
   | "wrong"
+  | "fail"
   | "complete"
   | "levelup"
   | "pop"
@@ -107,6 +108,13 @@ const players: Record<SoundName, () => void> = {
     playNotes([
       { freq: 233.08, start: 0, dur: 0.16, type: "sine", peak: 0.12 },
       { freq: 174.61, start: 0.12, dur: 0.24, type: "sine", peak: 0.12 },
+    ]),
+  // error/fail notification — lower, slightly longer descending tone
+  fail: () =>
+    playNotes([
+      { freq: 311.13, start: 0, dur: 0.12, type: "sine", peak: 0.1 },
+      { freq: 207.65, start: 0.1, dur: 0.18, type: "sine", peak: 0.1 },
+      { freq: 146.83, start: 0.22, dur: 0.3, type: "sine", peak: 0.08 },
     ]),
   // triumphant little fanfare for finishing a lesson/review
   complete: () =>

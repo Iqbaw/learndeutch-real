@@ -65,6 +65,7 @@ interface AppState {
   completedDays: number[];
   streak: number;
   lastStudyDate: string | null;
+  lastReviewDate: string | null;
   xp: number;
 
   vocabStatus: Record<string, MemoryStatus>;
@@ -96,6 +97,7 @@ interface AppState {
   reviewVocab: (id: string, correct: boolean) => void;
   recordGrammar: (topicId: string, correct: boolean) => void;
   completeLesson: (day: number, opts: { xp: number; subLevel: CEFRLevel }) => void;
+  completeReview: () => void;
   recordMock: (result: MockResult) => void;
   recordSpeaking: () => void;
   resetProgress: () => void;
@@ -129,6 +131,7 @@ const initialProgress = {
   completedDays: [] as number[],
   streak: 0,
   lastStudyDate: null as string | null,
+  lastReviewDate: null as string | null,
   xp: 0,
   vocabStatus: {} as Record<string, MemoryStatus>,
   errors: [] as ErrorItem[],
@@ -268,6 +271,8 @@ export const useAppStore = create<AppState>()(
       recordMock: (result) =>
         set((s) => ({ mockResults: [result, ...s.mockResults].slice(0, 50) })),
 
+      completeReview: () => set({ lastReviewDate: todayStr() }),
+
       recordSpeaking: () => set((s) => ({ speakingAttempts: s.speakingAttempts + 1 })),
 
       resetProgress: () => set({ ...initialProgress }),
@@ -302,6 +307,7 @@ export const useAppStore = create<AppState>()(
         skillStats: s.skillStats,
         grammarStats: s.grammarStats,
         mockResults: s.mockResults,
+        lastReviewDate: s.lastReviewDate,
         speakingAttempts: s.speakingAttempts,
         dailyTargetMinutes: s.dailyTargetMinutes,
         audioSpeed: s.audioSpeed,

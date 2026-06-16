@@ -240,7 +240,7 @@ function StepView({
       )}
 
       {(step.type === "speaking" || step.type === "writing") && step.prompt && (
-        <InputStep step={step} onSpeak={onSpeak} />
+        <InputStep step={step} onSpeak={onSpeak} onWriteResult={onExercise ? (correct, info) => onExercise(correct, info) : undefined} />
       )}
 
       {step.type === "mistake" && <MistakeStep step={step} />}
@@ -252,10 +252,47 @@ function StepView({
   );
 }
 
-function InputStep({ step, onSpeak }: { step: LessonStep; onSpeak?: (passed: boolean) => void }) {
+function InputStep({
+  step,
+  onSpeak,
+  onWriteResult,
+}: {
+  step: LessonStep;
+  onSpeak?: (passed: boolean) => void;
+  onWriteResult?: (correct: boolean, info: { userAnswer: string; correctAnswer: string; explanation: string }) => void;
+}) {
   const [value, setValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
   const speaking = step.type === "speaking";
+
+  function checkWritten() {
+    if (submitted || !value.trim()) return;
+    setSubmitted(true);
+
+    const expected = (step.expected ?? "").trim();
+    const userAnswer = value.trim();
+
+    // Fuzzy comparison: normalize case, punctuation, extra spaces
+    const normalize = (s: string) =>
+      s.toLowerCase().replace(/[.,!?;:'"„""]/g, "").replace(/\s+/g, " ").trim();
+
+    const norm = normalize(userAnswer);
+    const target = normalize(expected);
+
+    // Check exact, or close-enough (allow 1-2 char diff for small words)
+    const maxDist = target.length <= 10 ? 1 : 2;
+    const correct = norm === target || levenshteinDist(norm, target) <= maxDist;
+    setIsCorrect(correct);
+    playSound(correct ? "correct" : "wrong");
+    onWriteResult?.(correct, {
+      userAnswer,
+      correctAnswer: expected,
+      explanation: correct
+        ? "Penulisanmu benar!"
+        : `Jawaban yang tepat: "${expected}". Perhatikan ejaan dan urutan kata.`,
+    });
+  }
 
   return (
     <div className="mt-4">
@@ -273,25 +310,68 @@ function InputStep({ step, onSpeak }: { step: LessonStep; onSpeak?: (passed: boo
             onChange={(e) => setValue(e.target.value)}
             placeholder="Ketik jawabanmu di sini..."
             rows={2}
-            className="w-full rounded-2xl border border-border bg-card p-4 font-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            disabled={submitted}
+            className="w-full rounded-2xl border border-border bg-card p-4 font-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-70"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); checkWritten(); }
+            }}
           />
-          <CTAButton onClick={() => setSubmitted(true)} variant="outline" size="sm" className="mt-2">
-            Periksa
-          </CTAButton>
+          {!submitted && (
+            <CTAButton onClick={checkWritten} variant="outline" size="sm" className="mt-2" disabled={!value.trim()}>
+              Periksa
+            </CTAButton>
+          )}
         </div>
       )}
 
       {!speaking && submitted && step.expected && (
-        <div className="mt-3 flex items-start gap-2 rounded-2xl border border-success/30 bg-success/10 p-4 text-sm text-success animate-fade-up">
-          <Check className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>
-            <span className="font-bold">Contoh jawaban: </span>
-            {step.expected}
-          </p>
+        <div
+          className={cn(
+            "mt-3 flex items-start gap-2 rounded-2xl border p-4 text-sm animate-fade-up",
+            isCorrect
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-danger/30 bg-danger/10 text-ink"
+          )}
+        >
+          {isCorrect ? (
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+          ) : (
+            <X className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
+          )}
+          <div>
+            <p className="font-bold">
+              {isCorrect ? "Benar! " : "Belum tepat. "}
+            </p>
+            {!isCorrect && (
+              <p className="mt-1">
+                Jawaban yang tepat: <span className="font-bold text-ink">{step.expected}</span>
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
+}
+
+/** Simple Levenshtein distance for comparing typed answers */
+function levenshteinDist(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    let prevDiag = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const temp = prev[j];
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, prevDiag + cost);
+      prevDiag = temp;
+    }
+  }
+  return prev[n];
 }
 
 function MistakeStep({ step }: { step: LessonStep }) {

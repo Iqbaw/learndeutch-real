@@ -29,9 +29,13 @@ export default function ReviewPage() {
   const [started, setStarted] = useState(false);
   const vocabStatus = useAppStore((s) => s.vocabStatus);
   const errors = useAppStore((s) => s.errors);
+  const lastReviewDate = useAppStore((s) => s.lastReviewDate);
 
   const queue = useMemo(() => buildReviewQueue(vocabStatus), [vocabStatus]);
   const mistakeDue = errors.filter((e) => e.status === "new" || e.status === "relapsed").length;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const reviewDoneToday = lastReviewDate === today;
 
   return (
     <AppShell title="Review" subtitle="Spaced repetition: ulang di waktu yang tepat agar tidak lupa.">
@@ -48,6 +52,8 @@ export default function ReviewPage() {
               </div>
             }
           />
+        ) : reviewDoneToday && !started ? (
+          <ReviewDoneState queueLength={queue.length} onRestart={() => setStarted(true)} />
         ) : !started ? (
           <ReviewOverview queueLength={queue.length} mistakeDue={mistakeDue} onStart={() => setStarted(true)} />
         ) : (
@@ -55,6 +61,33 @@ export default function ReviewPage() {
         )}
       </AppGuard>
     </AppShell>
+  );
+}
+
+function ReviewDoneState({ queueLength, onRestart }: { queueLength: number; onRestart: () => void }) {
+  return (
+    <div className="mx-auto max-w-xl">
+      <div className="card-base p-8 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success/15 text-success">
+          <Check className="h-9 w-9" />
+        </div>
+        <h2 className="mt-4 font-heading text-2xl font-extrabold text-ink">
+          Review hari ini telah selesai!
+        </h2>
+        <p className="mt-2 text-muted">
+          Kamu sudah menyelesaikan review hari ini. Kartu akan siap lagi besok
+          sesuai jadwal spaced repetition. Tetap konsisten ya!
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <CTAButton href="/dashboard" variant="outline">
+            Ke Dashboard
+          </CTAButton>
+          <CTAButton onClick={onRestart} variant="ghost">
+            <RotateCcw className="h-4 w-4" /> Ulangi sesi ({queueLength} kartu)
+          </CTAButton>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -131,6 +164,7 @@ function ReviewOverview({
 
 function ReviewSession({ queue, onExit }: { queue: ReviewCard[]; onExit: () => void }) {
   const reviewVocab = useAppStore((s) => s.reviewVocab);
+  const completeReview = useAppStore((s) => s.completeReview);
   const [index, setIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
@@ -151,7 +185,11 @@ function ReviewSession({ queue, onExit }: { queue: ReviewCard[]; onExit: () => v
   }
 
   useEffect(() => {
-    if (finished) playSound("complete");
+    if (finished) {
+      playSound("complete");
+      completeReview();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished]);
 
   if (finished) {

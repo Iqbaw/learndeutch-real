@@ -175,8 +175,6 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
     }
   }
   const overallAccuracy = sumTotal > 0 ? Math.round((sumCorrect / sumTotal) * 100) : 0;
-  const confidence =
-    sumTotal === 0 ? 0 : Math.round(overallAccuracy * Math.min(1, sumTotal / 50));
 
   const get = (s: Skill) => accuracy(input.skillStats[s]);
   const activeRaw = avg([get("Speaking"), get("Writing")]);
@@ -185,12 +183,36 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
   const hasData =
     sumTotal > 0 || input.completedDays.length > 0 || vocab.started > 0;
 
+  // Accurate level estimation: weight all data sources
+  // More attempts = higher confidence. Accuracy drives level progression.
+  const effectiveAccuracy = sumTotal >= 5 ? overallAccuracy : 0;
+  const dayProgress = input.completedDays.length / 30; // 0..1
+  const vocabFactor = vocab.started > 0 ? Math.min(1, vocab.mastered / Math.max(1, vocab.started)) : 0;
+  const grammarAvg = grammarMastery.length > 0
+    ? grammarMastery.reduce((sum, g) => sum + g.value, 0) / grammarMastery.length
+    : 0;
+
+  // composite score (0-100) weighted across data sources
+  const composite = sumTotal === 0 ? 0 :
+    effectiveAccuracy * 0.35 +
+    grammarAvg * 0.25 +
+    (vocabFactor * 100) * 0.2 +
+    (dayProgress * 100) * 0.2;
+
   const estimatedLevel: CEFRLevel =
-    input.completedDays.length === 0
+    input.completedDays.length === 0 && sumTotal === 0
       ? input.startLevel
-      : input.currentDay <= 15
+      : composite >= 85
+      ? "A2.1"
+      : composite >= 70
+      ? "A1.2"
+      : composite >= 40
       ? "A1.1"
-      : "A1.2";
+      : input.startLevel;
+
+  // confidence increases with more data points
+  const dataDensity = Math.min(1, sumTotal / 80); // need ~80 answers for full confidence
+  const confidence = sumTotal === 0 ? 0 : Math.round(composite * dataDensity);
 
   const activeLevel = activeRaw > 0 ? valueToLevel(activeRaw) : input.startLevel;
   const passiveLevel = passiveRaw > 0 ? valueToLevel(passiveRaw) : input.startLevel;

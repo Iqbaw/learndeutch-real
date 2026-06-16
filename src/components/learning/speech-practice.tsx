@@ -65,6 +65,14 @@ export function SpeechPractice({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listening, transcript, feedback, evaluating]);
 
+  // Play fail sound on mic error or no-speech feedback
+  useEffect(() => {
+    if (error) playSound("fail");
+  }, [error]);
+  useEffect(() => {
+    if (feedback?.noSpeech) playSound("fail");
+  }, [feedback]);
+
   function handleMic() {
     if (listening) {
       stop();

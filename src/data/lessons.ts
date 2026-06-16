@@ -1,7 +1,10 @@
 import type { Lesson } from "@/types";
+import { lessonsWeek2 } from "./lessons-a1-week2";
+import { lessonsWeek3 } from "./lessons-a1-week3";
+import { lessonsWeek4 } from "./lessons-a1-week4";
 
 // Daily lessons — first 7 days fully fleshed out (PRD section 11.2 + 28)
-export const lessons: Lesson[] = [
+export const lessonsWeek1: Lesson[] = [
   {
     day: 1,
     subLevel: "A1.1",
@@ -358,6 +361,14 @@ export const lessons: Lesson[] = [
       { type: "victory", title: "Minggu 1 Selesai!", achievements: ["Menyelesaikan review minggu pertama.", "Siap lanjut ke materi keluarga & benda."], body: "Konsistensimu luar biasa. Lanjutkan streak-mu!" },
     ],
   },
+];
+
+// Combine all weeks
+export const lessons: Lesson[] = [
+  ...lessonsWeek1,
+  ...lessonsWeek2,
+  ...lessonsWeek3,
+  ...lessonsWeek4,
 ];
 
 export function getLessonByDay(day: number): Lesson | undefined {

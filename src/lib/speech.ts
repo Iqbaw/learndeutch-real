@@ -291,6 +291,23 @@ export function speak(text: string, options: SpeakOptions = {}): boolean {
       utterance.onend = onEnd;
       utterance.onerror = onEnd;
     }
+
+    // Chrome bug: speech pauses/stops after ~15s. Resume periodically.
+    let resumeTimer: ReturnType<typeof setInterval> | null = null;
+    utterance.onstart = () => {
+      onStart?.();
+      resumeTimer = setInterval(() => {
+        if (synth.speaking && !synth.paused) synth.resume();
+      }, 5000);
+    };
+    const cleanup = () => {
+      if (resumeTimer) clearInterval(resumeTimer);
+      resumeTimer = null;
+      onEnd?.();
+    };
+    utterance.onend = cleanup;
+    utterance.onerror = cleanup;
+
     synth.speak(utterance);
   });
 
