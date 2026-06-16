@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   RefreshCw,
@@ -21,6 +21,7 @@ import { CTAButton } from "@/components/ui/cta-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAppStore } from "@/lib/store";
 import { buildReviewQueue, deriveStats } from "@/lib/derive";
+import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import type { ReviewCard } from "@/types";
 
@@ -139,6 +140,7 @@ function ReviewSession({ queue, onExit }: { queue: ReviewCard[]; onExit: () => v
 
   function handleResult(correct: boolean) {
     if (correct) setCorrectCount((c) => c + 1);
+    playSound(correct ? "correct" : "wrong");
     // card.id is the vocabulary id — update its real memory status
     reviewVocab(card.id, correct);
   }
@@ -147,6 +149,10 @@ function ReviewSession({ queue, onExit }: { queue: ReviewCard[]; onExit: () => v
     if (index < total - 1) setIndex((i) => i + 1);
     else setFinished(true);
   }
+
+  useEffect(() => {
+    if (finished) playSound("complete");
+  }, [finished]);
 
   if (finished) {
     const pct = Math.round((correctCount / total) * 100);
@@ -234,6 +240,7 @@ function ReviewCardView({
             <button
               key={i}
               type="button"
+              data-no-sound
               onClick={() => choose(i)}
               disabled={answered}
               className={cn(

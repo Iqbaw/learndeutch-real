@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { CTAButton } from "@/components/ui/cta-button";
 import { useAppStore, type OnboardingAnswers } from "@/lib/store";
+import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
 interface Option {
@@ -277,6 +278,10 @@ function ResultCard({ answers, fallbackName }: { answers: OnboardingAnswers; fal
       ? answers.weakSkill.toLowerCase()
       : "speaking";
   const name = answers.name ?? fallbackName ?? "Pelajar";
+
+  useEffect(() => {
+    playSound("levelup");
+  }, []);
 
   return (
     <motion.div

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope, Atkinson_Hyperlegible, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SoundProvider } from "@/components/sound-provider";
 
 const heading = Manrope({
   subsets: ["latin"],
@@ -57,7 +58,10 @@ export default function RootLayout({
       <body
         className={`${heading.variable} ${body.variable} ${mono.variable} font-body antialiased`}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <SoundProvider />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

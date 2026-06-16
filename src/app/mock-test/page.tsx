@@ -22,6 +22,7 @@ import { CTAButton } from "@/components/ui/cta-button";
 import { ExerciseCard } from "@/components/learning/exercise-card";
 import { a1MockTest } from "@/data/mockTest";
 import { useAppStore } from "@/lib/store";
+import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import type { ErrorCategory, Skill } from "@/types";
 
@@ -195,6 +196,7 @@ function Result({ answers, total }: { answers: Record<number, boolean>; total: n
   useEffect(() => {
     if (recordedRef.current) return;
     recordedRef.current = true;
+    playSound(passed ? "levelup" : "complete");
     recordMock({
       id:
         typeof crypto !== "undefined" && "randomUUID" in crypto

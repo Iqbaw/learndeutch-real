@@ -9,6 +9,7 @@ import {
   Monitor,
   Clock,
   Volume2,
+  VolumeX,
   Languages,
   Bell,
   RotateCcw,
@@ -16,6 +17,7 @@ import {
   Flame,
   Award,
   LogOut,
+  Music,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppGuard } from "@/components/app-guard";
@@ -23,6 +25,7 @@ import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { useAppStore } from "@/lib/store";
 import { computeVocabCounts, deriveBadges } from "@/lib/derive";
+import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
@@ -42,6 +45,8 @@ export default function SettingsPage() {
   const setAudioSpeed = useAppStore((s) => s.setAudioSpeed);
   const explanationLang = useAppStore((s) => s.explanationLang);
   const setExplanationLang = useAppStore((s) => s.setExplanationLang);
+  const soundEnabled = useAppStore((s) => s.soundEnabled);
+  const setSoundEnabled = useAppStore((s) => s.setSoundEnabled);
   const resetProgress = useAppStore((s) => s.resetProgress);
   const resetAll = useAppStore((s) => s.resetAll);
 
@@ -155,6 +160,42 @@ export default function SettingsPage() {
                 {s}x
               </button>
             ))}
+          </div>
+        </SettingGroup>
+
+        <SettingGroup title="Efek suara" icon={<Music className="h-5 w-5" />}>
+          <p className="mb-3 text-sm text-muted">
+            Suara saat menekan tombol, menjawab benar/salah, dan menyelesaikan pelajaran agar
+            belajar terasa lebih hidup.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              data-no-sound
+              onClick={() => {
+                setSoundEnabled(true);
+                playSound("correct");
+              }}
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold transition-colors focusable",
+                soundEnabled
+                  ? "border-primary bg-primary-soft text-primary"
+                  : "border-border bg-card text-muted hover:text-ink"
+              )}
+            >
+              <Volume2 className="h-5 w-5" /> Aktif
+            </button>
+            <button
+              data-no-sound
+              onClick={() => setSoundEnabled(false)}
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold transition-colors focusable",
+                !soundEnabled
+                  ? "border-primary bg-primary-soft text-primary"
+                  : "border-border bg-card text-muted hover:text-ink"
+              )}
+            >
+              <VolumeX className="h-5 w-5" /> Mati
+            </button>
           </div>
         </SettingGroup>
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, X, ChevronDown, Dumbbell, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { playSound } from "@/lib/sound";
 import type { GrammarTopic } from "@/types";
 import { LevelBadge } from "@/components/ui/level-badge";
 
@@ -29,6 +30,7 @@ export function GrammarCard({
   function choose(i: number) {
     if (picked !== null) return;
     setPicked(i);
+    playSound(options[i].correct ? "correct" : "wrong");
     onPractice?.(options[i].correct);
   }
 
@@ -118,6 +120,7 @@ export function GrammarCard({
                     <button
                       key={i}
                       type="button"
+                      data-no-sound
                       onClick={() => choose(i)}
                       disabled={answered}
                       className={cn(

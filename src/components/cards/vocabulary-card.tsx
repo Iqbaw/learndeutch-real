@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import type { VocabularyItem, MemoryStatus } from "@/types";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { ListenButton } from "@/components/ui/listen-button";
+import { playSound } from "@/lib/sound";
 
 const articleColor: Record<string, string> = {
   der: "text-der",
@@ -90,7 +91,11 @@ export function VocabularyCard({
       {status === "new" && onLearn && (
         <button
           type="button"
-          onClick={() => onLearn(item.id)}
+          data-no-sound
+          onClick={() => {
+            playSound("pop");
+            onLearn(item.id);
+          }}
           className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-primary-soft/50 px-3 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary-soft focusable"
         >
           <Plus className="h-4 w-4" /> Pelajari kata ini

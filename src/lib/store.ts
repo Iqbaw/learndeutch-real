@@ -78,9 +78,11 @@ interface AppState {
   dailyTargetMinutes: number;
   audioSpeed: number;
   explanationLang: string;
+  soundEnabled: boolean;
   setDailyTarget: (minutes: number) => void;
   setAudioSpeed: (speed: number) => void;
   setExplanationLang: (lang: string) => void;
+  setSoundEnabled: (value: boolean) => void;
 
   // --- actions ---
   recordAnswer: (skill: Skill, correct: boolean) => void;
@@ -153,9 +155,11 @@ export const useAppStore = create<AppState>()(
       dailyTargetMinutes: 30,
       audioSpeed: 1,
       explanationLang: "Indonesia",
+      soundEnabled: true,
       setDailyTarget: (minutes) => set({ dailyTargetMinutes: minutes }),
       setAudioSpeed: (speed) => set({ audioSpeed: speed }),
       setExplanationLang: (lang) => set({ explanationLang: lang }),
+      setSoundEnabled: (value) => set({ soundEnabled: value }),
 
       recordAnswer: (skill, correct) =>
         set((s) => {
@@ -276,6 +280,7 @@ export const useAppStore = create<AppState>()(
           dailyTargetMinutes: 30,
           audioSpeed: 1,
           explanationLang: "Indonesia",
+          soundEnabled: true,
         }),
     }),
     {
@@ -301,6 +306,7 @@ export const useAppStore = create<AppState>()(
         dailyTargetMinutes: s.dailyTargetMinutes,
         audioSpeed: s.audioSpeed,
         explanationLang: s.explanationLang,
+        soundEnabled: s.soundEnabled,
       }),
     }
   )

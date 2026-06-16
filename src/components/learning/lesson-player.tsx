@@ -21,6 +21,7 @@ import {
 import type { Lesson, LessonStep, LessonStepType, Skill, ErrorCategory } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
+import { playSound } from "@/lib/sound";
 import { CTAButton } from "@/components/ui/cta-button";
 import { ExerciseCard } from "./exercise-card";
 import { TokenSentence } from "./token-sentence";
@@ -331,6 +332,10 @@ function VictoryInline({ achievements, body }: { achievements: string[]; body?: 
 }
 
 function VictoryView({ lesson }: { lesson: Lesson }) {
+  useEffect(() => {
+    playSound("complete");
+  }, []);
+
   return (
     <motion.div
       key="lesson-done"

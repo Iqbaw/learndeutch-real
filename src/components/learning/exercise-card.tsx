@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, X, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { playSound } from "@/lib/sound";
 import type { DrillExercise } from "@/types";
 
 interface ExerciseCardProps {
@@ -28,6 +29,7 @@ export function ExerciseCard({ exercise, onResult, onAnswered }: ExerciseCardPro
       setShake(true);
       setTimeout(() => setShake(false), 450);
     }
+    playSound(correct ? "correct" : "wrong");
     onResult?.(correct);
     onAnswered?.(correct, {
       userAnswer: exercise.options[i],
@@ -47,6 +49,7 @@ export function ExerciseCard({ exercise, onResult, onAnswered }: ExerciseCardPro
             <button
               key={i}
               type="button"
+              data-no-sound
               onClick={() => choose(i)}
               disabled={answered}
               className={cn(

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Mic, Square, Sparkles, NotebookPen, RotateCcw, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSpeechRecognition } from "@/lib/speech";
+import { playSound } from "@/lib/sound";
 import { speakingFeedbackService, type SpeakingFeedback } from "@/services/ai";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { ListenButton } from "@/components/ui/listen-button";
@@ -43,6 +44,7 @@ export function SpeechPractice({
     if (!result.noSpeech) {
       const passed =
         result.pronunciation >= 60 && result.matchedWords / Math.max(1, result.totalWords) >= 0.6;
+      playSound(passed ? "correct" : "wrong");
       onResultRef.current?.(passed);
     }
   }
