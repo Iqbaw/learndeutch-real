@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light mode (PRD section 15.2) */
+  --bg: 248 250 252; /* #F8FAFC */
+  --card: 255 255 255; /* #FFFFFF */
+  --elevated: 241 245 249; /* #F1F5F9 */
+  --border: 226 232 240; /* #E2E8F0 */
+  --primary: 37 99 235; /* #2563EB */
+  --primary-soft: 219 234 254; /* #DBEAFE */
+  --secondary: 245 158 11; /* #F59E0B */
+  --secondary-soft: 254 243 199; /* #FEF3C7 */
+  --ink: 17 24 39; /* #111827 */
+  --muted: 107 114 128; /* #6B7280 */
+  --success: 22 163 74; /* #16A34A */
+  --danger: 220 38 38; /* #DC2626 */
+  --warning: 217 119 6; /* #D97706 */
+  --der: 37 99 235; /* blue - maskulin */
+  --die: 219 39 119; /* pink - feminin */
+  --das: 22 163 74; /* green - netral */
+}
+
+.dark {
+  /* Dark mode (PRD section 15.2) - not pure black, comfortable contrast */
+  --bg: 15 23 42; /* #0F172A */
+  --card: 17 24 39; /* #111827 */
+  --elevated: 30 41 59; /* #1E293B */
+  --border: 51 65 85; /* #334155 */
+  --primary: 96 165 250; /* #60A5FA */
+  --primary-soft: 30 58 138; /* #1E3A8A */
+  --secondary: 251 191 36; /* #FBBF24 */
+  --secondary-soft: 120 53 15; /* #78350F */
+  --ink: 248 250 252; /* #F8FAFC */
+  --muted: 203 213 225; /* #CBD5E1 */
+  --success: 74 222 128; /* #4ADE80 */
+  --danger: 248 113 113; /* #F87171 */
+  --warning: 251 191 36; /* #FBBF24 */
+  --der: 96 165 250;
+  --die: 244 114 182;
+  --das: 74 222 128;
+}
+
+* {
+  border-color: rgb(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: rgb(var(--bg));
+  color: rgb(var(--ink));
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+}
+
+/* Custom utilities */
+@layer components {
+  .card-base {
+    @apply rounded-2xl border border-border bg-card shadow-soft;
+  }
+  .focusable {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+  }
+}
+
+/* Comfortable scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--border));
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}

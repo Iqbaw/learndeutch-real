@@ -1,0 +1,17 @@
+{
+  "name": "Deutsch Lernen in 30 Tagen",
+  "short_name": "Deutsch 30",
+  "description": "Belajar bahasa Jerman 30 hari per level dengan AI tutor dan statistik CEFR.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
