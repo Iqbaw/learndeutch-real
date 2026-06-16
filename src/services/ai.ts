@@ -19,6 +19,10 @@ export interface SpeakingFeedback {
   grammar: number;
   feedback: string;
   betterAnswer: string;
+  transcript: string;
+  matchedWords: number;
+  totalWords: number;
+  noSpeech?: boolean;
 }
 
 export interface PlacementResult {
@@ -77,19 +81,155 @@ export const writingCorrectionService = {
   },
 };
 
+/** Normalize German text for comparison: lowercase, strip punctuation, fold umlauts. */
+function normalizeForCompare(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[.,!?;:"'„“”]/g, "")
+    .replace(/ä/g, "a")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ß/g, "ss")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Levenshtein distance between two strings (for per-word similarity). */
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const prev = new Array<number>(n + 1);
+  const curr = new Array<number>(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+    }
+    for (let j = 0; j <= n; j++) prev[j] = curr[j];
+  }
+  return prev[n];
+}
+
+function wordSimilarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  const dist = levenshtein(a, b);
+  return 1 - dist / Math.max(a.length, b.length);
+}
+
+export interface SpeechScore {
+  pronunciation: number;
+  fluency: number;
+  grammar: number;
+  matchedWords: number;
+  totalWords: number;
+  feedback: string;
+}
+
+/**
+ * Compare what the learner actually said (from the microphone) with the
+ * expected German sentence and produce real, transcript-based scores.
+ */
+export function scoreSpeech(transcript: string, expected: string): SpeechScore {
+  const said = normalizeForCompare(transcript);
+  const target = normalizeForCompare(expected);
+  const saidWords = said ? said.split(" ") : [];
+  const targetWords = target ? target.split(" ") : [];
+  const totalWords = targetWords.length || 1;
+
+  // Greedy word matching: each target word matched to best remaining spoken word.
+  const available = [...saidWords];
+  let matchedWords = 0;
+  let similaritySum = 0;
+  for (const tw of targetWords) {
+    let bestIdx = -1;
+    let bestSim = 0;
+    for (let i = 0; i < available.length; i++) {
+      const sim = wordSimilarity(tw, available[i]);
+      if (sim > bestSim) {
+        bestSim = sim;
+        bestIdx = i;
+      }
+    }
+    similaritySum += bestSim;
+    if (bestSim >= 0.7) {
+      matchedWords++;
+      if (bestIdx >= 0) available.splice(bestIdx, 1);
+    }
+  }
+
+  const coverage = matchedWords / totalWords; // how many words got said
+  const avgSim = similaritySum / totalWords; // how close the pronunciation was
+
+  const pronunciation = Math.round(Math.min(100, avgSim * 100));
+  const grammar = Math.round(Math.min(100, coverage * 100));
+  // fluency rewards saying roughly the right number of words without huge extras
+  const lengthRatio = saidWords.length / totalWords;
+  const lengthPenalty = Math.min(1, Math.abs(1 - lengthRatio));
+  const fluency = Math.round(Math.min(100, Math.max(0, (coverage * 0.7 + (1 - lengthPenalty) * 0.3) * 100)));
+
+  let feedback: string;
+  if (coverage >= 0.85 && pronunciation >= 80) {
+    feedback = "Bagus sekali! Pengucapanmu jelas dan hampir semua kata terdengar tepat.";
+  } else if (coverage >= 0.6) {
+    const missed = targetWords.filter(
+      (tw) => !saidWords.some((sw) => wordSimilarity(tw, sw) >= 0.7)
+    );
+    feedback = missed.length
+      ? `Hampir benar! Beberapa kata belum terdengar jelas: "${missed.slice(0, 3).join(", ")}". Coba ucapkan lebih perlahan.`
+      : "Hampir benar! Coba ucapkan setiap kata sedikit lebih jelas.";
+  } else if (saidWords.length > 0) {
+    feedback = "Belum cukup mirip. Dengarkan contohnya dulu, lalu tirukan kata per kata.";
+  } else {
+    feedback = "Aku belum menangkap suaramu. Pastikan mikrofon aktif lalu coba lagi.";
+  }
+
+  if (/\bik\b/.test(said) && /\bich\b/.test(target)) {
+    feedback +=
+      ' Tip: "ich" diucapkan lembut seperti hembusan kecil, bukan "ik" yang keras.';
+  }
+
+  return { pronunciation, fluency, grammar, matchedWords, totalWords, feedback };
+}
+
 /** Speaking feedback — specific, never just "good job" (PRD section 13.6). */
 export const speakingFeedbackService = {
-  async evaluate(transcript: string): Promise<SpeakingFeedback> {
-    await wait(700);
-    const hasIch = /ich/i.test(transcript);
+  /**
+   * Evaluate a spoken transcript against the expected sentence.
+   * Scores are derived from the real microphone transcript when available.
+   */
+  async evaluate(transcript: string, expected?: string): Promise<SpeakingFeedback> {
+    await wait(350);
+    const target = expected ?? transcript;
+    const said = transcript.trim();
+
+    if (!said) {
+      return {
+        pronunciation: 0,
+        fluency: 0,
+        grammar: 0,
+        feedback: "Aku belum menangkap suaramu. Pastikan mikrofon aktif lalu coba lagi.",
+        betterAnswer: target,
+        transcript: "",
+        matchedWords: 0,
+        totalWords: target.split(/\s+/).filter(Boolean).length,
+        noSpeech: true,
+      };
+    }
+
+    const score = scoreSpeech(said, target);
     return {
-      pronunciation: 74,
-      fluency: 61,
-      grammar: 80,
-      feedback: hasIch
-        ? "Pengucapan 'ich' kamu masih terdengar seperti 'ik'. Coba suara 'ch' lebih lembut, seperti hembusan kecil dari mulut depan."
-        : "Bagus, kalimatmu jelas. Coba bicara sedikit lebih lambat agar setiap kata terdengar penuh.",
-      betterAnswer: transcript || "Ich komme aus Indonesien und wohne in Jakarta.",
+      pronunciation: score.pronunciation,
+      fluency: score.fluency,
+      grammar: score.grammar,
+      feedback: score.feedback,
+      betterAnswer: target,
+      transcript: said,
+      matchedWords: score.matchedWords,
+      totalWords: score.totalWords,
     };
   },
 };

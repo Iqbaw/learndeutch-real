@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { CTAButton } from "@/components/ui/cta-button";
 import { ExerciseCard } from "./exercise-card";
 import { TokenSentence } from "./token-sentence";
+import { SpeechPractice } from "./speech-practice";
 
 const stepIcon: Record<LessonStepType, typeof BookOpen> = {
   story: BookOpen,
@@ -194,19 +195,10 @@ function InputStep({ step }: { step: LessonStep }) {
       {step.body && <p className="mt-2 text-sm text-muted">{step.body}</p>}
 
       {speaking ? (
-        <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-6">
-          <button
-            type="button"
-            onClick={() => setSubmitted(true)}
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-glow transition-transform hover:scale-105 dark:text-bg focusable"
-            aria-label="Mulai rekam suara"
-          >
-            <Mic className="h-7 w-7" />
-          </button>
-          <p className="text-sm text-muted">
-            {submitted ? "Bagus! Pengucapanmu terekam." : "Ketuk untuk merekam (mock)"}
-          </p>
-        </div>
+        <SpeechPractice
+          expected={step.expected ?? step.prompt ?? ""}
+          className="mt-4"
+        />
       ) : (
         <div className="mt-4">
           <textarea
@@ -222,7 +214,7 @@ function InputStep({ step }: { step: LessonStep }) {
         </div>
       )}
 
-      {submitted && step.expected && (
+      {!speaking && submitted && step.expected && (
         <div className="mt-3 flex items-start gap-2 rounded-2xl border border-success/30 bg-success/10 p-4 text-sm text-success animate-fade-up">
           <Check className="mt-0.5 h-4 w-4 shrink-0" />
           <p>

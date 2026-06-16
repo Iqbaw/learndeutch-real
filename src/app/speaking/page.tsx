@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Mic, Volume2, Sparkles, NotebookPen, ArrowLeft, Bot, User } from "lucide-react";
+import { Volume2, ArrowLeft, Bot, User, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { RoleplayCard } from "@/components/cards/roleplay-card";
 import { CTAButton } from "@/components/ui/cta-button";
-import { ProgressRing } from "@/components/ui/progress-ring";
 import { AIInsightCard } from "@/components/cards/ai-insight-card";
+import { SpeechPractice } from "@/components/learning/speech-practice";
 import { roleplays } from "@/data/roleplays";
-import { speakingFeedbackService, type SpeakingFeedback } from "@/services/ai";
+import { speak, isSpeechSynthesisSupported } from "@/lib/speech";
 import type { Roleplay } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -16,12 +16,13 @@ export default function SpeakingPage() {
   const [active, setActive] = useState<Roleplay | null>(null);
 
   return (
-    <AppShell title="Speaking Lab" subtitle="Latihan bicara tanpa takut. Feedback ramah dan spesifik.">
+    <AppShell title="Speaking Lab" subtitle="Latihan bicara pakai mikrofon asli. Feedback ramah dan spesifik.">
       {!active ? (
         <>
           <AIInsightCard className="mb-5">
-            Speaking kamu masih pasif. Mode privat, feedback lembut, latihan pendek — pilih satu
-            roleplay dan mulai bicara. Tidak ada yang menilai kecuali untuk membantumu.
+            Speaking kamu masih pasif. Ketuk mikrofon dan ucapkan kalimatnya — pengenalan suara
+            akan mendengar bahasa Jermanmu dan memberi skor pengucapan. Pilih satu roleplay untuk
+            mulai bicara.
           </AIInsightCard>
           <h2 className="mb-3 font-heading text-lg font-extrabold text-ink">Pilih Roleplay</h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -38,18 +39,8 @@ export default function SpeakingPage() {
 }
 
 function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () => void }) {
-  const [recordingTurn, setRecordingTurn] = useState<number | null>(null);
-  const [feedback, setFeedback] = useState<Record<number, SpeakingFeedback>>({});
-  const [loading, setLoading] = useState<number | null>(null);
-
-  async function record(turnIndex: number, text: string) {
-    setRecordingTurn(turnIndex);
-    setLoading(turnIndex);
-    const result = await speakingFeedbackService.evaluate(text);
-    setFeedback((f) => ({ ...f, [turnIndex]: result }));
-    setLoading(null);
-    setRecordingTurn(null);
-  }
+  const [openTurn, setOpenTurn] = useState<number | null>(null);
+  const synthOk = isSpeechSynthesisSupported();
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -71,7 +62,7 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
       <div className="space-y-3">
         {roleplay.turns.map((turn, i) => {
           const isAI = turn.speaker === "ai";
-          const fb = feedback[i];
+          const isOpen = openTurn === i;
           return (
             <div key={i} className={cn("flex gap-2", isAI ? "justify-start" : "justify-end")}>
               {isAI && (
@@ -79,7 +70,7 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
                   <Bot className="h-4 w-4" />
                 </span>
               )}
-              <div className={cn("max-w-[80%]", !isAI && "text-right")}>
+              <div className={cn("max-w-[85%]", !isAI && "text-right")}>
                 <div
                   className={cn(
                     "rounded-2xl px-4 py-3",
@@ -96,42 +87,27 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
 
                 {isAI ? (
                   <button
-                    className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline focusable rounded"
-                    aria-label="Dengarkan ucapan"
+                    onClick={() => synthOk && speak(turn.text, "de-DE", 0.95)}
+                    disabled={!synthOk}
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline focusable rounded disabled:opacity-40 disabled:no-underline"
+                    aria-label="Dengarkan ucapan AI"
                   >
                     <Volume2 className="h-3.5 w-3.5" /> Dengarkan
                   </button>
                 ) : (
-                  <div className="mt-1 flex items-center justify-end gap-2">
+                  <div className="mt-1 flex items-center justify-end">
                     <button
-                      onClick={() => record(i, turn.text)}
-                      disabled={loading === i}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold transition-colors focusable",
-                        recordingTurn === i ? "bg-danger text-white" : "bg-secondary-soft text-secondary"
-                      )}
+                      onClick={() => setOpenTurn(isOpen ? null : i)}
+                      className="inline-flex items-center gap-1 rounded-lg bg-secondary-soft px-2.5 py-1.5 text-xs font-bold text-secondary focusable"
                     >
-                      <Mic className="h-3.5 w-3.5" />
-                      {loading === i ? "Menilai..." : fb ? "Rekam ulang" : "Ucapkan"}
+                      {isOpen ? "Tutup" : "Ucapkan giliranmu"}
                     </button>
                   </div>
                 )}
 
-                {fb && (
-                  <div className="mt-2 rounded-2xl border border-border bg-card p-3 text-left animate-fade-up">
-                    <div className="flex items-center gap-4">
-                      <ProgressRing value={fb.pronunciation} size={56} stroke={6} sublabel="ucap" />
-                      <div className="flex-1 space-y-1.5">
-                        <ScoreBar label="Kelancaran" value={fb.fluency} />
-                        <ScoreBar label="Grammar" value={fb.grammar} />
-                      </div>
-                    </div>
-                    <p className="mt-3 flex items-start gap-1.5 text-sm text-ink">
-                      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> {fb.feedback}
-                    </p>
-                    <button className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline focusable rounded">
-                      <NotebookPen className="h-3.5 w-3.5" /> Simpan ke Error Notebook
-                    </button>
+                {!isAI && isOpen && (
+                  <div className="mt-2 text-left">
+                    <SpeechPractice expected={turn.text} allowSave showListen />
                   </div>
                 )}
               </div>
@@ -145,24 +121,17 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
         })}
       </div>
 
+      {!synthOk && (
+        <p className="mt-4 flex items-center gap-2 rounded-xl bg-warning/10 p-3 text-xs text-warning">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          Pemutar suara contoh tidak tersedia di browser ini, tapi mikrofon tetap bisa dipakai.
+        </p>
+      )}
+
       <div className="mt-6">
         <CTAButton onClick={onBack} variant="outline" className="w-full">
           Selesai latihan
         </CTAButton>
-      </div>
-    </div>
-  );
-}
-
-function ScoreBar({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between text-[0.65rem] font-bold text-muted">
-        <span>{label}</span>
-        <span>{value}%</span>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-elevated">
-        <div className="h-full rounded-full bg-primary" style={{ width: `${value}%` }} />
       </div>
     </div>
   );
