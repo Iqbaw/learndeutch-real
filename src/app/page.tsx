@@ -20,6 +20,7 @@ import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { HeroMockup } from "@/components/marketing/hero-mockup";
 import { FAQ } from "@/components/marketing/faq";
+import { MobileLanding } from "@/components/marketing/mobile-landing";
 import { SectionHeader } from "@/components/ui/section-header";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
@@ -47,8 +48,15 @@ const dailyFlow = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-bg">
-      <MarketingNav />
+    <>
+      {/* Mobile: swipeable slide deck (no vertical scroll) */}
+      <div className="md:hidden">
+        <MobileLanding />
+      </div>
+
+      {/* Desktop / tablet: full vertical marketing page */}
+      <div className="hidden min-h-screen bg-bg md:block">
+        <MarketingNav />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
@@ -386,6 +394,7 @@ export default function LandingPage() {
       </section>
 
       <MarketingFooter />
-    </div>
+      </div>
+    </>
   );
 }

@@ -95,6 +95,9 @@ export interface LessonStep {
   // speaking/writing prompt
   prompt?: string;
   expected?: string;
+  // for writing: if set, answer is correct when it contains ALL these
+  // words (lets names/free parts vary, e.g. "Mein Vater heißt <nama>")
+  keywords?: string[];
   // mistake explanation
   wrong?: string;
   correct?: string;

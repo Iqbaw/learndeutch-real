@@ -53,7 +53,8 @@ export default function DashboardPage() {
 
   // weakness box from real error categories
   const weakness = topErrorCategories(errors);
-  const dayProgress = completedDays.includes(currentDay) ? 100 : 0;
+  // overall A1 progress (days completed out of 30) — never stuck at 0 after a day
+  const dayProgress = Math.round((completedDays.length / 30) * 100);
 
   return (
     <AppShell title={`Hallo, ${name}! 👋`} subtitle="Ini kondisi belajarmu hari ini. Ayo lanjutkan.">

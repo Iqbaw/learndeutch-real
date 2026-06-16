@@ -58,7 +58,7 @@ interface AppState {
   onboarding: OnboardingAnswers;
   profile: Profile | null;
   setOnboardingAnswer: (key: keyof OnboardingAnswers, value: string) => void;
-  completeOnboarding: (profile: Profile) => void;
+  completeOnboarding: (profile: Profile, startDay?: number) => void;
 
   // --- progress ---
   currentDay: number;
@@ -151,7 +151,8 @@ export const useAppStore = create<AppState>()(
       profile: null,
       setOnboardingAnswer: (key, value) =>
         set((s) => ({ onboarding: { ...s.onboarding, [key]: value } })),
-      completeOnboarding: (profile) => set({ profile }),
+      completeOnboarding: (profile, startDay = 1) =>
+        set({ profile, currentDay: Math.max(1, startDay) }),
 
       ...initialProgress,
 

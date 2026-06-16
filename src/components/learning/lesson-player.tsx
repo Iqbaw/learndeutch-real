@@ -273,16 +273,23 @@ function InputStep({
     const expected = (step.expected ?? "").trim();
     const userAnswer = value.trim();
 
-    // Fuzzy comparison: normalize case, punctuation, extra spaces
     const normalize = (s: string) =>
       s.toLowerCase().replace(/[.,!?;:'"„""]/g, "").replace(/\s+/g, " ").trim();
 
     const norm = normalize(userAnswer);
-    const target = normalize(expected);
+    let correct: boolean;
 
-    // Check exact, or close-enough (allow 1-2 char diff for small words)
-    const maxDist = target.length <= 10 ? 1 : 2;
-    const correct = norm === target || levenshteinDist(norm, target) <= maxDist;
+    if (step.keywords && step.keywords.length > 0) {
+      // Flexible mode: answer is correct if it contains all required words.
+      // This lets names / free parts vary (e.g. "Mein Vater heißt <nama bebas>").
+      correct = step.keywords.every((kw) => norm.includes(normalize(kw)));
+    } else {
+      // Exact-ish mode with small typo tolerance.
+      const target = normalize(expected);
+      const maxDist = target.length <= 10 ? 1 : 2;
+      correct = norm === target || levenshteinDist(norm, target) <= maxDist;
+    }
+
     setIsCorrect(correct);
     playSound(correct ? "correct" : "wrong");
     onWriteResult?.(correct, {
@@ -344,7 +351,7 @@ function InputStep({
             </p>
             {!isCorrect && (
               <p className="mt-1">
-                Jawaban yang tepat: <span className="font-bold text-ink">{step.expected}</span>
+                Contoh jawaban yang benar: <span className="font-bold text-ink">{step.expected}</span>
               </p>
             )}
           </div>
@@ -438,8 +445,8 @@ function VictoryView({ lesson }: { lesson: Lesson }) {
         <CTAButton href="/dashboard" size="lg" className="flex-1">
           Kembali ke Dashboard
         </CTAButton>
-        <CTAButton href="/review" variant="outline" size="lg" className="flex-1">
-          Lanjut Review
+        <CTAButton href="/roadmap" variant="outline" size="lg" className="flex-1">
+          Lihat Roadmap
         </CTAButton>
       </div>
     </motion.div>

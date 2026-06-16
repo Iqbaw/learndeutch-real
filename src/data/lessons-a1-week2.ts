@@ -14,7 +14,7 @@ export const lessonsWeek2: Lesson[] = [
       { type: "example", title: "Contoh keluarga", tokens: [{ text: "Meine", role: "subject" }, { text: "Mutter", role: "object" }, { text: "heißt", role: "verb" }, { text: "Sari", role: "info" }], german: "Meine Mutter heißt Sari.", indonesian: "Ibu saya bernama Sari." },
       { type: "drill", title: "Pilih possessive", exercise: { prompt: "'Ayah saya bekerja.' — Mein ___ arbeitet.", options: ["Mutter", "Vater", "Schwester"], correctIndex: 1, explanation: "Vater (ayah) maskulin → mein Vater." } },
       { type: "drill", title: "Mein atau meine?", exercise: { prompt: "___ Schwester ist nett.", options: ["Mein", "Meine", "Meinen"], correctIndex: 1, explanation: "Schwester feminin → meine Schwester." } },
-      { type: "writing", title: "Ceritakan keluargamu", prompt: "Tulis: 'Ayah saya bernama ...' dalam bahasa Jerman.", expected: "Mein Vater heißt Ahmad." },
+      { type: "writing", title: "Ceritakan keluargamu", prompt: "Tulis: 'Ayah saya bernama ...' (pakai nama ayahmu sendiri) dalam bahasa Jerman.", expected: "Mein Vater heißt Ahmad.", keywords: ["mein", "vater", "heißt"] },
       { type: "speaking", title: "Perkenalkan keluargamu", prompt: "Ucapkan: 'Meine Familie ist groß.'", expected: "Meine Familie ist groß." },
       { type: "mistake", title: "Kesalahan umum", wrong: "Mein Mutter heißt Sari.", correct: "Meine Mutter heißt Sari.", body: "Mutter feminin, jadi pakai 'meine', bukan 'mein'." },
       { type: "victory", title: "Mini Victory!", achievements: ["Bisa menyebut anggota keluarga.", "Paham mein vs meine.", "Bisa bercerita keluarga singkat."], body: "Sekarang kamu bisa cerita tentang keluargamu dalam bahasa Jerman!" },
