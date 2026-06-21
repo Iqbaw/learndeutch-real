@@ -36,6 +36,16 @@ export interface Profile {
   createdAt: string;
 }
 
+/** Snapshot of the adaptive placement test result, used to personalize lessons. */
+export interface PlacementSnapshot {
+  estimatedLevel: CEFRLevel;
+  confidence: number;
+  scorePct: number;
+  perSkill: { skill: string; label: string; accuracy: number; total: number }[];
+  focusAreas: string[];
+  takenAt: string;
+}
+
 export interface SkillStat {
   correct: number;
   total: number;
@@ -57,7 +67,9 @@ interface AppState {
   // --- onboarding & profile ---
   onboarding: OnboardingAnswers;
   profile: Profile | null;
+  placement: PlacementSnapshot | null;
   setOnboardingAnswer: (key: keyof OnboardingAnswers, value: string) => void;
+  setPlacement: (snapshot: PlacementSnapshot) => void;
   completeOnboarding: (profile: Profile, startDay?: number) => void;
 
   // --- progress ---
@@ -149,8 +161,10 @@ export const useAppStore = create<AppState>()(
 
       onboarding: {},
       profile: null,
+      placement: null,
       setOnboardingAnswer: (key, value) =>
         set((s) => ({ onboarding: { ...s.onboarding, [key]: value } })),
+      setPlacement: (snapshot) => set({ placement: snapshot }),
       completeOnboarding: (profile, startDay = 1) =>
         set({ profile, currentDay: Math.max(1, startDay) }),
 
@@ -282,6 +296,7 @@ export const useAppStore = create<AppState>()(
         set({
           ...initialProgress,
           profile: null,
+          placement: null,
           onboarding: {},
           dailyTargetMinutes: 30,
           audioSpeed: 1,
@@ -298,6 +313,7 @@ export const useAppStore = create<AppState>()(
       partialize: (s) => ({
         onboarding: s.onboarding,
         profile: s.profile,
+        placement: s.placement,
         currentDay: s.currentDay,
         completedDays: s.completedDays,
         streak: s.streak,

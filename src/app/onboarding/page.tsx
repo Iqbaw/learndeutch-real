@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,12 +19,37 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Gauge,
+  Loader2,
+  BrainCircuit,
 } from "lucide-react";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
-import { useAppStore, type OnboardingAnswers, type Profile } from "@/lib/store";
+import {
+  useAppStore,
+  type OnboardingAnswers,
+  type Profile,
+  type PlacementSnapshot,
+} from "@/lib/store";
 import { playSound } from "@/lib/sound";
-import { placementQuestions, evaluatePlacement, type PlacementOutcome } from "@/data/placement";
+import {
+  initialState,
+  applyAnswer,
+  nextBand,
+  nextSkill,
+  shouldStop,
+  finalizeResult,
+  PLACEMENT_BANDS,
+  SKILL_LABEL,
+  MAX_QUESTIONS,
+  type PlacementState,
+  type AnswerRecord,
+  type PlacementResult,
+} from "@/lib/placement-engine";
+import {
+  fetchPlacementQuestion,
+  fetchPlacementSummary,
+  type PlacementQuestion,
+} from "@/services/placement-client";
 import { cn } from "@/lib/utils";
 
 interface Option {
@@ -57,7 +82,7 @@ const questions: Question[] = [
   {
     key: "level",
     title: "Level kamu saat ini?",
-    subtitle: "Jujur saja, ini membantu kami menempatkanmu dengan tepat.",
+    subtitle: "Jujur saja, ini membantu kami memulai tes di tingkat yang pas.",
     options: [
       { value: "Nol total", label: "Nol total" },
       { value: "Sedikit", label: "Pernah belajar sedikit" },
@@ -107,24 +132,31 @@ const questions: Question[] = [
 
 type Phase = "profile" | "placementIntro" | "placement" | "result";
 
+type Outcome = PlacementResult & { focusAreas: string[] };
+
 export default function OnboardingPage() {
-  const { onboarding, setOnboardingAnswer, completeOnboarding, setDailyTarget } = useAppStore();
+  const { onboarding, setOnboardingAnswer, setPlacement, completeOnboarding, setDailyTarget } =
+    useAppStore();
   const [phase, setPhase] = useState<Phase>("profile");
   const [step, setStep] = useState(0); // 0 = name, 1..5 = questions
   const [name, setName] = useState(onboarding.name ?? "");
-  const [pIndex, setPIndex] = useState(0);
-  const [pCorrect, setPCorrect] = useState<boolean[]>([]);
-  const [outcome, setOutcome] = useState<PlacementOutcome | null>(null);
+
+  // --- adaptive placement state ---
+  const [pState, setPState] = useState<PlacementState | null>(null);
+  const [currentQ, setCurrentQ] = useState<PlacementQuestion | null>(null);
+  const [loadingQ, setLoadingQ] = useState(false);
+  const [askedCount, setAskedCount] = useState(0);
+  const recentPromptsRef = useRef<string[]>([]);
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
 
   const totalProfileSteps = questions.length + 1;
   const currentQuestion = step >= 1 ? questions[step - 1] : null;
 
-  // overall progress across the whole onboarding
   const progress =
     phase === "result"
       ? 100
       : phase === "placement"
-      ? 60 + Math.round((pIndex / placementQuestions.length) * 35)
+      ? 62 + Math.round((Math.min(askedCount, MAX_QUESTIONS) / MAX_QUESTIONS) * 33)
       : phase === "placementIntro"
       ? 58
       : Math.round((step / totalProfileSteps) * 55);
@@ -148,31 +180,96 @@ export default function OnboardingPage() {
     }, 180);
   }
 
-  function answerPlacement(correct: boolean) {
-    const next = [...pCorrect, correct];
-    setPCorrect(next);
-    setTimeout(() => {
-      if (pIndex < placementQuestions.length - 1) {
-        setPIndex((i) => i + 1);
-      } else {
-        finishPlacement(next);
-      }
-    }, 220);
+  async function loadNextQuestion(state: PlacementState) {
+    setLoadingQ(true);
+    setCurrentQ(null);
+    const band = nextBand(state);
+    const skill = nextSkill(state, onboarding.weakSkill);
+    const q = await fetchPlacementQuestion(band, skill, recentPromptsRef.current);
+    recentPromptsRef.current = [...recentPromptsRef.current, q.prompt].slice(-8);
+    setCurrentQ(q);
+    setLoadingQ(false);
   }
 
-  function finishPlacement(correctFlags: boolean[]) {
-    const result = evaluatePlacement(correctFlags, onboarding.level);
-    setOutcome(result);
+  async function startPlacement() {
+    const init = initialState(onboarding.level);
+    setPState(init);
+    setAskedCount(0);
+    setOutcome(null);
+    recentPromptsRef.current = [];
+    setPhase("placement");
+    await loadNextQuestion(init);
+  }
+
+  async function answerPlacement(correct: boolean) {
+    if (!pState || !currentQ) return;
+    const record: AnswerRecord = {
+      band: currentQ.band,
+      bandIndex: PLACEMENT_BANDS.indexOf(currentQ.band),
+      skill: currentQ.skill,
+      correct,
+    };
+    const nextState = applyAnswer(pState, record);
+    setPState(nextState);
+    setAskedCount((c) => c + 1);
+    if (shouldStop(nextState)) {
+      await finishPlacement(nextState);
+    } else {
+      await loadNextQuestion(nextState);
+    }
+  }
+
+  async function finishPlacement(state: PlacementState) {
     setPhase("result");
+    setOutcome(null);
+    const result = finalizeResult(state, onboarding.level);
+
+    const { summary, focusAreas } = await fetchPlacementSummary({
+      estimatedLevel: result.estimatedLevel,
+      startLevel: result.startLevel,
+      scorePct: result.scorePct,
+      confidence: result.confidence,
+      perSkill: result.perSkill.map((s) => ({
+        label: s.label,
+        accuracy: s.accuracy,
+        total: s.total,
+      })),
+      profile: {
+        name: onboarding.name,
+        goal: onboarding.goal,
+        weakSkill: onboarding.weakSkill,
+        dailyTime: onboarding.dailyTime,
+      },
+    });
+
+    const finalOutcome: Outcome = {
+      ...result,
+      summary: summary ?? result.summary,
+      focusAreas,
+    };
+    setOutcome(finalOutcome);
+
+    const snapshot: PlacementSnapshot = {
+      estimatedLevel: result.estimatedLevel,
+      confidence: result.confidence,
+      scorePct: result.scorePct,
+      perSkill: result.perSkill.map((s) => ({
+        skill: s.skill,
+        label: s.label,
+        accuracy: s.accuracy,
+        total: s.total,
+      })),
+      focusAreas,
+      takenAt: new Date().toISOString(),
+    };
+    setPlacement(snapshot);
     playSound("levelup");
   }
 
   function skipPlacement() {
-    // No quiz — estimate purely from self-reported level
-    const result = evaluatePlacement([], onboarding.level);
-    setOutcome(result);
-    setPhase("result");
-    playSound("levelup");
+    // Estimate purely from the self-reported level (no questions answered).
+    const init = initialState(onboarding.level);
+    finishPlacement(init);
   }
 
   function finishOnboarding(startDay: number, startLevel: Profile["startLevel"]) {
@@ -204,7 +301,7 @@ export default function OnboardingPage() {
             {phase === "result"
               ? "Selesai"
               : phase === "placement"
-              ? `Tes ${pIndex + 1}/${placementQuestions.length}`
+              ? `Soal ${Math.min(askedCount + 1, MAX_QUESTIONS)}`
               : phase === "placementIntro"
               ? "Tes penempatan"
               : `Langkah ${step + 1}/${totalProfileSteps}`}
@@ -221,20 +318,25 @@ export default function OnboardingPage() {
 
         <div className="flex flex-1 flex-col justify-center py-8">
           <AnimatePresence mode="wait">
-            {phase === "result" && outcome ? (
-              <ResultCard
-                key="result"
-                outcome={outcome}
-                answers={onboarding}
-                fallbackName={name}
-                onStart={finishOnboarding}
-              />
+            {phase === "result" ? (
+              outcome ? (
+                <ResultCard
+                  key="result"
+                  outcome={outcome}
+                  answers={onboarding}
+                  fallbackName={name}
+                  onStart={finishOnboarding}
+                />
+              ) : (
+                <FinalizingView key="finalizing" />
+              )
             ) : phase === "placementIntro" ? (
-              <PlacementIntro key="pintro" onStart={() => setPhase("placement")} onSkip={skipPlacement} />
+              <PlacementIntro key="pintro" onStart={startPlacement} onSkip={skipPlacement} />
             ) : phase === "placement" ? (
               <PlacementQuiz
-                key={`pq-${pIndex}`}
-                index={pIndex}
+                key={`pq-${askedCount}`}
+                question={currentQ}
+                loading={loadingQ}
                 onAnswer={answerPlacement}
               />
             ) : step === 0 ? (
@@ -357,33 +459,67 @@ function PlacementIntro({ onStart, onSkip }: { onStart: () => void; onSkip: () =
         <ClipboardCheck className="h-7 w-7" />
       </div>
       <h1 className="mt-4 font-heading text-2xl font-extrabold tracking-tight text-ink">
-        Tes Penempatan Singkat
+        Tes Penempatan Adaptif
       </h1>
       <p className="mt-2 text-muted">
-        8 pertanyaan singkat (sekitar 2 menit) untuk menentukan level awalmu dengan akurat.
-        Tidak apa-apa kalau belum tahu jawabannya — pilih saja yang menurutmu paling tepat.
+        Tes ini menyesuaikan tingkat kesulitan setiap soal dengan jawabanmu — makin tepat
+        kamu menjawab, makin menantang soalnya. Hanya sekitar 7–12 soal (±3 menit) untuk
+        mengukur levelmu di berbagai keterampilan secara akurat.
       </p>
+      <ul className="mt-4 space-y-2 text-sm text-ink/90">
+        {[
+          "Kesulitan soal beradaptasi otomatis dengan kemampuanmu.",
+          "Mencakup tata bahasa, kosakata, membaca, dan komunikasi.",
+          "Hasil dilengkapi estimasi level + tingkat keyakinan.",
+        ].map((t) => (
+          <li key={t} className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+            {t}
+          </li>
+        ))}
+      </ul>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <CTAButton onClick={onStart} size="lg" className="flex-1">
           Mulai Tes <ArrowRight className="h-5 w-5" />
         </CTAButton>
         <CTAButton onClick={onSkip} variant="outline" size="lg" className="flex-1">
-          Lewati (mulai dari awal)
+          Lewati (estimasi dari level)
         </CTAButton>
       </div>
     </motion.div>
   );
 }
 
-function PlacementQuiz({ index, onAnswer }: { index: number; onAnswer: (correct: boolean) => void }) {
+function PlacementQuiz({
+  question,
+  loading,
+  onAnswer,
+}: {
+  question: PlacementQuestion | null;
+  loading: boolean;
+  onAnswer: (correct: boolean) => void;
+}) {
   const [picked, setPicked] = useState<number | null>(null);
-  const q = placementQuestions[index];
 
   function choose(i: number) {
-    if (picked !== null) return;
+    if (picked !== null || !question) return;
     setPicked(i);
     playSound("tap");
-    onAnswer(i === q.correctIndex);
+    onAnswer(i === question.correctIndex);
+  }
+
+  if (loading || !question) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="flex flex-col items-center justify-center gap-3 py-16 text-center"
+      >
+        <Loader2 className="h-7 w-7 animate-spin text-primary" />
+        <p className="text-sm font-medium text-muted">Menyiapkan soal yang pas untukmu...</p>
+      </motion.div>
+    );
   }
 
   return (
@@ -393,14 +529,24 @@ function PlacementQuiz({ index, onAnswer }: { index: number; onAnswer: (correct:
       exit={{ opacity: 0, x: -24 }}
       transition={{ duration: 0.22 }}
     >
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary-soft px-3 py-1 text-xs font-bold text-secondary">
-        <Gauge className="h-3.5 w-3.5" /> Tes Penempatan
-      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary-soft px-3 py-1 text-xs font-bold text-secondary">
+          <Gauge className="h-3.5 w-3.5" /> {SKILL_LABEL[question.skill]}
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-elevated px-3 py-1 text-xs font-bold text-muted">
+          Tingkat {question.band}
+        </span>
+        {question.source === "ai" && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary">
+            <BrainCircuit className="h-3.5 w-3.5" /> AI
+          </span>
+        )}
+      </div>
       <h1 className="mt-3 font-heading text-xl font-extrabold tracking-tight text-ink sm:text-2xl">
-        {q.prompt}
+        {question.prompt}
       </h1>
       <div className="mt-6 grid gap-3">
-        {q.options.map((opt, i) => (
+        {question.options.map((opt, i) => (
           <button
             key={i}
             type="button"
@@ -427,29 +573,50 @@ function PlacementQuiz({ index, onAnswer }: { index: number; onAnswer: (correct:
   );
 }
 
+function FinalizingView() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="flex flex-col items-center justify-center gap-3 py-16 text-center"
+    >
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="font-heading font-bold text-ink">Menganalisis jawabanmu...</p>
+      <p className="max-w-xs text-sm text-muted">
+        Kami menghitung estimasi level dan menyiapkan jalur belajar yang dipersonalisasi.
+      </p>
+    </motion.div>
+  );
+}
+
 function ResultCard({
   outcome,
   answers,
   fallbackName,
   onStart,
 }: {
-  outcome: PlacementOutcome;
+  outcome: Outcome;
   answers: OnboardingAnswers;
   fallbackName: string;
   onStart: (startDay: number, startLevel: Profile["startLevel"]) => void;
 }) {
   const router = useRouter();
   const time = answers.dailyTime ?? "30";
-  const weak =
-    answers.weakSkill && answers.weakSkill !== "Belum tahu"
-      ? answers.weakSkill.toLowerCase()
-      : "speaking";
   const name = answers.name ?? fallbackName ?? "Pelajar";
+  const focus =
+    outcome.focusAreas.length > 0
+      ? outcome.focusAreas[0]
+      : answers.weakSkill && answers.weakSkill !== "Belum tahu"
+      ? answers.weakSkill
+      : "Speaking";
 
   function go(startDay: number, startLevel: Profile["startLevel"]) {
     onStart(startDay, startLevel);
     router.push("/dashboard");
   }
+
+  const testedSkills = outcome.perSkill.filter((s) => s.total > 0);
 
   return (
     <motion.div
@@ -471,11 +638,52 @@ function ResultCard({
         </div>
         <div className="flex-1">
           <p className="font-heading font-bold text-ink">Estimasi level: {outcome.estimatedLevel}</p>
-          <p className="text-sm text-muted">Skor tes penempatan: {outcome.scorePct}%</p>
+          <p className="text-sm text-muted">
+            {outcome.totalQuestions > 0
+              ? `Skor ${outcome.scorePct}% · keyakinan ${outcome.confidence}%`
+              : `Estimasi dari level yang kamu pilih · keyakinan ${outcome.confidence}%`}
+          </p>
         </div>
       </div>
 
+      {/* confidence meter */}
+      <div className="mt-3">
+        <div className="h-2 overflow-hidden rounded-full bg-elevated">
+          <motion.div
+            className="h-full rounded-full bg-success"
+            initial={{ width: 0 }}
+            animate={{ width: `${outcome.confidence}%` }}
+            transition={{ duration: 0.6 }}
+          />
+        </div>
+        <p className="mt-1 text-xs text-muted">Tingkat keyakinan estimasi level</p>
+      </div>
+
       <p className="mt-4 text-muted">{outcome.summary}</p>
+
+      {/* per-skill breakdown */}
+      {testedSkills.length > 0 && (
+        <div className="mt-5 space-y-2.5">
+          <p className="font-heading text-sm font-bold text-ink">Rincian per keterampilan</p>
+          {testedSkills.map((s) => (
+            <div key={s.skill}>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-ink/90">{s.label}</span>
+                <span className="text-muted">{s.accuracy}%</span>
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-elevated">
+                <div
+                  className={cn(
+                    "h-full rounded-full",
+                    s.accuracy >= 70 ? "bg-success" : s.accuracy >= 40 ? "bg-primary" : "bg-secondary"
+                  )}
+                  style={{ width: `${s.accuracy}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl bg-elevated p-4">
@@ -490,7 +698,7 @@ function ResultCard({
         </div>
         <div className="rounded-2xl bg-elevated p-4">
           <Sparkles className="h-5 w-5 text-success" />
-          <p className="mt-2 font-heading text-lg font-extrabold capitalize text-ink">{weak}</p>
+          <p className="mt-2 font-heading text-lg font-extrabold capitalize text-ink">{focus}</p>
           <p className="text-xs text-muted">Fokus tambahan</p>
         </div>
       </div>

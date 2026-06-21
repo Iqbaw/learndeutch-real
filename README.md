@@ -80,9 +80,46 @@ npm run lint
 npm run typecheck
 ```
 
-## 🔌 Integrasi AI (siap dikembangkan)
+## 🔌 Integrasi AI dengan DeepSeek (V4)
 
-Service di `src/services/ai.ts` saat ini mengembalikan data dummy terverifikasi, tetapi sudah berbentuk abstraksi (`aiTutorService`, `writingCorrectionService`, `speakingFeedbackService`, `placementTestService`) sehingga mudah diganti dengan backend LLM / speech yang sesungguhnya.
+Aplikasi ini mendukung **AI nyata** lewat DeepSeek untuk dua fitur utama:
+
+- **Tes penempatan adaptif** (`/onboarding`) — soal dibuat dinamis oleh AI pada tingkat
+  kesulitan yang menyesuaikan jawabanmu (Computerized Adaptive Testing), mencakup tata
+  bahasa, kosakata, membaca, dan komunikasi, lalu menghasilkan estimasi level + tingkat
+  keyakinan + rincian per keterampilan.
+- **Pelajaran dipersonalisasi** (`/lesson`) — materi harian disusun khusus berdasarkan
+  level, tujuan, gaya belajar, kelemahan, dan kesalahan terakhir pelajar.
+
+### Cara mengaktifkan
+
+```bash
+# Salin contoh env lalu isi API key DeepSeek-mu
+cp .env.example .env.local
+```
+
+Isi `.env.local`:
+
+```
+DEEPSEEK_API_KEY=sk-...              # wajib untuk mengaktifkan fitur AI
+DEEPSEEK_MODEL=deepseek-v4-flash     # atau deepseek-v4-pro untuk kualitas tertinggi
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+```
+
+Dapatkan API key di [platform.deepseek.com](https://platform.deepseek.com/).
+
+### Arsitektur & keamanan
+
+- API key **hanya** dibaca di server (route `src/app/api/placement` dan `src/app/api/lesson`)
+  melalui `src/lib/deepseek.ts`, sehingga tidak pernah terekspos ke browser.
+- Mesin adaptif (`src/lib/placement-engine.ts`) bersifat deterministik dan berjalan di
+  klien; DeepSeek hanya membuat *isi* soal pada tingkat yang diminta mesin.
+- **Fallback otomatis**: tanpa `DEEPSEEK_API_KEY` (atau saat permintaan gagal), tes
+  penempatan memakai bank soal statis (`src/data/placement-bank.ts`) dan pelajaran memakai
+  materi bawaan, sehingga aplikasi selalu berjalan.
+
+> Catatan model: nama `deepseek-chat` / `deepseek-reasoner` masih bisa dipakai untuk
+> kompatibilitas, tetapi nama resmi V4 adalah `deepseek-v4-flash` dan `deepseek-v4-pro`.
 
 ## ⚠️ Catatan Sertifikat
 
