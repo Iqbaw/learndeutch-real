@@ -59,6 +59,18 @@ export const SKILL_LABEL: Record<PlacementSkill, string> = {
 export const MIN_QUESTIONS = 7;
 export const MAX_QUESTIONS = 12;
 
+/**
+ * The maximum percentage any learner statistic can ever show. A perfect 100%
+ * is reserved conceptually for a native German speaker — app learners cap at
+ * 98% so the metrics stay honest and there is always room to grow.
+ */
+export const MAX_STAT_PERCENT = 98;
+
+/** Round a 0–100 value and clamp it to the 0..MAX_STAT_PERCENT range. */
+export function capPercent(value: number): number {
+  return Math.max(0, Math.min(MAX_STAT_PERCENT, Math.round(value)));
+}
+
 const INITIAL_UNCERTAINTY = 2.0;
 const MIN_UNCERTAINTY = 0.45;
 const STOP_UNCERTAINTY = 0.7;
@@ -217,14 +229,14 @@ export function finalizeResult(state: PlacementState, selfLevel?: string): Place
 
   const correctCount = state.history.filter((r) => r.correct).length;
   const totalQuestions = state.history.length;
-  const scorePct = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+  const scorePct = totalQuestions > 0 ? capPercent((correctCount / totalQuestions) * 100) : 0;
 
   // Confidence: high when uncertainty is low and answers are internally consistent.
   const uncertaintyConf = 1 - (state.uncertainty - MIN_UNCERTAINTY) / (INITIAL_UNCERTAINTY - MIN_UNCERTAINTY);
   const consistency = answerConsistency(state);
   const confidence = totalQuestions === 0
     ? 35
-    : Math.round(clamp(45, 97, 55 + uncertaintyConf * 30 + consistency * 12));
+    : capPercent(clamp(45, 98, 55 + uncertaintyConf * 30 + consistency * 12));
 
   const perSkill = PLACEMENT_SKILLS.map<PerSkillResult>((skill) => {
     const items = state.history.filter((r) => r.skill === skill);
@@ -234,7 +246,7 @@ export function finalizeResult(state: PlacementState, selfLevel?: string): Place
       label: SKILL_LABEL[skill],
       correct: c,
       total: items.length,
-      accuracy: items.length > 0 ? Math.round((c / items.length) * 100) : 0,
+      accuracy: items.length > 0 ? capPercent((c / items.length) * 100) : 0,
     };
   });
 

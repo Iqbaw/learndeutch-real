@@ -15,6 +15,7 @@ import type {
 import { a1Days } from "@/data/levels";
 import { vocabulary } from "@/data/vocabulary";
 import { grammarTopics } from "@/data/grammar";
+import { capPercent } from "@/lib/placement-engine";
 import type { SkillStat } from "@/lib/store";
 
 export const SKILLS: Skill[] = [
@@ -66,7 +67,7 @@ export function buildRoadmap(currentDay: number, completedDays: number[]): Roadm
 
 function accuracy(stat?: SkillStat): number {
   if (!stat || stat.total === 0) return 0;
-  return Math.round((stat.correct / stat.total) * 100);
+  return capPercent((stat.correct / stat.total) * 100);
 }
 
 export function computeSkillScores(
@@ -135,6 +136,8 @@ export interface DeriveStatsInput {
   grammarStats: Record<string, SkillStat>;
   vocabStatus: Record<string, MemoryStatus>;
   speakingAttempts: number;
+  /** Optional adaptive-placement result; seeds the estimate before lessons accrue. */
+  placement?: { estimatedLevel: CEFRLevel; confidence: number } | null;
 }
 
 export interface DerivedStats {
@@ -174,14 +177,14 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
       sumTotal += stat.total;
     }
   }
-  const overallAccuracy = sumTotal > 0 ? Math.round((sumCorrect / sumTotal) * 100) : 0;
+  const overallAccuracy = sumTotal > 0 ? capPercent((sumCorrect / sumTotal) * 100) : 0;
 
   const get = (s: Skill) => accuracy(input.skillStats[s]);
   const activeRaw = avg([get("Speaking"), get("Writing")]);
   const passiveRaw = avg([get("Reading"), get("Listening"), get("Vocabulary")]);
 
   const hasData =
-    sumTotal > 0 || input.completedDays.length > 0 || vocab.started > 0;
+    sumTotal > 0 || input.completedDays.length > 0 || vocab.started > 0 || !!input.placement;
 
   // Accurate level estimation: weight all data sources
   // More attempts = higher confidence. Accuracy drives level progression.
@@ -199,7 +202,7 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
     (vocabFactor * 100) * 0.2 +
     (dayProgress * 100) * 0.2;
 
-  const estimatedLevel: CEFRLevel =
+  const computedLevel: CEFRLevel =
     input.completedDays.length === 0 && sumTotal === 0
       ? input.startLevel
       : composite >= 85
@@ -210,9 +213,20 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
       ? "A1.1"
       : input.startLevel;
 
+  // While lesson data is still sparse, trust the adaptive placement estimate;
+  // once the learner has done enough lessons, real performance takes over.
+  const lessonsDone = input.completedDays.length;
+  const estimatedLevel: CEFRLevel =
+    input.placement && lessonsDone < 5 ? input.placement.estimatedLevel : computedLevel;
+
   // confidence increases with more data points
   const dataDensity = Math.min(1, sumTotal / 80); // need ~80 answers for full confidence
-  const confidence = sumTotal === 0 ? 0 : Math.round(composite * dataDensity);
+  let confidence = sumTotal === 0 ? 0 : Math.round(composite * dataDensity);
+  // Placement gives an immediate, real confidence floor before lessons accrue.
+  if (input.placement && lessonsDone < 5) {
+    confidence = Math.max(confidence, input.placement.confidence);
+  }
+  confidence = capPercent(confidence);
 
   const activeLevel = activeRaw > 0 ? valueToLevel(activeRaw) : input.startLevel;
   const passiveLevel = passiveRaw > 0 ? valueToLevel(passiveRaw) : input.startLevel;
@@ -220,7 +234,7 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
   // retention: share of started words that reached almost/mastered
   const retention =
     vocab.started > 0
-      ? Math.round(((vocab.almost + vocab.mastered) / vocab.started) * 100)
+      ? capPercent(((vocab.almost + vocab.mastered) / vocab.started) * 100)
       : 0;
 
   const realUse = avg([get("Speaking"), get("Writing"), get("Pronunciation")]);
