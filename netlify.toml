@@ -1,0 +1,23 @@
+# ============================================================
+# Netlify configuration for the Next.js (App Router) app.
+#
+# This app uses server-side API routes (/api/placement, /api/lesson)
+# which require the Netlify Next.js Runtime — they are deployed as
+# serverless functions, NOT a static export. The plugin below makes
+# that explicit so server routes always work.
+#
+# Set DEEPSEEK_API_KEY (and optionally DEEPSEEK_MODEL /
+# DEEPSEEK_BASE_URL) in: Site settings -> Environment variables.
+# After adding/changing env vars, trigger a fresh deploy.
+# ============================================================
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Pin a modern Node version for the build (Next.js 14 needs Node 18.17+).
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
