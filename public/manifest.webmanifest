@@ -4,8 +4,8 @@
   "description": "Belajar bahasa Jerman 30 hari per level dengan AI tutor dan statistik CEFR.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0F172A",
-  "theme_color": "#2563EB",
+  "background_color": "#1A1916",
+  "theme_color": "#F7C400",
   "icons": [
     {
       "src": "/icon.svg",

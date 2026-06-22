@@ -3,37 +3,39 @@
 @tailwind utilities;
 
 :root {
-  /* Light mode (PRD section 15.2) */
-  --bg: 248 250 252; /* #F8FAFC */
+  /* Light mode — warm yellow brand, high readability */
+  --bg: 251 250 246; /* #FBFAF6 warm off-white */
   --card: 255 255 255; /* #FFFFFF */
-  --elevated: 241 245 249; /* #F1F5F9 */
-  --border: 226 232 240; /* #E2E8F0 */
-  --primary: 37 99 235; /* #2563EB */
-  --primary-soft: 219 234 254; /* #DBEAFE */
-  --secondary: 245 158 11; /* #F59E0B */
-  --secondary-soft: 254 243 199; /* #FEF3C7 */
-  --ink: 17 24 39; /* #111827 */
-  --muted: 107 114 128; /* #6B7280 */
+  --elevated: 245 242 234; /* #F5F2EA */
+  --border: 232 227 216; /* #E8E3D8 */
+  --primary: 244 180 0; /* #F4B400 golden yellow */
+  --on-primary: 38 30 5; /* #261E05 near-black for text on yellow */
+  --primary-soft: 255 244 204; /* #FFF4CC pale yellow */
+  --secondary: 233 56 41; /* #E93829 logo red */
+  --secondary-soft: 255 226 222; /* #FFE2DE */
+  --ink: 31 33 38; /* #1F2126 */
+  --muted: 110 106 96; /* #6E6A60 warm gray */
   --success: 22 163 74; /* #16A34A */
   --danger: 220 38 38; /* #DC2626 */
   --warning: 217 119 6; /* #D97706 */
-  --der: 37 99 235; /* blue - maskulin */
-  --die: 219 39 119; /* pink - feminin */
-  --das: 22 163 74; /* green - netral */
+  --der: 37 99 235; /* der = blue (grammar memory code) */
+  --die: 219 39 119; /* die = pink */
+  --das: 22 163 74; /* das = green */
 }
 
 .dark {
-  /* Dark mode (PRD section 15.2) - not pure black, comfortable contrast */
-  --bg: 15 23 42; /* #0F172A */
-  --card: 17 24 39; /* #111827 */
-  --elevated: 30 41 59; /* #1E293B */
-  --border: 51 65 85; /* #334155 */
-  --primary: 96 165 250; /* #60A5FA */
-  --primary-soft: 30 58 138; /* #1E3A8A */
-  --secondary: 251 191 36; /* #FBBF24 */
-  --secondary-soft: 120 53 15; /* #78350F */
-  --ink: 248 250 252; /* #F8FAFC */
-  --muted: 203 213 225; /* #CBD5E1 */
+  /* Dark mode — warm neutral dark (no blue tint), comfortable with yellow */
+  --bg: 26 25 22; /* #1A1916 */
+  --card: 33 31 27; /* #211F1B */
+  --elevated: 43 40 35; /* #2B2823 */
+  --border: 58 54 47; /* #3A362F */
+  --primary: 250 204 21; /* #FACC15 bright comfortable yellow */
+  --on-primary: 26 25 22; /* same as dark bg → dark text on yellow */
+  --primary-soft: 74 60 16; /* #4A3C10 deep amber */
+  --secondary: 248 113 113; /* #F87171 soft red */
+  --secondary-soft: 74 31 27; /* #4A1F1B */
+  --ink: 245 243 236; /* #F5F3EC warm white */
+  --muted: 184 178 166; /* #B8B2A6 */
   --success: 74 222 128; /* #4ADE80 */
   --danger: 248 113 113; /* #F87171 */
   --warning: 251 191 36; /* #FBBF24 */

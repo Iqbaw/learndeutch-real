@@ -210,7 +210,7 @@ export default function LandingPage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {dailyFlow.map((f) => (
               <div key={f.step} className="card-base p-5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-heading text-sm font-extrabold text-white dark:text-bg">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-heading text-sm font-extrabold text-onprimary">
                   {f.step}
                 </span>
                 <h3 className="mt-3 font-heading font-bold text-ink">{f.title}</h3>
@@ -343,7 +343,7 @@ export default function LandingPage() {
             <div className="card-base border-primary/40 p-6 shadow-glow">
               <div className="flex items-center justify-between">
                 <h3 className="font-heading text-xl font-extrabold text-ink">Pro</h3>
-                <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white dark:text-bg">Populer</span>
+                <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-onprimary">Populer</span>
               </div>
               <p className="mt-1 text-sm text-muted">Semua level, AI tutor & speaking lab.</p>
               <p className="mt-4 font-heading text-3xl font-extrabold text-ink">Rp99k<span className="text-base font-medium text-muted">/bln</span></p>
@@ -375,10 +375,10 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-12 text-center sm:px-12">
-          <h2 className="font-heading text-3xl font-extrabold tracking-tight text-white dark:text-bg">
+          <h2 className="font-heading text-3xl font-extrabold tracking-tight text-onprimary">
             Mulai hari pertamamu dalam bahasa Jerman
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-white/90 dark:text-bg/80">
+          <p className="mx-auto mt-3 max-w-xl text-onprimary/80">
             Setiap hari tahu harus belajar apa. Grammar dibuat visual dan masuk akal.
             30 hari per level — terukur, realistis, dan konsisten.
           </p>

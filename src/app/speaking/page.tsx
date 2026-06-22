@@ -91,12 +91,12 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
                 <div
                   className={cn(
                     "rounded-2xl px-4 py-3",
-                    isAI ? "bg-elevated text-ink" : "bg-primary text-white dark:text-bg"
+                    isAI ? "bg-elevated text-ink" : "bg-primary text-onprimary"
                   )}
                 >
                   <p className="font-body font-bold">{turn.text}</p>
                   {turn.translation && (
-                    <p className={cn("mt-0.5 text-xs", isAI ? "text-muted" : "text-white/80 dark:text-bg/70")}>
+                    <p className={cn("mt-0.5 text-xs", isAI ? "text-muted" : "text-onprimary/80")}>
                       {turn.translation}
                     </p>
                   )}

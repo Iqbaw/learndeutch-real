@@ -121,8 +121,8 @@ export function SpeechPractice({
           onClick={handleMic}
           aria-label={listening ? "Berhenti merekam" : "Mulai bicara"}
           className={cn(
-            "relative flex h-16 w-16 items-center justify-center rounded-full text-white shadow-glow transition-transform hover:scale-105 focusable dark:text-bg",
-            listening ? "bg-danger" : "bg-primary"
+            "relative flex h-16 w-16 items-center justify-center rounded-full shadow-glow transition-transform hover:scale-105 focusable",
+            listening ? "bg-danger text-white" : "bg-primary text-onprimary"
           )}
         >
           {listening ? <Square className="h-6 w-6" /> : <Mic className="h-7 w-7" />}

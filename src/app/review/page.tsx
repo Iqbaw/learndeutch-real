@@ -194,7 +194,7 @@ function ReviewOverview({
         <div className="mt-5 card-base overflow-hidden border-primary/40">
           <div className="bg-gradient-to-br from-primary-soft/80 to-card p-6">
             <div className="flex items-center gap-2">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white dark:text-bg">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-onprimary">
                 <BrainCircuit className="h-5 w-5" />
               </span>
               <div>

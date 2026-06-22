@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { CTAButton } from "@/components/ui/cta-button";
+import { Logo } from "@/components/ui/logo";
 
 const links = [
   { label: "Metode", href: "#method" },
@@ -20,9 +21,7 @@ export function MarketingNav() {
     <header className="sticky top-0 z-50 border-b border-border bg-bg/80 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5 focusable rounded-lg">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-heading text-lg font-extrabold text-white dark:text-bg">
-            D
-          </span>
+          <Logo className="h-10 w-10" />
           <span className="font-heading text-base font-extrabold text-ink">
             Deutsch <span className="text-primary">30</span>
           </span>

@@ -10,7 +10,7 @@ const statusConfig: Record<
   { cls: string; icon: typeof Check; label: string }
 > = {
   done: { cls: "bg-success/15 text-success border-success/30", icon: Check, label: "Selesai" },
-  active: { cls: "bg-primary text-white dark:text-bg border-primary shadow-glow", icon: Play, label: "Hari ini" },
+  active: { cls: "bg-primary text-onprimary border-primary shadow-glow", icon: Play, label: "Hari ini" },
   locked: { cls: "bg-elevated text-muted border-border", icon: Lock, label: "Terkunci" },
   remedial: { cls: "bg-warning/15 text-warning border-warning/30", icon: Stethoscope, label: "Remedial" },
   exam: { cls: "bg-secondary-soft text-secondary border-secondary/30", icon: Trophy, label: "Ujian" },

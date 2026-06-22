@@ -71,7 +71,7 @@ export default function SettingsPage() {
     <AppShell title="Settings" subtitle="Atur tampilan, target belajar, dan preferensi belajarmu.">
       <AppGuard>
         <div className="card-base mb-5 flex items-center gap-4 p-5">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary font-heading text-2xl font-extrabold text-white dark:text-bg">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary font-heading text-2xl font-extrabold text-onprimary">
             {name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
@@ -137,7 +137,7 @@ export default function SettingsPage() {
                 onClick={() => setDailyTarget(m)}
                 className={cn(
                   "rounded-xl px-4 py-2 text-sm font-bold transition-colors focusable",
-                  dailyTargetMinutes === m ? "bg-primary text-white dark:text-bg" : "bg-elevated text-muted hover:text-ink"
+                  dailyTargetMinutes === m ? "bg-primary text-onprimary" : "bg-elevated text-muted hover:text-ink"
                 )}
               >
                 {m} menit
@@ -154,7 +154,7 @@ export default function SettingsPage() {
                 onClick={() => setAudioSpeed(s)}
                 className={cn(
                   "rounded-xl px-4 py-2 text-sm font-bold transition-colors focusable",
-                  audioSpeed === s ? "bg-primary text-white dark:text-bg" : "bg-elevated text-muted hover:text-ink"
+                  audioSpeed === s ? "bg-primary text-onprimary" : "bg-elevated text-muted hover:text-ink"
                 )}
               >
                 {s}x
@@ -207,7 +207,7 @@ export default function SettingsPage() {
                 onClick={() => setExplanationLang(l)}
                 className={cn(
                   "rounded-xl px-4 py-2 text-sm font-bold transition-colors focusable",
-                  explanationLang === l ? "bg-primary text-white dark:text-bg" : "bg-elevated text-muted hover:text-ink"
+                  explanationLang === l ? "bg-primary text-onprimary" : "bg-elevated text-muted hover:text-ink"
                 )}
               >
                 {l}

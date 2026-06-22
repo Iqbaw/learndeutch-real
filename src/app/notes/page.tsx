@@ -65,7 +65,7 @@ export default function NotesPage() {
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 font-heading text-sm font-bold transition-all focusable",
                   isSel
-                    ? "border-primary bg-primary text-white dark:text-bg"
+                    ? "border-primary bg-primary text-onprimary"
                     : open
                     ? "border-border bg-card text-ink hover:border-primary hover:bg-primary-soft/40"
                     : "border-border bg-elevated text-muted cursor-not-allowed"
@@ -92,7 +92,7 @@ export default function NotesPage() {
             <div className="card-base overflow-hidden">
               <div className="bg-gradient-to-br from-primary-soft/80 to-card p-6">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-heading font-extrabold text-white dark:text-bg">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-heading font-extrabold text-onprimary">
                     {current.level}
                   </span>
                   <div>

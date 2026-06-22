@@ -27,6 +27,7 @@ import {
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { FormattedText } from "@/components/ui/formatted-text";
+import { Logo } from "@/components/ui/logo";
 import {
   useAppStore,
   type OnboardingAnswers,
@@ -318,9 +319,7 @@ export default function OnboardingPage() {
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 py-8 sm:px-6">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 focusable rounded-lg">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-heading text-lg font-extrabold text-white dark:text-bg">
-              D
-            </span>
+            <Logo className="h-10 w-10" />
             <span className="font-heading text-sm font-extrabold text-ink">Deutsch 30</span>
           </Link>
           <span className="text-sm text-muted">
@@ -475,7 +474,7 @@ function ProfileStep({
                 <span
                   className={cn(
                     "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border",
-                    active ? "border-primary bg-primary text-white dark:text-bg" : "border-border"
+                    active ? "border-primary bg-primary text-onprimary" : "border-border"
                   )}
                 >
                   {active && <Check className="h-3.5 w-3.5" />}
@@ -705,7 +704,7 @@ function ResultCard({
       </h2>
 
       <div className="mt-4 flex items-center gap-3 rounded-2xl bg-elevated p-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-lg font-extrabold text-white dark:text-bg">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-lg font-extrabold text-onprimary">
           <span className="font-heading">{outcome.estimatedLevel}</span>
         </div>
         <div className="flex-1">

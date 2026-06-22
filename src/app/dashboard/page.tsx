@@ -73,7 +73,7 @@ export default function DashboardPage() {
             ) : (
               <div className="card-base p-6">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white dark:text-bg">
+                  <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-onprimary">
                     {activeLevel} · Hari {currentDay}
                   </span>
                   {dayMeta && <LevelBadge level={dayMeta.subLevel} variant="soft" />}

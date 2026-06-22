@@ -64,7 +64,7 @@ export default function RoadmapPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-heading text-2xl font-extrabold text-primary">{lvl.id}</span>
                   {isActive ? (
-                    <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white dark:text-bg">
+                    <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-onprimary">
                       Aktif
                     </span>
                   ) : isUnlocked ? (

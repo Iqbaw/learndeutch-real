@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { Logo } from "@/components/ui/logo";
 import {
   Sparkles,
   Brain,
@@ -27,9 +28,7 @@ const slides: Slide[] = [
     id: "hero",
     render: () => (
       <div className="flex flex-col items-center text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary font-heading text-3xl font-extrabold text-white shadow-glow dark:text-bg">
-          D
-        </span>
+        <Logo className="h-16 w-16" />
         <span className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-bold text-primary">
           <Sparkles className="h-3.5 w-3.5" /> Belajar dari nol
         </span>
@@ -104,7 +103,7 @@ const slides: Slide[] = [
               key={l}
               className={cn(
                 "rounded-xl px-3 py-2 font-heading text-sm font-extrabold",
-                i === 0 ? "bg-primary text-white dark:text-bg" : "bg-elevated text-muted"
+                i === 0 ? "bg-primary text-onprimary" : "bg-elevated text-muted"
               )}
             >
               {l}
@@ -139,9 +138,7 @@ const slides: Slide[] = [
     id: "cta",
     render: () => (
       <div className="flex flex-col items-center text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary font-heading text-3xl font-extrabold text-white shadow-glow dark:text-bg">
-          D
-        </span>
+        <Logo className="h-16 w-16" />
         <h2 className="mt-5 font-heading text-2xl font-extrabold tracking-tight text-ink">
           Siap mulai hari pertamamu?
         </h2>
@@ -151,7 +148,7 @@ const slides: Slide[] = [
         <div className="mt-7 flex w-full max-w-xs flex-col gap-3">
           <Link
             href="/onboarding"
-            className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-primary font-heading text-base font-bold text-white shadow-glow active:scale-[0.98] dark:text-bg focusable"
+            className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-primary font-heading text-base font-bold text-onprimary shadow-glow active:scale-[0.98] focusable"
           >
             Mulai dari A1.1 <ArrowRight className="h-5 w-5" />
           </Link>
@@ -191,9 +188,7 @@ export function MobileLanding() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-5 pt-4">
         <Link href="/" className="flex items-center gap-2 focusable rounded-lg">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary font-heading text-base font-extrabold text-white dark:text-bg">
-            D
-          </span>
+          <Logo className="h-9 w-9" />
           <span className="font-heading text-sm font-extrabold text-ink">Deutsch 30</span>
         </Link>
         <div className="flex items-center gap-2">
@@ -245,14 +240,14 @@ export function MobileLanding() {
         {isLast ? (
           <Link
             href="/onboarding"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 font-heading text-base font-bold text-white shadow-glow active:scale-[0.98] dark:text-bg focusable"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 font-heading text-base font-bold text-onprimary shadow-glow active:scale-[0.98] focusable"
           >
             Mulai Sekarang <ArrowRight className="h-5 w-5" />
           </Link>
         ) : (
           <button
             onClick={() => goTo(active + 1)}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 font-heading text-base font-bold text-white shadow-soft active:scale-[0.98] dark:text-bg focusable"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 font-heading text-base font-bold text-onprimary shadow-soft active:scale-[0.98] focusable"
           >
             Lanjut <ArrowRight className="h-5 w-5" />
           </button>

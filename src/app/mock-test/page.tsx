@@ -142,7 +142,7 @@ function HoerenAudio({ audioText, qIndex }: { audioText: string; qIndex: number 
 
   return (
     <div className="mb-4 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary-soft/40 p-4">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white dark:text-bg">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-onprimary">
         <Headphones className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">

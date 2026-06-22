@@ -17,6 +17,8 @@ const config: Config = {
           DEFAULT: "rgb(var(--primary) / <alpha-value>)",
           soft: "rgb(var(--primary-soft) / <alpha-value>)",
         },
+        // readable text/icon color to place ON the primary (yellow) surface
+        onprimary: "rgb(var(--on-primary) / <alpha-value>)",
         secondary: {
           DEFAULT: "rgb(var(--secondary) / <alpha-value>)",
           soft: "rgb(var(--secondary-soft) / <alpha-value>)",

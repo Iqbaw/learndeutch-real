@@ -208,7 +208,7 @@ function LessonInner() {
         <div className="card-base overflow-hidden">
           <div className="bg-gradient-to-br from-primary-soft/80 to-card p-6">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white dark:text-bg">
+              <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-onprimary">
                 Hari {scaffold.day}
               </span>
               <LevelBadge level={scaffold.subLevel} variant="soft" />

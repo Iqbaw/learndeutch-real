@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/ui/logo";
 
 export function MarketingFooter() {
   return (
@@ -7,9 +8,7 @@ export function MarketingFooter() {
         <div className="flex flex-col gap-8 md:flex-row md:justify-between">
           <div className="max-w-sm">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-heading text-lg font-extrabold text-white dark:text-bg">
-                D
-              </span>
+              <Logo className="h-10 w-10" />
               <span className="font-heading text-base font-extrabold text-ink">
                 Deutsch Lernen in 30 Tagen
               </span>

@@ -16,7 +16,7 @@ export function MissionCard({ lesson, progress = 0 }: MissionCardProps) {
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white dark:text-bg">
+            <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-onprimary">
               Hari {lesson.day}
             </span>
             <LevelBadge level={lesson.subLevel} variant="soft" />

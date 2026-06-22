@@ -76,7 +76,7 @@ export default function VocabularyPage() {
               onClick={() => setCat(c)}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-sm font-bold transition-colors focusable",
-                cat === c ? "bg-primary text-white dark:text-bg" : "bg-elevated text-muted hover:text-ink"
+                cat === c ? "bg-primary text-onprimary" : "bg-elevated text-muted hover:text-ink"
               )}
             >
               {c}

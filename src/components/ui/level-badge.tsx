@@ -14,7 +14,7 @@ export function LevelBadge({ level, variant = "soft", className }: LevelBadgePro
         "inline-flex items-center rounded-lg px-2.5 py-1 font-mono text-xs font-bold",
         variant === "soft"
           ? "bg-primary-soft text-primary"
-          : "bg-primary text-white dark:text-bg",
+          : "bg-primary text-onprimary",
         className
       )}
     >

@@ -6,6 +6,7 @@ import { sidebarNav } from "./nav-config";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { Logo } from "@/components/ui/logo";
 import { Flame } from "lucide-react";
 
 export function Sidebar() {
@@ -18,9 +19,7 @@ export function Sidebar() {
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 border-r border-border bg-card">
       <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border">
         <Link href="/" className="flex items-center gap-2.5 focusable rounded-lg">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-heading text-lg font-extrabold text-white dark:text-bg">
-            D
-          </span>
+          <Logo className="h-10 w-10" />
           <span className="flex flex-col leading-tight">
             <span className="font-heading text-sm font-extrabold text-ink">Deutsch 30</span>
             <span className="text-[0.65rem] text-muted">in 30 Tagen</span>
@@ -55,7 +54,7 @@ export function Sidebar() {
 
       <div className="m-3 rounded-2xl bg-elevated p-3.5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-heading font-bold text-white dark:text-bg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-heading font-bold text-onprimary">
             {name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
