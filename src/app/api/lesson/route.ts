@@ -102,9 +102,17 @@ function coerceStep(raw: unknown): LessonStep | null {
   if (o.exercise && typeof o.exercise === "object") {
     const e = o.exercise as Record<string, unknown>;
     const prompt = str(e.prompt);
-    const options = Array.isArray(e.options)
+    let options = Array.isArray(e.options)
       ? e.options.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
       : [];
+    // Drop duplicate options — avoids the "every answer looks correct" problem.
+    const seen = new Set<string>();
+    options = options.filter((opt) => {
+      const k = opt.trim().toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
     const correctIndex = typeof e.correctIndex === "number" ? e.correctIndex : -1;
     if (prompt && options.length >= 2 && correctIndex >= 0 && correctIndex < options.length) {
       step.exercise = {
@@ -113,7 +121,7 @@ function coerceStep(raw: unknown): LessonStep | null {
         correctIndex,
         explanation: str(e.explanation) ?? "",
       };
-    } else if ((type === "drill" || type === "listening") && !prompt) {
+    } else if (type === "drill" || type === "listening") {
       // a drill/listening step without a valid exercise is not renderable
       return null;
     }
@@ -221,12 +229,19 @@ Materi hari ini:
 - Target: ${input.goal.join("; ")}
 
 Aturan konten:
+- Sesuaikan TINGKAT KESULITAN dengan level pelajar (${input.subLevel}). Untuk A1/A2:
+  buat materi sederhana, kalimat pendek, kosakata sehari-hari yang umum — JANGAN terlalu sulit.
+- DILARANG membuat soal/langkah fonetik, pelafalan, atau transkripsi IPA (mis. "bunyi mana
+  yang benar", simbol IPA). Itu terlalu sulit untuk pemula. Fokus ke arti, tata bahasa,
+  membaca, dan kalimat praktis.
 - Sesuaikan contoh dengan tujuan & minat pelajar bila relevan.
 - Jika skill terlemah diketahui, tambahkan lebih banyak langkah latihan untuk skill itu.
 - Buat 7–10 langkah dengan urutan yang masuk akal.
 - Wajib ada minimal: 1 "story", 1 "pattern", 1 "example", 2 "drill", 1 langkah produktif ("speaking" atau "writing"), 1 "mistake", diakhiri 1 "victory".
-- Setiap "drill" dan "listening" WAJIB punya objek "exercise" dengan 3 opsi.
-- Penjelasan jawaban harus jelas dan mendidik.
+- Setiap "drill" dan "listening" WAJIB punya objek "exercise" dengan 3 opsi BERBEDA.
+- ATURAN OPSI (PENTING): hanya 1 opsi yang benar; 2 opsi lain harus JELAS SALAH (kesalahan
+  umum), bukan jawaban yang juga benar. Jangan ada opsi yang sama/duplikat.
+- Penjelasan jawaban harus jelas dan mendidik (kenapa benar & kenapa yang lain salah).
 
 Skema JSON (ikuti persis nama field):
 {

@@ -43,6 +43,50 @@ export function valueToLevel(value: number): CEFRLevel {
   return "B1.1";
 }
 
+// A single ordered CEFR ladder so every level shown in the app sits on the
+// same scale and can be compared / nudged consistently. This is the key to
+// keeping the estimated level, active level and passive level in sync.
+const CEFR_LADDER: CEFRLevel[] = [
+  "Pre-A1",
+  "A1.1",
+  "A1.2",
+  "A2.1",
+  "A2.2",
+  "B1.1",
+  "B1.2",
+  "B2.1",
+  "B2.2",
+  "C1.1",
+  "C1.2",
+  "C2.1",
+  "C2.2",
+];
+
+function levelIndex(level: CEFRLevel): number {
+  const i = CEFR_LADDER.indexOf(level);
+  return i < 0 ? 1 : i; // default to A1.1 if unknown
+}
+
+function levelAt(index: number): CEFRLevel {
+  return CEFR_LADDER[Math.max(0, Math.min(CEFR_LADDER.length - 1, index))];
+}
+
+function higherLevel(a: CEFRLevel, b: CEFRLevel): CEFRLevel {
+  return levelIndex(a) >= levelIndex(b) ? a : b;
+}
+
+/**
+ * Express a single skill's level RELATIVE to the learner's overall estimated
+ * level, so a skill never contradicts the headline estimate by more than one
+ * sub-level. With no data for the skill, it simply equals the base level.
+ */
+function relativeSkillLevel(base: CEFRLevel, skillAccuracy: number, refAccuracy: number): CEFRLevel {
+  if (skillAccuracy <= 0) return base;
+  const diff = skillAccuracy - refAccuracy;
+  const step = diff >= 18 ? 1 : diff <= -18 ? -1 : 0;
+  return levelAt(levelIndex(base) + step);
+}
+
 export function buildRoadmap(currentDay: number, completedDays: number[]): RoadmapDay[] {
   const done = new Set(completedDays);
   return a1Days.map((d) => {
@@ -214,10 +258,17 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
       : input.startLevel;
 
   // While lesson data is still sparse, trust the adaptive placement estimate;
-  // once the learner has done enough lessons, real performance takes over.
+  // once the learner has done enough lessons, real performance can raise it.
+  // The placement is a real assessment, so it acts as a floor — the headline
+  // level never drops below it, keeping every screen in sync.
   const lessonsDone = input.completedDays.length;
-  const estimatedLevel: CEFRLevel =
-    input.placement && lessonsDone < 5 ? input.placement.estimatedLevel : computedLevel;
+  const placementLevel = input.placement?.estimatedLevel;
+  let estimatedLevel: CEFRLevel;
+  if (placementLevel) {
+    estimatedLevel = lessonsDone < 5 ? placementLevel : higherLevel(computedLevel, placementLevel);
+  } else {
+    estimatedLevel = computedLevel;
+  }
 
   // confidence increases with more data points
   const dataDensity = Math.min(1, sumTotal / 80); // need ~80 answers for full confidence
@@ -228,8 +279,16 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
   }
   confidence = capPercent(confidence);
 
-  const activeLevel = activeRaw > 0 ? valueToLevel(activeRaw) : input.startLevel;
-  const passiveLevel = passiveRaw > 0 ? valueToLevel(passiveRaw) : input.startLevel;
+  // Active / passive levels are expressed relative to the estimated level so
+  // they always stay consistent with it (within one sub-level), instead of
+  // living on a separate accuracy scale.
+  const activeLevel = relativeSkillLevel(estimatedLevel, activeRaw, overallAccuracy);
+  const passiveLevel = relativeSkillLevel(estimatedLevel, passiveRaw, overallAccuracy);
+
+  // Keep each radar skill's level label anchored to the estimate too.
+  const syncedSkills: SkillScore[] = skills.map((s) =>
+    s.value > 0 ? { ...s, level: relativeSkillLevel(estimatedLevel, s.value, overallAccuracy) } : s
+  );
 
   // retention: share of started words that reached almost/mastered
   const retention =
@@ -268,7 +327,7 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
     confidence,
     activeLevel,
     passiveLevel,
-    skills,
+    skills: syncedSkills,
     vocab,
     grammarMastery,
     retention,

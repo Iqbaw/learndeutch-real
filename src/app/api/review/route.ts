@@ -53,9 +53,17 @@ function coerceItems(raw: unknown, errors: IncomingError[]): ReviewItem[] {
     const o = entry as Record<string, unknown>;
     const errorId = typeof o.errorId === "string" ? o.errorId : "";
     const src = byId.get(errorId);
-    const options = Array.isArray(o.options)
+    let options = Array.isArray(o.options)
       ? o.options.map(clean).filter((x) => x.length > 0)
       : [];
+    // Drop duplicate options (avoids "every answer is correct").
+    const seen = new Set<string>();
+    options = options.filter((opt) => {
+      const k = opt.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
     const correctIndex = typeof o.correctIndex === "number" ? o.correctIndex : -1;
     const question = clean(o.question);
     if (
@@ -106,7 +114,10 @@ ${mistakeLines}
 
 Untuk SETIAP kesalahan, buat SATU soal latihan BARU (variasi, bukan menyalin soal lama persis)
 yang menguji KONSEP yang sama agar pelajar bisa memperbaikinya. Tiap soal:
-- 3 opsi, hanya 1 benar, distraktor masuk akal (sertakan jenis kesalahan yang tadi dibuat pelajar).
+- Sesuaikan tingkat kesulitan dengan level pelajar (${profile.estimatedLevel || "A1"}) — jangan terlalu sulit.
+- DILARANG soal fonetik/pelafalan/transkripsi IPA. Fokus ke arti & tata bahasa.
+- 3 opsi BERBEDA, hanya 1 benar; 2 opsi lain harus JELAS SALAH (termasuk jenis kesalahan
+  yang tadi dibuat pelajar), bukan jawaban yang juga benar. Jangan ada opsi duplikat.
 - "explanation" menjelaskan kenapa benar DAN mengaitkan dengan kesalahan pelajar sebelumnya.
 - "tip" = trik singkat agar mudah diingat.
 - Sertakan "errorId" persis sesuai yang diberikan agar bisa dilacak.

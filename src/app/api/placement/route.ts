@@ -24,17 +24,23 @@ interface QuestionResponse extends PlacementItem {
 function isValidItem(x: unknown): x is PlacementItem {
   if (!x || typeof x !== "object") return false;
   const o = x as Record<string, unknown>;
-  return (
-    typeof o.prompt === "string" &&
-    o.prompt.trim().length > 0 &&
-    Array.isArray(o.options) &&
-    o.options.length === 4 &&
-    o.options.every((opt) => typeof opt === "string" && opt.trim().length > 0) &&
-    typeof o.correctIndex === "number" &&
-    o.correctIndex >= 0 &&
-    o.correctIndex <= 3 &&
-    typeof o.explanation === "string"
-  );
+  if (
+    typeof o.prompt !== "string" ||
+    o.prompt.trim().length === 0 ||
+    !Array.isArray(o.options) ||
+    o.options.length !== 4 ||
+    !o.options.every((opt) => typeof opt === "string" && opt.trim().length > 0) ||
+    typeof o.correctIndex !== "number" ||
+    o.correctIndex < 0 ||
+    o.correctIndex > 3 ||
+    typeof o.explanation !== "string"
+  ) {
+    return false;
+  }
+  // Reject duplicate options — a frequent cause of "all answers look correct".
+  const normalized = (o.options as string[]).map((s) => s.trim().toLowerCase());
+  if (new Set(normalized).size !== normalized.length) return false;
+  return true;
 }
 
 const SKILL_GUIDANCE: Record<PlacementSkill, string> = {
@@ -69,8 +75,13 @@ async function generateQuestion(
   const user = `Buat SATU soal pilihan ganda bahasa Jerman.
 - Tingkat CEFR: ${band}
 - Keterampilan yang diuji: ${SKILL_LABEL[skill]} — ${SKILL_GUIDANCE[skill]}
-- Soal harus benar-benar sesuai tingkat ${band} (tidak terlalu mudah/sulit).
-- Tepat 4 opsi jawaban, hanya 1 yang benar, dan distraktor harus masuk akal (bukan asal).
+- Soal HARUS pas untuk tingkat ${band}: untuk A1/A2 buat soal sederhana dan praktis,
+  jangan terlalu sulit. Gunakan kosakata & situasi sehari-hari yang umum.
+- DILARANG membuat soal fonetik/pelafalan/transkripsi IPA atau soal "bunyi mana yang benar".
+  Fokus ke arti, tata bahasa, dan pemahaman — bukan pengucapan.
+- Aturan jawaban (PENTING): tepat 4 opsi dengan HANYA 1 yang benar. 3 opsi lain harus
+  JELAS SALAH secara tata bahasa/arti (mewakili kesalahan umum), BUKAN jawaban yang juga
+  bisa dianggap benar. Jangan pernah membuat lebih dari satu opsi yang benar.
 - Hindari soal yang mirip dengan yang sudah pernah muncul:
 ${avoid || "- (belum ada)"}
 
@@ -79,7 +90,7 @@ Format JSON yang WAJIB:
   "prompt": "instruksi singkat dalam bahasa Indonesia + materi Jerman",
   "options": ["opsi1", "opsi2", "opsi3", "opsi4"],
   "correctIndex": 0,
-  "explanation": "penjelasan singkat dalam bahasa Indonesia mengapa jawaban itu benar"
+  "explanation": "penjelasan singkat dalam bahasa Indonesia mengapa jawaban itu benar dan kenapa opsi lain salah"
 }`;
 
   try {
