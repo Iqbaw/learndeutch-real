@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, X, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playSound } from "@/lib/sound";
+import { FormattedText } from "@/components/ui/formatted-text";
 import type { DrillExercise } from "@/types";
 
 interface ExerciseCardProps {
@@ -83,7 +84,7 @@ export function ExerciseCard({ exercise, onResult, onAnswered }: ExerciseCardPro
             <span className="font-bold">
               {isCorrect ? "Tepat sekali! " : "Hampir benar. "}
             </span>
-            {exercise.explanation}
+            <FormattedText text={exercise.explanation} />
           </p>
         </div>
       )}

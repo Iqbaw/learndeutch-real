@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { FormattedText } from "@/components/ui/formatted-text";
 import {
   useAppStore,
   type OnboardingAnswers,
@@ -659,7 +660,7 @@ function ResultCard({
         <p className="mt-1 text-xs text-muted">Tingkat keyakinan estimasi level</p>
       </div>
 
-      <p className="mt-4 text-muted">{outcome.summary}</p>
+      <p className="mt-4 text-muted"><FormattedText text={outcome.summary} /></p>
 
       {/* per-skill breakdown */}
       {testedSkills.length > 0 && (
