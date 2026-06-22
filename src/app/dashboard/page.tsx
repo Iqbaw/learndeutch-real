@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const skillStats = useAppStore((s) => s.skillStats);
   const grammarStats = useAppStore((s) => s.grammarStats);
   const speakingAttempts = useAppStore((s) => s.speakingAttempts);
+  const placement = useAppStore((s) => s.placement);
 
   const name = profile?.name ?? "Pelajar";
   const lesson = getLessonByDay(currentDay);
@@ -49,6 +50,7 @@ export default function DashboardPage() {
     grammarStats,
     vocabStatus,
     speakingAttempts,
+    placement,
   });
 
   // weakness box from real error categories

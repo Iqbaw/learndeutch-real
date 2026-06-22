@@ -31,6 +31,7 @@ export default function StatisticsPage() {
   const grammarStats = useAppStore((s) => s.grammarStats);
   const vocabStatus = useAppStore((s) => s.vocabStatus);
   const speakingAttempts = useAppStore((s) => s.speakingAttempts);
+  const placement = useAppStore((s) => s.placement);
 
   const stats = deriveStats({
     startLevel: profile?.startLevel ?? "A1.1",
@@ -40,6 +41,7 @@ export default function StatisticsPage() {
     grammarStats,
     vocabStatus,
     speakingAttempts,
+    placement,
   });
 
   return (

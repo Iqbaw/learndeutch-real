@@ -164,7 +164,29 @@ export const useAppStore = create<AppState>()(
       placement: null,
       setOnboardingAnswer: (key, value) =>
         set((s) => ({ onboarding: { ...s.onboarding, [key]: value } })),
-      setPlacement: (snapshot) => set({ placement: snapshot }),
+      setPlacement: (snapshot) =>
+        set((s) => {
+          // Seed skill stats from the adaptive placement so the statistics &
+          // radar reflect the learner's real placement performance right away.
+          // Only seeds skills with no existing data — never overwrites progress.
+          const skillMap: Record<string, Skill[]> = {
+            grammar: ["Grammar"],
+            vocabulary: ["Vocabulary"],
+            reading: ["Reading", "Listening"],
+            communication: ["Speaking", "Writing"],
+          };
+          const skillStats = { ...s.skillStats };
+          for (const ps of snapshot.perSkill) {
+            if (ps.total <= 0) continue;
+            const targets = skillMap[ps.skill];
+            if (!targets) continue;
+            const correct = Math.round((ps.accuracy / 100) * ps.total);
+            for (const sk of targets) {
+              if (!skillStats[sk]) skillStats[sk] = { correct, total: ps.total };
+            }
+          }
+          return { placement: snapshot, skillStats };
+        }),
       completeOnboarding: (profile, startDay = 1) =>
         set({ profile, currentDay: Math.max(1, startDay) }),
 
