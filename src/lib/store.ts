@@ -105,6 +105,7 @@ interface AppState {
     explanation: string;
     category: ErrorCategory;
   }) => void;
+  reviewError: (id: string, correct: boolean) => void;
   startLearningVocab: (id: string) => void;
   reviewVocab: (id: string, correct: boolean) => void;
   recordGrammar: (topicId: string, correct: boolean) => void;
@@ -309,6 +310,21 @@ export const useAppStore = create<AppState>()(
         set((s) => ({ mockResults: [result, ...s.mockResults].slice(0, 50) })),
 
       completeReview: () => set({ lastReviewDate: todayStr() }),
+
+      reviewError: (id, correct) =>
+        set((s) => {
+          // Mistake mastery ladder. A correct answer advances the error toward
+          // "safe"; a wrong answer marks it "relapsed" so it resurfaces.
+          const order: ErrorItem["status"][] = ["new", "reviewed", "almost", "safe"];
+          const errors = s.errors.map((e) => {
+            if (e.id !== id) return e;
+            if (!correct) return { ...e, status: "relapsed" as const, date: todayStr() };
+            const base = e.status === "relapsed" ? "new" : e.status;
+            const idx = Math.max(0, order.indexOf(base));
+            return { ...e, status: order[Math.min(order.length - 1, idx + 1)], date: todayStr() };
+          });
+          return { errors, xp: s.xp + (correct ? 8 : 2) };
+        }),
 
       recordSpeaking: () => set((s) => ({ speakingAttempts: s.speakingAttempts + 1 })),
 
