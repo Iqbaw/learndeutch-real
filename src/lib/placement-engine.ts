@@ -15,7 +15,7 @@
 // stable or we hit the question cap.
 // ============================================================
 
-import type { CEFRLevel } from "@/types";
+import type { CEFRLevel, MajorLevel } from "@/types";
 
 export type PlacementBand =
   | "A1.1"
@@ -203,8 +203,10 @@ export interface PerSkillResult {
 export interface PlacementResult {
   estimatedLevel: CEFRLevel; // the learner's true estimated band
   startLevel: CEFRLevel; // where they start in the (A1) course
-  recommendedDay: number; // 1 or 16
+  recommendedDay: number; // 1..30 — the precise day to start at
   canSkip: boolean;
+  /** When the learner clearly tests above A1, the major level to skip to (needs confirmation). */
+  suggestLevel?: MajorLevel;
   confidence: number; // 0-100
   scorePct: number; // 0-100
   correctCount: number;
@@ -214,11 +216,30 @@ export interface PlacementResult {
   summary: string; // filled by AI when available, else a sensible default
 }
 
-/** Highest day/level the bundled course currently supports (A1.2 starts day 16). */
-function courseStart(bandIndex: number): { startLevel: CEFRLevel; day: number; canSkip: boolean } {
-  if (bandIndex <= 0) return { startLevel: "A1.1", day: 1, canSkip: false };
-  // Anyone at A1.2 or above starts at the most advanced bundled lesson (A1.2 / day 16).
-  return { startLevel: "A1.2", day: 16, canSkip: true };
+/**
+ * Map the placement outcome to a PRECISE recommended start: a specific day
+ * within A1 (scaled by score), or — when the learner clearly tests above A1 —
+ * a suggestion to skip to the matching major level (with confirmation).
+ */
+function recommendStart(
+  bandIndex: number,
+  scorePct: number,
+  isAbsoluteBeginner: boolean
+): { startLevel: CEFRLevel; recommendedDay: number; canSkip: boolean; suggestLevel?: MajorLevel } {
+  if (isAbsoluteBeginner || bandIndex <= 0) {
+    // A1.1 — place within the first half of the course based on score.
+    const day = Math.max(1, Math.min(13, 1 + Math.round((scorePct / 100) * 12)));
+    return { startLevel: "A1.1", recommendedDay: day, canSkip: day > 1 };
+  }
+  if (bandIndex === 1) {
+    // A1.2 — place within the second half of the course.
+    const day = Math.max(16, Math.min(27, 16 + Math.round((scorePct / 100) * 11)));
+    return { startLevel: "A1.2", recommendedDay: day, canSkip: true };
+  }
+  // A2.1 or above — suggest skipping to that major level (user confirms).
+  const band = PLACEMENT_BANDS[bandIndex];
+  const major = band.slice(0, 2) as MajorLevel;
+  return { startLevel: band as CEFRLevel, recommendedDay: 1, canSkip: true, suggestLevel: major };
 }
 
 /** Produce the final assessment from the engine state. */
@@ -254,13 +275,18 @@ export function finalizeResult(state: PlacementState, selfLevel?: string): Place
   let resolvedIndex = finalIndex;
   if (selfLevel === "Nol total" && finalIndex <= 1) resolvedIndex = 0;
 
-  const { startLevel, day, canSkip } = courseStart(resolvedIndex);
+  const { startLevel, recommendedDay, canSkip, suggestLevel } = recommendStart(
+    resolvedIndex,
+    scorePct,
+    selfLevel === "Nol total"
+  );
 
   return {
     estimatedLevel: (selfLevel === "Nol total" && resolvedIndex === 0 ? "A1.1" : estimatedLevel) as CEFRLevel,
     startLevel,
-    recommendedDay: day,
+    recommendedDay,
     canSkip,
+    suggestLevel,
     confidence,
     scorePct,
     correctCount,

@@ -21,6 +21,7 @@ import {
   Gauge,
   Loader2,
   BrainCircuit,
+  AlertTriangle,
 } from "lucide-react";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
@@ -31,6 +32,7 @@ import {
   type Profile,
   type PlacementSnapshot,
 } from "@/lib/store";
+import type { MajorLevel } from "@/types";
 import { playSound } from "@/lib/sound";
 import {
   initialState,
@@ -136,7 +138,7 @@ type Phase = "profile" | "placementIntro" | "placement" | "result";
 type Outcome = PlacementResult & { focusAreas: string[] };
 
 export default function OnboardingPage() {
-  const { onboarding, setOnboardingAnswer, setPlacement, completeOnboarding, setDailyTarget } =
+  const { onboarding, setOnboardingAnswer, setPlacement, completeOnboarding, setDailyTarget, skipToLevel } =
     useAppStore();
   const [phase, setPhase] = useState<Phase>("profile");
   const [step, setStep] = useState(0); // 0 = name, 1..5 = questions
@@ -288,6 +290,22 @@ export default function OnboardingPage() {
     );
   }
 
+  function finishWithLevelSkip(level: MajorLevel) {
+    setDailyTarget(parseInt(onboarding.dailyTime ?? "30", 10));
+    completeOnboarding(
+      {
+        name: (onboarding.name ?? name).trim() || "Pelajar",
+        goal: onboarding.goal ?? "Hobi",
+        startLevel: `${level}.1` as Profile["startLevel"],
+        weakSkill: onboarding.weakSkill ?? "Belum tahu",
+        learningStyle: onboarding.learningStyle ?? "Campuran",
+        createdAt: new Date().toISOString(),
+      },
+      1
+    );
+    skipToLevel(level);
+  }
+
   return (
     <div className="min-h-screen bg-bg">
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 py-8 sm:px-6">
@@ -327,6 +345,7 @@ export default function OnboardingPage() {
                   answers={onboarding}
                   fallbackName={name}
                   onStart={finishOnboarding}
+                  onSkipLevel={finishWithLevelSkip}
                 />
               ) : (
                 <FinalizingView key="finalizing" />
@@ -596,13 +615,16 @@ function ResultCard({
   answers,
   fallbackName,
   onStart,
+  onSkipLevel,
 }: {
   outcome: Outcome;
   answers: OnboardingAnswers;
   fallbackName: string;
   onStart: (startDay: number, startLevel: Profile["startLevel"]) => void;
+  onSkipLevel: (level: MajorLevel) => void;
 }) {
   const router = useRouter();
+  const [confirmSkip, setConfirmSkip] = useState(false);
   const time = answers.dailyTime ?? "30";
   const name = answers.name ?? fallbackName ?? "Pelajar";
   const focus =
@@ -614,6 +636,11 @@ function ResultCard({
 
   function go(startDay: number, startLevel: Profile["startLevel"]) {
     onStart(startDay, startLevel);
+    router.push("/dashboard");
+  }
+
+  function goSkipLevel(level: MajorLevel) {
+    onSkipLevel(level);
     router.push("/dashboard");
   }
 
@@ -705,17 +732,30 @@ function ResultCard({
       </div>
 
       <div className="mt-7 flex flex-col gap-3">
-        {outcome.canSkip ? (
+        {outcome.suggestLevel ? (
           <>
-            <CTAButton onClick={() => go(outcome.recommendedDay, outcome.startLevel)} size="lg" className="w-full">
-              Lompat ke {outcome.startLevel} (Hari {outcome.recommendedDay}) <ArrowRight className="h-5 w-5" />
+            <CTAButton onClick={() => setConfirmSkip(true)} size="lg" className="w-full">
+              Lompat ke level {outcome.suggestLevel} <ArrowRight className="h-5 w-5" />
+            </CTAButton>
+            <CTAButton onClick={() => go(1, "A1.1")} variant="outline" size="lg" className="w-full">
+              Tetap mulai dari fondasi A1 (Hari 1)
+            </CTAButton>
+          </>
+        ) : outcome.canSkip ? (
+          <>
+            <CTAButton
+              onClick={() => go(outcome.recommendedDay, outcome.startLevel)}
+              size="lg"
+              className="w-full"
+            >
+              Mulai dari Hari {outcome.recommendedDay} ({outcome.startLevel}) <ArrowRight className="h-5 w-5" />
             </CTAButton>
             <CTAButton onClick={() => go(1, "A1.1")} variant="outline" size="lg" className="w-full">
               Mulai dari fondasi (Hari 1)
             </CTAButton>
           </>
         ) : (
-          <CTAButton onClick={() => go(1, outcome.startLevel)} size="lg" className="w-full">
+          <CTAButton onClick={() => go(outcome.recommendedDay, outcome.startLevel)} size="lg" className="w-full">
             Masuk ke Dashboard <ArrowRight className="h-5 w-5" />
           </CTAButton>
         )}
@@ -723,6 +763,46 @@ function ResultCard({
           <LevelBadge level={outcome.estimatedLevel} /> Levelmu akan terus diperbarui otomatis seiring kamu belajar.
         </p>
       </div>
+
+      {/* Skip-level confirmation */}
+      <AnimatePresence>
+        {confirmSkip && outcome.suggestLevel && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setConfirmSkip(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm card-base p-6"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary-soft text-secondary">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <h3 className="mt-3 font-heading text-lg font-extrabold text-ink">
+                Yakin lompat ke level {outcome.suggestLevel}?
+              </h3>
+              <p className="mt-2 text-sm text-muted">
+                Kamu akan langsung mulai di level {outcome.suggestLevel} dan melewati materi di
+                bawahnya. Kamu tetap bisa kembali ke level sebelumnya kapan saja dari Roadmap.
+              </p>
+              <div className="mt-5 flex flex-col gap-2">
+                <CTAButton onClick={() => goSkipLevel(outcome.suggestLevel!)} className="w-full">
+                  Ya, lompat ke {outcome.suggestLevel}
+                </CTAButton>
+                <CTAButton onClick={() => setConfirmSkip(false)} variant="outline" className="w-full">
+                  Batal
+                </CTAButton>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

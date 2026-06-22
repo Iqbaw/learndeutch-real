@@ -22,6 +22,7 @@ import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getLessonByDay } from "@/data/lessons";
+import { daysForLevel } from "@/data/levels";
 import { useAppStore } from "@/lib/store";
 import { buildRoadmap, buildReviewQueue, deriveStats } from "@/lib/derive";
 
@@ -37,10 +38,12 @@ export default function DashboardPage() {
   const grammarStats = useAppStore((s) => s.grammarStats);
   const speakingAttempts = useAppStore((s) => s.speakingAttempts);
   const placement = useAppStore((s) => s.placement);
+  const activeLevel = useAppStore((s) => s.activeLevel);
 
   const name = profile?.name ?? "Pelajar";
-  const lesson = getLessonByDay(currentDay);
-  const roadmap = buildRoadmap(currentDay, completedDays);
+  const lesson = getLessonByDay(activeLevel === "A1" ? currentDay : -1);
+  const dayMeta = daysForLevel(activeLevel).find((d) => d.day === currentDay);
+  const roadmap = buildRoadmap(currentDay, completedDays, daysForLevel(activeLevel));
   const reviewDue = buildReviewQueue(vocabStatus).length;
   const stats = deriveStats({
     startLevel: profile?.startLevel ?? "A1.1",
@@ -67,16 +70,22 @@ export default function DashboardPage() {
               <MissionCard lesson={lesson} progress={dayProgress} />
             ) : (
               <div className="card-base p-6">
-                <h2 className="font-heading text-xl font-extrabold text-ink">
-                  Hari {currentDay}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white dark:text-bg">
+                    {activeLevel} · Hari {currentDay}
+                  </span>
+                  {dayMeta && <LevelBadge level={dayMeta.subLevel} variant="soft" />}
+                </div>
+                <h2 className="mt-3 font-heading text-xl font-extrabold text-ink">
+                  {dayMeta?.theme ?? `Hari ${currentDay}`}
                 </h2>
-                <p className="mt-2 text-muted">
-                  Materi interaktif untuk hari ini sedang disiapkan. Sementara itu, perkuat
-                  ingatanmu lewat review atau ulangi pelajaran sebelumnya.
+                <p className="mt-1 text-muted">
+                  {dayMeta?.skill ? `Fokus: ${dayMeta.skill}. ` : ""}
+                  Pelajaran ini dibuat khusus untukmu oleh AI sesuai level {activeLevel}.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <CTAButton href="/review">Mulai Review</CTAButton>
-                  <CTAButton href="/roadmap" variant="outline">Lihat Roadmap</CTAButton>
+                  <CTAButton href="/lesson">Mulai Belajar</CTAButton>
+                  <CTAButton href="/review" variant="outline">Review</CTAButton>
                 </div>
               </div>
             )}

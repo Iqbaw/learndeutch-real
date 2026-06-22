@@ -6,6 +6,7 @@ import type {
   CEFRLevel,
   ErrorCategory,
   ErrorItem,
+  MajorLevel,
   MemoryStatus,
   Skill,
 } from "@/types";
@@ -80,6 +81,15 @@ interface AppState {
   lastReviewDate: string | null;
   xp: number;
 
+  // --- major level system (A1 → C2) ---
+  activeLevel: MajorLevel;
+  unlockedLevels: MajorLevel[];
+  // per-level progress preserved when switching between major levels
+  levelArchive: Record<string, { currentDay: number; completedDays: number[] }>;
+  switchLevel: (level: MajorLevel) => void;
+  unlockLevel: (level: MajorLevel) => void;
+  skipToLevel: (level: MajorLevel) => void;
+
   vocabStatus: Record<string, MemoryStatus>;
   errors: ErrorItem[];
   skillStats: Partial<Record<Skill, SkillStat>>;
@@ -146,6 +156,9 @@ const initialProgress = {
   lastStudyDate: null as string | null,
   lastReviewDate: null as string | null,
   xp: 0,
+  activeLevel: "A1" as MajorLevel,
+  unlockedLevels: ["A1"] as MajorLevel[],
+  levelArchive: {} as Record<string, { currentDay: number; completedDays: number[] }>,
   vocabStatus: {} as Record<string, MemoryStatus>,
   errors: [] as ErrorItem[],
   skillStats: {} as Partial<Record<Skill, SkillStat>>,
@@ -153,6 +166,8 @@ const initialProgress = {
   mockResults: [] as MockResult[],
   speakingAttempts: 0,
 };
+
+export const MAJOR_LEVELS: MajorLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -190,6 +205,42 @@ export const useAppStore = create<AppState>()(
         }),
       completeOnboarding: (profile, startDay = 1) =>
         set({ profile, currentDay: Math.max(1, startDay) }),
+
+      switchLevel: (level) =>
+        set((s) => {
+          if (level === s.activeLevel) return s;
+          const levelArchive = {
+            ...s.levelArchive,
+            [s.activeLevel]: { currentDay: s.currentDay, completedDays: s.completedDays },
+          };
+          const restored = levelArchive[level] ?? { currentDay: 1, completedDays: [] };
+          const unlockedLevels = s.unlockedLevels.includes(level)
+            ? s.unlockedLevels
+            : [...s.unlockedLevels, level];
+          return {
+            activeLevel: level,
+            unlockedLevels,
+            levelArchive,
+            currentDay: restored.currentDay,
+            completedDays: restored.completedDays,
+          };
+        }),
+
+      unlockLevel: (level) =>
+        set((s) => {
+          const idx = MAJOR_LEVELS.indexOf(level);
+          if (idx < 0) return s;
+          // Unlocking a level also marks every level below it as unlocked (passed).
+          const unlockedLevels = Array.from(
+            new Set([...s.unlockedLevels, ...MAJOR_LEVELS.slice(0, idx + 1)])
+          );
+          return { unlockedLevels };
+        }),
+
+      skipToLevel: (level) => {
+        get().unlockLevel(level);
+        get().switchLevel(level);
+      },
 
       ...initialProgress,
 
@@ -357,6 +408,9 @@ export const useAppStore = create<AppState>()(
         streak: s.streak,
         lastStudyDate: s.lastStudyDate,
         xp: s.xp,
+        activeLevel: s.activeLevel,
+        unlockedLevels: s.unlockedLevels,
+        levelArchive: s.levelArchive,
         vocabStatus: s.vocabStatus,
         errors: s.errors,
         skillStats: s.skillStats,

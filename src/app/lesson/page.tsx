@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { LessonPlayer } from "@/components/learning/lesson-player";
 import { getLessonByDay, lessons } from "@/data/lessons";
-import { a1Days } from "@/data/levels";
+import { daysForLevel } from "@/data/levels";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { useAppStore, useHydrated } from "@/lib/store";
@@ -31,6 +31,7 @@ export default function LessonPage() {
   const errors = useAppStore((s) => s.errors);
   const currentDay = useAppStore((s) => s.currentDay);
   const completedDays = useAppStore((s) => s.completedDays);
+  const activeLevel = useAppStore((s) => s.activeLevel);
   const router = useRouter();
 
   const [started, setStarted] = useState(false);
@@ -54,11 +55,16 @@ export default function LessonPage() {
   }, []);
 
   const staticLesson = useMemo(() => {
+    // Hand-authored lessons exist only for A1; other levels use AI generation.
+    if (activeLevel !== "A1") return undefined;
     const lastAvailableDay = lessons[lessons.length - 1]?.day ?? 1;
     return getLessonByDay(currentDay) ?? getLessonByDay(Math.min(currentDay, lastAvailableDay));
-  }, [currentDay]);
+  }, [currentDay, activeLevel]);
 
-  const dayMeta = useMemo(() => a1Days.find((d) => d.day === currentDay), [currentDay]);
+  const dayMeta = useMemo(
+    () => daysForLevel(activeLevel).find((d) => d.day === currentDay),
+    [activeLevel, currentDay]
+  );
 
   const alreadyDone = completedDays.includes(currentDay);
 

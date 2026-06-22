@@ -87,9 +87,13 @@ function relativeSkillLevel(base: CEFRLevel, skillAccuracy: number, refAccuracy:
   return levelAt(levelIndex(base) + step);
 }
 
-export function buildRoadmap(currentDay: number, completedDays: number[]): RoadmapDay[] {
+export function buildRoadmap(
+  currentDay: number,
+  completedDays: number[],
+  days: { day: number; subLevel: CEFRLevel; theme: string; skill: string; estimatedMinutes: number }[] = a1Days
+): RoadmapDay[] {
   const done = new Set(completedDays);
-  return a1Days.map((d) => {
+  return days.map((d) => {
     let status: RoadmapDay["status"];
     if (done.has(d.day)) status = "done";
     else if (d.day === currentDay) status = "active";
