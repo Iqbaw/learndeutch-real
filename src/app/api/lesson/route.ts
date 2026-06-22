@@ -125,11 +125,13 @@ function coerceStep(raw: unknown): LessonStep | null {
     });
     const correctIndex = typeof e.correctIndex === "number" ? e.correctIndex : -1;
     if (prompt && promptLooksComplete(prompt) && options.length >= 2 && correctIndex >= 0 && correctIndex < options.length) {
+      const audioText = str(e.audioText);
       step.exercise = {
         prompt,
         options,
         correctIndex,
         explanation: str(e.explanation) ?? "",
+        ...(audioText ? { audioText } : {}),
       };
     } else if (type === "drill" || type === "listening") {
       // a drill/listening step without a valid exercise is not renderable
@@ -249,6 +251,9 @@ Aturan konten:
 - Buat 7–10 langkah dengan urutan yang masuk akal.
 - Wajib ada minimal: 1 "story", 1 "pattern", 1 "example", 2 "drill", 1 langkah produktif ("speaking" atau "writing"), 1 "mistake", diakhiri 1 "victory".
 - Setiap "drill" dan "listening" WAJIB punya objek "exercise" dengan 3 opsi BERBEDA.
+- Langkah "listening" WAJIB punya "audioText": kalimat/dialog Jerman yang akan DIPUTAR sebagai
+  audio. Untuk listening, "prompt" berisi PERTANYAAN saja (bahasa Indonesia) — JANGAN menuliskan
+  teks Jermannya di prompt (biar pelajar benar-benar mendengar).
 - WAJIB: soal yang melengkapi kalimat HARUS memuat kalimat Jerman LENGKAP dengan bagian
   kosong ditandai "___" di field "prompt" — jangan menulis instruksi tanpa kalimatnya.
 - ATURAN OPSI (PENTING): hanya 1 opsi yang benar; 2 opsi lain harus JELAS SALAH (kesalahan
@@ -266,7 +271,7 @@ Skema JSON (ikuti persis nama field):
     { "type": "example", "title": "...", "german": "...", "indonesian": "...",
       "tokens": [ { "text": "Ich", "role": "subject" }, { "text": "lerne", "role": "verb" } ] },
     { "type": "drill", "title": "...", "exercise": { "prompt": "...", "options": ["a","b","c"], "correctIndex": 0, "explanation": "..." } },
-    { "type": "listening", "title": "...", "exercise": { "prompt": "...", "options": ["a","b","c"], "correctIndex": 1, "explanation": "..." } },
+    { "type": "listening", "title": "...", "exercise": { "prompt": "pertanyaan saja (Indonesia)", "audioText": "kalimat/dialog Jerman yang diputar", "options": ["a","b","c"], "correctIndex": 1, "explanation": "..." } },
     { "type": "speaking", "title": "...", "prompt": "Ucapkan: ...", "expected": "kalimat Jerman", "body": "tips" },
     { "type": "writing", "title": "...", "prompt": "Tulis: ...", "expected": "kalimat Jerman", "keywords": ["kata wajib"] },
     { "type": "mistake", "title": "...", "wrong": "salah", "correct": "benar", "body": "penjelasan" },

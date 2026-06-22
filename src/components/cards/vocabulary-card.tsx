@@ -17,8 +17,8 @@ const articleColor: Record<string, string> = {
 
 const statusStyle: Record<MemoryStatus, { label: string; cls: string }> = {
   new: { label: "Belum dipelajari", cls: "bg-elevated text-muted" },
-  learning: { label: "Dipelajari", cls: "bg-secondary-soft text-secondary" },
-  review: { label: "Perlu review", cls: "bg-warning/15 text-warning" },
+  learning: { label: "Sedang dipelajari", cls: "bg-secondary-soft text-secondary" },
+  review: { label: "Perlu diulang", cls: "bg-warning/15 text-warning" },
   almost: { label: "Hampir hafal", cls: "bg-primary-soft text-primary" },
   mastered: { label: "Dikuasai", cls: "bg-success/15 text-success" },
 };

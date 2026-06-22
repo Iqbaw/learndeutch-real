@@ -22,8 +22,11 @@ import type { Lesson, LessonStep, LessonStepType, Skill, ErrorCategory } from "@
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { playSound } from "@/lib/sound";
+import { speak } from "@/lib/speech";
 import { CTAButton } from "@/components/ui/cta-button";
 import { FormattedText } from "@/components/ui/formatted-text";
+import { FormulaBlock } from "@/components/ui/formula-block";
+import { ListenButton } from "@/components/ui/listen-button";
 import { ExerciseCard } from "./exercise-card";
 import { TokenSentence } from "./token-sentence";
 import { SpeechPractice } from "./speech-practice";
@@ -67,6 +70,7 @@ const stepIcon: Record<LessonStepType, typeof BookOpen> = {
 export function LessonPlayer({ lesson }: { lesson: Lesson }) {
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState(false);
+  const [answered, setAnswered] = useState(false);
 
   const recordAnswer = useAppStore((s) => s.recordAnswer);
   const recordError = useAppStore((s) => s.recordError);
@@ -78,6 +82,15 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
   const step = lesson.steps[index];
   const progress = Math.round(((index + (done ? 1 : 0)) / total) * 100);
   const isLast = index === total - 1;
+
+  // Typed (writing) steps must be checked with "Periksa" before moving on.
+  const mustCheckFirst = step.type === "writing" && !!step.prompt;
+  const blockNext = mustCheckFirst && !answered;
+
+  // reset the "answered" gate whenever the step changes
+  useEffect(() => {
+    setAnswered(false);
+  }, [index]);
 
   // record the completed lesson exactly once when the user reaches the end
   useEffect(() => {
@@ -150,6 +163,7 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
                 step={step}
                 onExercise={(correct, info) => handleExercise(step.type, correct, info)}
                 onSpeak={handleSpeak}
+                onWritten={() => setAnswered(true)}
               />
             </motion.div>
           ) : (
@@ -160,18 +174,25 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
 
       {/* Footer nav */}
       {!done && (
-        <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-border bg-bg/90 py-4 backdrop-blur">
-          <button
-            type="button"
-            onClick={() => setIndex((i) => Math.max(0, i - 1))}
-            disabled={index === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold text-muted hover:text-ink disabled:opacity-40 focusable"
-          >
-            <ArrowLeft className="h-4 w-4" /> Sebelumnya
-          </button>
-          <CTAButton onClick={next} size="lg">
-            {isLast ? "Selesai" : "Lanjut"} <ArrowRight className="h-5 w-5" />
-          </CTAButton>
+        <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border bg-bg/90 py-4 backdrop-blur">
+          {blockNext && (
+            <p className="text-center text-xs font-medium text-muted">
+              Tekan <span className="font-bold text-primary">Periksa</span> dulu untuk melihat jawaban sebelum lanjut.
+            </p>
+          )}
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setIndex((i) => Math.max(0, i - 1))}
+              disabled={index === 0}
+              className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold text-muted hover:text-ink disabled:opacity-40 focusable"
+            >
+              <ArrowLeft className="h-4 w-4" /> Sebelumnya
+            </button>
+            <CTAButton onClick={next} size="lg" disabled={blockNext}>
+              {isLast ? "Selesai" : "Lanjut"} <ArrowRight className="h-5 w-5" />
+            </CTAButton>
+          </div>
         </div>
       )}
     </div>
@@ -196,6 +217,7 @@ function StepView({
   step,
   onExercise,
   onSpeak,
+  onWritten,
 }: {
   step: LessonStep;
   onExercise?: (
@@ -203,6 +225,7 @@ function StepView({
     info: { userAnswer: string; correctAnswer: string; explanation: string }
   ) => void;
   onSpeak?: (passed: boolean) => void;
+  onWritten?: () => void;
 }) {
   return (
     <div>
@@ -216,8 +239,8 @@ function StepView({
 
       {step.formula && (
         <div className="mt-4 rounded-2xl bg-elevated p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-muted">Rumus</p>
-          <p className="mt-1 font-mono text-base text-ink">{step.formula}</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">Rumus</p>
+          <FormulaBlock formula={step.formula} />
         </div>
       )}
 
@@ -240,6 +263,10 @@ function StepView({
         </div>
       )}
 
+      {step.type === "listening" && step.exercise && (
+        <HoerenBlock text={step.exercise.audioText || step.german || step.exercise.prompt} />
+      )}
+
       {step.exercise && (
         <div className="mt-5">
           <ExerciseCard exercise={step.exercise} onAnswered={onExercise} />
@@ -247,7 +274,12 @@ function StepView({
       )}
 
       {(step.type === "speaking" || step.type === "writing") && step.prompt && (
-        <InputStep step={step} onSpeak={onSpeak} onWriteResult={onExercise ? (correct, info) => onExercise(correct, info) : undefined} />
+        <InputStep
+          step={step}
+          onSpeak={onSpeak}
+          onWriteResult={onExercise ? (correct, info) => onExercise(correct, info) : undefined}
+          onWritten={onWritten}
+        />
       )}
 
       {step.type === "mistake" && <MistakeStep step={step} />}
@@ -263,10 +295,12 @@ function InputStep({
   step,
   onSpeak,
   onWriteResult,
+  onWritten,
 }: {
   step: LessonStep;
   onSpeak?: (passed: boolean) => void;
   onWriteResult?: (correct: boolean, info: { userAnswer: string; correctAnswer: string; explanation: string }) => void;
+  onWritten?: () => void;
 }) {
   const [value, setValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -299,6 +333,7 @@ function InputStep({
 
     setIsCorrect(correct);
     playSound(correct ? "correct" : "wrong");
+    onWritten?.();
     onWriteResult?.(correct, {
       userAnswer,
       correctAnswer: expected,
@@ -411,16 +446,30 @@ function MistakeStep({ step }: { step: LessonStep }) {
 }
 
 function VictoryInline({ achievements, body }: { achievements: string[]; body?: string }) {
+  // De-duplicate: drop achievements that just repeat the body or each other,
+  // which is what caused the "doubled sentence" in the Mini Victory.
+  const norm = (s: string) => s.trim().toLowerCase().replace(/[.!]+$/, "");
+  const seen = new Set<string>();
+  if (body) seen.add(norm(body));
+  const uniqueAchievements = achievements.filter((a) => {
+    const k = norm(a);
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+
   return (
     <div className="mt-2 space-y-4">
       {body && <p className="text-lg leading-relaxed text-ink"><FormattedText text={body} /></p>}
-      <ul className="space-y-2">
-        {achievements.map((a, i) => (
-          <li key={i} className="flex items-start gap-2 rounded-xl bg-success/10 p-3 text-sm text-ink">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" /> <FormattedText text={a} />
-          </li>
-        ))}
-      </ul>
+      {uniqueAchievements.length > 0 && (
+        <ul className="space-y-2">
+          {uniqueAchievements.map((a, i) => (
+            <li key={i} className="flex items-start gap-2 rounded-xl bg-success/10 p-3 text-sm text-ink">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" /> <FormattedText text={a} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -457,5 +506,27 @@ function VictoryView({ lesson }: { lesson: Lesson }) {
         </CTAButton>
       </div>
     </motion.div>
+  );
+}
+
+
+// Hören (listening) audio block — plays the clip (auto + replay) and hides the
+// transcript so the learner truly practises listening.
+function HoerenBlock({ text }: { text: string }) {
+  useEffect(() => {
+    const t = setTimeout(() => speak(text), 300);
+    return () => clearTimeout(t);
+  }, [text]);
+  return (
+    <div className="mt-4 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary-soft/40 p-4">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-onprimary">
+        <Volume2 className="h-5 w-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-heading text-sm font-bold text-ink">Dengarkan</p>
+        <p className="text-xs text-muted">Putar audionya, lalu jawab. Teks sengaja disembunyikan.</p>
+      </div>
+      <ListenButton text={text} label="Putar" />
+    </div>
   );
 }

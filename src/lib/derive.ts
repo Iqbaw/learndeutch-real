@@ -175,7 +175,11 @@ export function grammarMasteryFor(
   topicId: string,
   grammarStats: Record<string, SkillStat>
 ): number {
-  return accuracy(grammarStats[topicId]);
+  // Grammar topic mastery can reach a full 100% (you can fully master a topic),
+  // unlike the overall CEFR stats which are intentionally capped at 98%.
+  const stat = grammarStats[topicId];
+  if (!stat || stat.total === 0) return 0;
+  return Math.round((stat.correct / stat.total) * 100);
 }
 
 export function computeGrammarMastery(

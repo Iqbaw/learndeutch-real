@@ -170,7 +170,11 @@ export function SpeechPractice({
         </p>
       )}
 
-      {feedback && !feedback.noSpeech && (
+      {feedback && !feedback.noSpeech && (() => {
+        const speechPassed =
+          feedback.pronunciation >= 60 &&
+          feedback.matchedWords / Math.max(1, feedback.totalWords) >= 0.6;
+        return (
         <div className="mt-4 animate-fade-up">
           <p className="text-xs font-bold uppercase tracking-wide text-muted">Kamu mengucapkan</p>
           <p className="mt-1 rounded-xl bg-elevated p-3 font-body text-ink">
@@ -200,7 +204,7 @@ export function SpeechPractice({
             >
               <RotateCcw className="h-3.5 w-3.5" /> Coba lagi
             </button>
-            {allowSave && (
+            {allowSave && !speechPassed && (
               <button
                 onClick={() => {
                   onSave?.({
@@ -219,7 +223,8 @@ export function SpeechPractice({
             )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {feedback?.noSpeech && (
         <p className="mt-3 rounded-xl bg-elevated p-3 text-sm text-muted">{feedback.feedback}</p>

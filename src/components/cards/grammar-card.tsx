@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { playSound } from "@/lib/sound";
 import type { GrammarTopic } from "@/types";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { FormulaBlock } from "@/components/ui/formula-block";
 
 export function GrammarCard({
   topic,
@@ -72,8 +73,8 @@ export function GrammarCard({
       {open && (
         <div className="space-y-4 border-t border-border px-5 py-4 animate-fade-up">
           <div className="rounded-xl bg-elevated p-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted">Rumus</p>
-            <p className="mt-1 font-mono text-sm text-ink">{topic.formula}</p>
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">Rumus</p>
+            <FormulaBlock formula={topic.formula} />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
