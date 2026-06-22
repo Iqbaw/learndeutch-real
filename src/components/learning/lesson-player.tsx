@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { playSound } from "@/lib/sound";
 import { CTAButton } from "@/components/ui/cta-button";
+import { FormattedText } from "@/components/ui/formatted-text";
 import { ExerciseCard } from "./exercise-card";
 import { TokenSentence } from "./token-sentence";
 import { SpeechPractice } from "./speech-practice";
@@ -208,7 +209,9 @@ function StepView({
       <StepBadge type={step.type} title={step.title} />
 
       {step.body && step.type !== "mistake" && (
-        <p className="text-lg leading-relaxed text-ink">{step.body}</p>
+        <p className="text-lg leading-relaxed text-ink">
+          <FormattedText text={step.body} />
+        </p>
       )}
 
       {step.formula && (
@@ -229,7 +232,11 @@ function StepView({
           {step.german && (
             <p className="font-heading text-xl font-extrabold text-ink">{step.german}</p>
           )}
-          {step.indonesian && <p className="mt-1 text-muted">{step.indonesian}</p>}
+          {step.indonesian && (
+            <p className="mt-1 text-muted">
+              <FormattedText text={step.indonesian} />
+            </p>
+          )}
         </div>
       )}
 
@@ -306,7 +313,7 @@ function InputStep({
       <p className="rounded-2xl bg-primary-soft/60 p-4 font-heading text-lg font-bold text-ink">
         {step.prompt}
       </p>
-      {step.body && <p className="mt-2 text-sm text-muted">{step.body}</p>}
+      {step.body && <p className="mt-2 text-sm text-muted"><FormattedText text={step.body} /></p>}
 
       {speaking ? (
         <SpeechPractice expected={step.expected ?? step.prompt ?? ""} onResult={onSpeak} className="mt-4" />
@@ -384,7 +391,7 @@ function levenshteinDist(a: string, b: string): number {
 function MistakeStep({ step }: { step: LessonStep }) {
   return (
     <div className="mt-2 space-y-4">
-      {step.body && <p className="text-lg leading-relaxed text-ink">{step.body}</p>}
+      {step.body && <p className="text-lg leading-relaxed text-ink"><FormattedText text={step.body} /></p>}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-danger/30 bg-danger/10 p-4">
           <p className="flex items-center gap-1.5 text-xs font-bold text-danger">
@@ -406,11 +413,11 @@ function MistakeStep({ step }: { step: LessonStep }) {
 function VictoryInline({ achievements, body }: { achievements: string[]; body?: string }) {
   return (
     <div className="mt-2 space-y-4">
-      {body && <p className="text-lg leading-relaxed text-ink">{body}</p>}
+      {body && <p className="text-lg leading-relaxed text-ink"><FormattedText text={body} /></p>}
       <ul className="space-y-2">
         {achievements.map((a, i) => (
           <li key={i} className="flex items-start gap-2 rounded-xl bg-success/10 p-3 text-sm text-ink">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" /> {a}
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" /> <FormattedText text={a} />
           </li>
         ))}
       </ul>
