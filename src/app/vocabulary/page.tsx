@@ -41,6 +41,22 @@ export default function VocabularyPage() {
           <StatCard label="Sudah dikuasai" value={mastered} hint="kata" accent="success" />
         </div>
 
+        <div className="mt-4 rounded-2xl border border-border bg-card p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted">Arti status</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <Legend cls="bg-secondary-soft text-secondary" label="Dipelajari" desc="baru kamu mulai pelajari" />
+            <Legend cls="bg-warning/15 text-warning" label="Perlu review" desc="pernah salah, perlu diulang" />
+            <Legend cls="bg-primary-soft text-primary" label="Hampir hafal" desc="tinggal selangkah lagi" />
+            <Legend cls="bg-success/15 text-success" label="Dikuasai" desc="sudah melekat kuat" />
+            <Legend cls="bg-elevated text-muted" label="Belum dipelajari" desc="belum kamu mulai" />
+          </div>
+          <p className="mt-3 text-xs text-muted">
+            Status naik turun otomatis lewat <span className="font-bold text-ink">Review</span> — jawab benar
+            menaikkan status, salah mengembalikannya ke &quot;perlu review&quot;. Statusnya memang bukan tombol;
+            untuk menaikkannya, latih kata itu di Review.
+          </p>
+        </div>
+
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
@@ -90,5 +106,14 @@ export default function VocabularyPage() {
         </div>
       </AppGuard>
     </AppShell>
+  );
+}
+
+function Legend({ cls, label, desc }: { cls: string; label: string; desc: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className={cn("rounded-md px-2 py-0.5 text-xs font-bold", cls)}>{label}</span>
+      <span className="text-xs text-muted">{desc}</span>
+    </div>
   );
 }

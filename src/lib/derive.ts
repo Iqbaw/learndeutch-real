@@ -95,13 +95,21 @@ export function buildRoadmap(
   const done = new Set(completedDays);
   return days.map((d) => {
     let status: RoadmapDay["status"];
-    if (done.has(d.day)) status = "done";
-    else if (d.day === currentDay) status = "active";
-    else if (d.day < currentDay) status = "done";
-    else if (EXAM_DAYS.has(d.day)) status = "exam";
-    else if (REVIEW_DAYS.has(d.day)) status = "review";
-    else if (REMEDIAL_DAYS.has(d.day)) status = "remedial";
-    else status = "locked";
+    if (d.day === currentDay) {
+      status = "active";
+    } else if (done.has(d.day) || d.day < currentDay) {
+      // a day the learner has already reached — replayable, keeps its type
+      status = EXAM_DAYS.has(d.day)
+        ? "exam"
+        : REVIEW_DAYS.has(d.day)
+        ? "review"
+        : REMEDIAL_DAYS.has(d.day)
+        ? "remedial"
+        : "done";
+    } else {
+      // not reached yet → locked (must progress to unlock)
+      status = "locked";
+    }
     return {
       day: d.day,
       subLevel: d.subLevel,

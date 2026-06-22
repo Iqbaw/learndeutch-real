@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { motion } from "framer-motion";
 import {
   AlertCircle,
   RefreshCw,
@@ -93,18 +95,18 @@ export default function DashboardPage() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <div className="card-base flex items-center gap-4 p-5">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary-soft text-secondary">
+              <PopIcon active={streak > 0} glow="rgba(245, 158, 11, 0.55)" className="bg-secondary-soft text-secondary">
                 <Flame className="h-7 w-7" />
-              </div>
+              </PopIcon>
               <div>
                 <p className="font-heading text-2xl font-extrabold text-ink">{streak} hari</p>
                 <p className="text-sm text-muted">Streak konsistensi</p>
               </div>
             </div>
             <div className="card-base flex items-center gap-4 p-5">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+              <PopIcon active={xp > 0} glow="rgba(99, 102, 241, 0.5)" delay={0.12} className="bg-primary-soft text-primary">
                 <Trophy className="h-7 w-7" />
-              </div>
+              </PopIcon>
               <div>
                 <p className="font-heading text-2xl font-extrabold text-ink">
                   {xp.toLocaleString("id-ID")} XP
@@ -226,4 +228,46 @@ function topErrorCategories(errors: { category: string }[]) {
     .map(([category, count]) => ({ category, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
+}
+
+
+// A subtle "ignite" pop for the streak & XP icons when you open the dashboard.
+// Kept brief (a couple of pulses) so it celebrates without breaking the
+// minimalist feel.
+function PopIcon({
+  children,
+  active,
+  glow,
+  className = "",
+  delay = 0,
+}: {
+  children: ReactNode;
+  active: boolean;
+  glow: string;
+  className?: string;
+  delay?: number;
+}) {
+  return (
+    <motion.div
+      initial={{ scale: 0.6, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 320, damping: 15, delay }}
+      className={`relative flex h-14 w-14 items-center justify-center rounded-2xl ${className}`}
+    >
+      {active && (
+        <motion.span
+          aria-hidden
+          className="absolute inset-0 rounded-2xl"
+          animate={{ boxShadow: ["0 0 0 0 rgba(0,0,0,0)", `0 0 20px 4px ${glow}`, "0 0 0 0 rgba(0,0,0,0)"] }}
+          transition={{ duration: 1.5, repeat: 2, delay: delay + 0.2 }}
+        />
+      )}
+      <motion.span
+        animate={active ? { scale: [1, 1.16, 1], rotate: [0, -5, 0] } : undefined}
+        transition={{ duration: 0.9, repeat: 2, delay: delay + 0.25 }}
+      >
+        {children}
+      </motion.span>
+    </motion.div>
+  );
 }

@@ -15,6 +15,12 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "bin-bist-ist: 'B-B-I' untuk tiga subjek pertama.",
     level: "A1.1",
     icon: "user",
+    quiz: {
+      question: "Lengkapi: „Wir ___ Studenten.“",
+      options: ["sind", "seid", "bist"],
+      correctIndex: 0,
+      explanation: "Untuk subjek 'wir', bentuk sein adalah 'sind'.",
+    },
   },
   {
     id: "haben",
@@ -29,6 +35,12 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "habe-hast-hat: tiga 'ha' beruntun.",
     level: "A1.1",
     icon: "package",
+    quiz: {
+      question: "Lengkapi: „Er ___ einen Hund.“",
+      options: ["hat", "habe", "haben"],
+      correctIndex: 0,
+      explanation: "Untuk subjek 'er', bentuk haben adalah 'hat'.",
+    },
   },
   {
     id: "verb-position-2",
@@ -43,6 +55,12 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "Verb naik kereta dan selalu duduk di kursi nomor 2.",
     level: "A1.1",
     icon: "train-front",
+    quiz: {
+      question: "Mana kalimat yang benar?",
+      options: ["Morgen gehe ich ins Kino.", "Morgen ich gehe ins Kino."],
+      correctIndex: 0,
+      explanation: "Diawali 'Morgen', verba tetap di posisi ke-2, baru subjek.",
+    },
   },
   {
     id: "regular-verb",
@@ -57,6 +75,12 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "du selalu bawa '-st' (du-ST).",
     level: "A1.2",
     icon: "repeat",
+    quiz: {
+      question: "Lengkapi: „Ihr ___ Fußball.“ (spielen)",
+      options: ["spielt", "spielen", "spielst"],
+      correctIndex: 0,
+      explanation: "Untuk subjek 'ihr', akhirannya '-t' → 'spielt'.",
+    },
   },
   {
     id: "w-fragen",
@@ -71,6 +95,12 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "Wer, Was, Wo, Wann, Warum, Wie — semuanya W.",
     level: "A1.2",
     icon: "help-circle",
+    quiz: {
+      question: "Mana kalimat yang benar?",
+      options: ["Wann beginnt der Kurs?", "Wann der Kurs beginnt?"],
+      correctIndex: 0,
+      explanation: "Setelah kata tanya W, verba langsung mengikuti sebelum subjek.",
+    },
   },
   {
     id: "nicht-kein",
@@ -85,6 +115,12 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "kein = ke-(b)enda. nicht = nolak aksi.",
     level: "A1.2",
     icon: "ban",
+    quiz: {
+      question: "Lengkapi: „Das ist ___ Problem.“",
+      options: ["kein", "nicht", "keine"],
+      correctIndex: 0,
+      explanation: "Menolak kata benda netral 'Problem' → 'kein' (bukan 'nicht').",
+    },
   },
   {
     id: "der-die-das",
@@ -99,6 +135,12 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "Beri warna: der biru, die ungu, das hijau.",
     level: "A1.1",
     icon: "palette",
+    quiz: {
+      question: "Pilih artikel yang benar: ___ Frau",
+      options: ["der", "die", "das"],
+      correctIndex: 1,
+      explanation: "Frau bersifat feminin → 'die Frau'.",
+    },
   },
   {
     id: "akkusativ",
@@ -113,6 +155,12 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "deN untuk objek maskuliN.",
     level: "A1.2",
     icon: "target",
+    quiz: {
+      question: "Lengkapi: „Ich kaufe ___ Apfel.“ (der Apfel)",
+      options: ["den", "der", "dem"],
+      correctIndex: 0,
+      explanation: "Apfel adalah objek (Akkusativ), maskulin: der → den.",
+    },
   },
   {
     id: "dativ-preview",
@@ -127,6 +175,12 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "deM untuk penerima (M = memberi kepada).",
     level: "A1.2",
     icon: "compass",
+    quiz: {
+      question: "Lengkapi: „Ich helfe ___ Frau.“ (die Frau)",
+      options: ["der", "die", "dem"],
+      correctIndex: 0,
+      explanation: "helfen memakai Dativ; feminin die → der.",
+    },
   },
   {
     id: "modal-moechte",
@@ -141,5 +195,11 @@ export const grammarTopics: GrammarTopic[] = [
     mnemonic: "möchte menendang verb kedua ke ujung.",
     level: "A1.2",
     icon: "sparkles",
+    quiz: {
+      question: "Mana kalimat yang benar?",
+      options: ["Ich möchte einen Tee trinken.", "Ich möchte trinken einen Tee."],
+      correctIndex: 0,
+      explanation: "Setelah modal 'möchte', verba kedua (trinken) pindah ke akhir.",
+    },
   },
 ];

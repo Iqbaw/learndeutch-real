@@ -50,7 +50,7 @@ export function DayMap({ days, compact = false }: DayMapProps) {
             </div>
           );
           return clickable ? (
-            <Link key={d.day} href="/lesson" className="focusable rounded-xl">
+            <Link key={d.day} href={`/lesson?day=${d.day}`} className="focusable rounded-xl">
               {inner}
             </Link>
           ) : (

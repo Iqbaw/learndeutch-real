@@ -22,6 +22,7 @@ import {
   Loader2,
   BrainCircuit,
   AlertTriangle,
+  Check,
 } from "lucide-react";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
@@ -66,6 +67,8 @@ interface Question {
   title: string;
   subtitle: string;
   options: Option[];
+  multi?: boolean;
+  exclusiveValues?: string[];
 }
 
 const questions: Question[] = [
@@ -108,8 +111,10 @@ const questions: Question[] = [
   },
   {
     key: "weakSkill",
-    title: "Skill apa yang paling lemah?",
-    subtitle: "Kami akan memberi latihan tambahan di sini.",
+    title: "Skill apa yang ingin kamu asah?",
+    subtitle: "Boleh pilih lebih dari satu — kami akan beri latihan ekstra di semuanya.",
+    multi: true,
+    exclusiveValues: ["Belum tahu"],
     options: [
       { value: "Grammar", label: "Grammar" },
       { value: "Speaking", label: "Speaking" },
@@ -122,7 +127,9 @@ const questions: Question[] = [
   {
     key: "learningStyle",
     title: "Gaya belajar yang kamu suka?",
-    subtitle: "Kami sesuaikan tampilan materimu.",
+    subtitle: "Pilih satu atau beberapa — kami akan padukan tampilan materimu.",
+    multi: true,
+    exclusiveValues: ["Campuran"],
     options: [
       { value: "Gambar", label: "Banyak gambar" },
       { value: "Latihan", label: "Banyak latihan" },
@@ -419,6 +426,21 @@ function ProfileStep({
   onPick: (value: string) => void;
   onBack: () => void;
 }) {
+  const exclusive = question.exclusiveValues ?? [];
+  const [picks, setPicks] = useState<string[]>(
+    selected ? selected.split(", ").filter(Boolean) : []
+  );
+
+  function toggleMulti(value: string) {
+    setPicks((prev) => {
+      const isExclusive = exclusive.includes(value);
+      if (isExclusive) return prev.includes(value) ? [] : [value];
+      // selecting a normal option clears any exclusive choice
+      const base = prev.filter((v) => !exclusive.includes(v));
+      return base.includes(value) ? base.filter((v) => v !== value) : [...base, value];
+    });
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 24 }}
@@ -436,12 +458,12 @@ function ProfileStep({
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {question.options.map((opt) => {
           const Icon = opt.icon;
-          const active = selected === opt.value;
+          const active = question.multi ? picks.includes(opt.value) : selected === opt.value;
           return (
             <button
               key={opt.value}
               type="button"
-              onClick={() => onPick(opt.value)}
+              onClick={() => (question.multi ? toggleMulti(opt.value) : onPick(opt.value))}
               className={cn(
                 "flex items-center gap-3 rounded-2xl border px-4 py-4 text-left font-heading font-bold transition-all focusable",
                 active
@@ -449,12 +471,34 @@ function ProfileStep({
                   : "border-border bg-card text-ink hover:border-primary hover:bg-primary-soft/40"
               )}
             >
+              {question.multi && (
+                <span
+                  className={cn(
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border",
+                    active ? "border-primary bg-primary text-white dark:text-bg" : "border-border"
+                  )}
+                >
+                  {active && <Check className="h-3.5 w-3.5" />}
+                </span>
+              )}
               {Icon && <Icon className="h-5 w-5 shrink-0 text-primary" />}
               {opt.label}
             </button>
           );
         })}
       </div>
+
+      {question.multi && (
+        <CTAButton
+          onClick={() => onPick(picks.join(", "))}
+          size="lg"
+          className="mt-4 w-full"
+          disabled={picks.length === 0}
+        >
+          Lanjut <ArrowRight className="h-5 w-5" />
+        </CTAButton>
+      )}
+
       <button
         type="button"
         onClick={onBack}

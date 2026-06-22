@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Loader2,
   Clock,
@@ -25,6 +25,20 @@ import { fetchAIEnabled, fetchPersonalizedLesson, type LessonRequest } from "@/s
 import type { CEFRLevel, Lesson } from "@/types";
 
 export default function LessonPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-bg">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <LessonInner />
+    </Suspense>
+  );
+}
+
+function LessonInner() {
   const hydrated = useHydrated();
   const profile = useAppStore((s) => s.profile);
   const placement = useAppStore((s) => s.placement);
@@ -33,6 +47,14 @@ export default function LessonPage() {
   const completedDays = useAppStore((s) => s.completedDays);
   const activeLevel = useAppStore((s) => s.activeLevel);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Allow replaying any day already reached (day <= currentDay) via ?day=N,
+  // e.g. from the Roadmap. Future days fall back to the current day.
+  const dayParam = parseInt(searchParams.get("day") ?? "", 10);
+  const targetDay =
+    Number.isFinite(dayParam) && dayParam >= 1 && dayParam <= currentDay ? dayParam : currentDay;
+  const isReplay = targetDay < currentDay;
 
   const [started, setStarted] = useState(false);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
@@ -58,28 +80,28 @@ export default function LessonPage() {
     // Hand-authored lessons exist only for A1; other levels use AI generation.
     if (activeLevel !== "A1") return undefined;
     const lastAvailableDay = lessons[lessons.length - 1]?.day ?? 1;
-    return getLessonByDay(currentDay) ?? getLessonByDay(Math.min(currentDay, lastAvailableDay));
-  }, [currentDay, activeLevel]);
+    return getLessonByDay(targetDay) ?? getLessonByDay(Math.min(targetDay, lastAvailableDay));
+  }, [targetDay, activeLevel]);
 
   const dayMeta = useMemo(
-    () => daysForLevel(activeLevel).find((d) => d.day === currentDay),
-    [activeLevel, currentDay]
+    () => daysForLevel(activeLevel).find((d) => d.day === targetDay),
+    [activeLevel, targetDay]
   );
 
-  const alreadyDone = completedDays.includes(currentDay);
+  const alreadyDone = completedDays.includes(targetDay);
 
   // Scaffold used both for the overview and as the brief for AI personalization.
   const scaffold = useMemo(() => {
     const subLevel: CEFRLevel =
       staticLesson?.subLevel ?? (dayMeta?.subLevel as CEFRLevel) ?? profile?.startLevel ?? "A1.1";
     return {
-      day: currentDay,
+      day: targetDay,
       subLevel,
       title: staticLesson?.title ?? dayMeta?.theme ?? "Pelajaran bahasa Jerman",
       goal: staticLesson?.goal ?? (dayMeta ? [dayMeta.skill] : ["Belajar materi hari ini"]),
       estimatedMinutes: staticLesson?.estimatedMinutes ?? dayMeta?.estimatedMinutes ?? 35,
     };
-  }, [staticLesson, dayMeta, profile, currentDay]);
+  }, [staticLesson, dayMeta, profile, targetDay]);
 
   function buildRequest(): LessonRequest {
     const recentErrorCategories = Array.from(
@@ -145,7 +167,7 @@ export default function LessonPage() {
     );
   }
 
-  const withinCourse = currentDay <= 30;
+  const withinCourse = targetDay <= 30;
   const canUseAI = aiEnabled === true && withinCourse;
 
   // No bundled lesson AND AI unavailable → nothing we can show.
@@ -153,7 +175,7 @@ export default function LessonPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg px-4 text-center">
         <h1 className="font-heading text-2xl font-extrabold text-ink">
-          Materi hari {currentDay} sedang disiapkan
+          Materi hari {targetDay} sedang disiapkan
         </h1>
         <p className="max-w-sm text-muted">
           Pelajaran interaktif untuk hari ini akan segera hadir. Sementara itu, kamu bisa
@@ -190,6 +212,11 @@ export default function LessonPage() {
                 Hari {scaffold.day}
               </span>
               <LevelBadge level={scaffold.subLevel} variant="soft" />
+              {isReplay && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-secondary-soft px-2.5 py-1 text-xs font-bold text-secondary">
+                  Mengulang
+                </span>
+              )}
               {canUseAI && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold text-primary">
                   <BrainCircuit className="h-3.5 w-3.5" /> Dipersonalisasi AI

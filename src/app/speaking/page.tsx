@@ -47,11 +47,16 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
   const synthOk = isSpeechSynthesisSupported();
   const recordSpeaking = useAppStore((s) => s.recordSpeaking);
   const recordAnswer = useAppStore((s) => s.recordAnswer);
+  const recordError = useAppStore((s) => s.recordError);
 
   function handleSpoken(passed: boolean) {
     recordSpeaking();
     recordAnswer("Speaking", passed);
     recordAnswer("Pronunciation", passed);
+  }
+
+  function handleSaveError(info: { userAnswer: string; correctAnswer: string; explanation: string }) {
+    recordError({ ...info, category: "Pronunciation" });
   }
 
   return (
@@ -114,7 +119,7 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
 
                 {!isAI && isOpen && (
                   <div className="mt-2 text-left">
-                    <SpeechPractice expected={turn.text} allowSave showListen onResult={handleSpoken} />
+                    <SpeechPractice expected={turn.text} allowSave showListen onResult={handleSpoken} onSave={handleSaveError} />
                   </div>
                 )}
               </div>

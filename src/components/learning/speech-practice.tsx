@@ -16,6 +16,8 @@ interface SpeechPracticeProps {
   showListen?: boolean;
   /** offer the "save to Error Notebook" action */
   allowSave?: boolean;
+  /** called when the user saves the attempt to the Error Notebook */
+  onSave?: (info: { userAnswer: string; correctAnswer: string; explanation: string }) => void;
   /** fired once per attempt with whether the pronunciation passed */
   onResult?: (passed: boolean) => void;
   className?: string;
@@ -25,6 +27,7 @@ export function SpeechPractice({
   expected,
   showListen = true,
   allowSave = false,
+  onSave,
   onResult,
   className,
 }: SpeechPracticeProps) {
@@ -199,7 +202,14 @@ export function SpeechPractice({
             </button>
             {allowSave && (
               <button
-                onClick={() => setSaved(true)}
+                onClick={() => {
+                  onSave?.({
+                    userAnswer: feedback.transcript || "(tidak terdeteksi)",
+                    correctAnswer: feedback.betterAnswer || expectedRef.current,
+                    explanation: feedback.feedback || "Latih pengucapan kalimat ini sampai lancar.",
+                  });
+                  setSaved(true);
+                }}
                 disabled={saved}
                 className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-primary hover:underline focusable disabled:text-success disabled:no-underline"
               >

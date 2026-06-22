@@ -76,6 +76,8 @@ export interface DrillExercise {
   options: string[];
   correctIndex: number;
   explanation: string;
+  // optional spoken text for listening (Hören) questions — played, not shown
+  audioText?: string;
 }
 
 export interface LessonStep {
@@ -153,6 +155,8 @@ export interface GrammarTopic {
   mastery?: number; // 0-100, derived per-user from the store
   level: CEFRLevel;
   icon: string;
+  // distinct recall quiz (different sentence than the worked example)
+  quiz?: { question: string; options: string[]; correctIndex: number; explanation: string };
 }
 
 // ---------- Errors ----------

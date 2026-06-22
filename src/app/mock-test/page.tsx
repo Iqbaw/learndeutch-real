@@ -20,6 +20,8 @@ import { AppShell } from "@/components/layout/app-shell";
 import { AppGuard } from "@/components/app-guard";
 import { CTAButton } from "@/components/ui/cta-button";
 import { ExerciseCard } from "@/components/learning/exercise-card";
+import { ListenButton } from "@/components/ui/listen-button";
+import { speak } from "@/lib/speech";
 import { a1MockTest } from "@/data/mockTest";
 import { useAppStore } from "@/lib/store";
 import { playSound } from "@/lib/sound";
@@ -106,6 +108,7 @@ export default function MockTestPage() {
                 transition={{ duration: 0.22 }}
                 className="card-base p-6"
               >
+                {current.audioText && <HoerenAudio audioText={current.audioText} qIndex={index} />}
                 <ExerciseCard
                   exercise={current}
                   onResult={answer}
@@ -126,6 +129,28 @@ export default function MockTestPage() {
         {phase === "result" && <Result answers={answers} total={total} />}
       </AppGuard>
     </AppShell>
+  );
+}
+
+function HoerenAudio({ audioText, qIndex }: { audioText: string; qIndex: number }) {
+  // Auto-play the clip once when a listening question appears, plus a replay button.
+  useEffect(() => {
+    const t = setTimeout(() => speak(audioText), 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qIndex]);
+
+  return (
+    <div className="mb-4 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary-soft/40 p-4">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white dark:text-bg">
+        <Headphones className="h-5 w-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-heading text-sm font-bold text-ink">Bagian Hören</p>
+        <p className="text-xs text-muted">Dengarkan audionya — teks sengaja tidak ditampilkan.</p>
+      </div>
+      <ListenButton text={audioText} label="Putar" />
+    </div>
   );
 }
 

@@ -168,20 +168,23 @@ export function nextSkill(state: PlacementState, weakSkill?: string): PlacementS
 }
 
 function mapWeakSkill(weakSkill?: string): PlacementSkill | null {
-  switch (weakSkill) {
-    case "Grammar":
-      return "grammar";
-    case "Vocabulary":
-      return "vocabulary";
-    case "Listening":
-    case "Reading":
-      return "reading";
-    case "Speaking":
-    case "Writing":
-      return "communication";
-    default:
-      return null;
+  if (!weakSkill) return null;
+  // weakSkill may be a comma-joined multi-select (e.g. "Grammar, Speaking").
+  for (const part of weakSkill.split(",").map((s) => s.trim())) {
+    switch (part) {
+      case "Grammar":
+        return "grammar";
+      case "Vocabulary":
+        return "vocabulary";
+      case "Listening":
+      case "Reading":
+        return "reading";
+      case "Speaking":
+      case "Writing":
+        return "communication";
+    }
   }
+  return null;
 }
 
 /** Decide whether the test has enough information to stop. */

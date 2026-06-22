@@ -33,6 +33,17 @@ import type { ReviewCard, ErrorItem } from "@/types";
 
 type Mode = "none" | "vocab" | "mistakes";
 
+// Normalized quiz item used by the deferred-feedback session.
+interface QuizItem {
+  id: string;
+  category?: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  tip?: string;
+}
+
 export default function ReviewPage() {
   const [mode, setMode] = useState<Mode>("none");
   const [aiEnabled, setAiEnabled] = useState(false);
@@ -51,7 +62,6 @@ export default function ReviewPage() {
 
   const queue = useMemo(() => buildReviewQueue(vocabStatus), [vocabStatus]);
 
-  // Active mistakes worth re-practicing (everything except already "safe").
   const activeErrors = useMemo(
     () =>
       [...errors]
@@ -67,7 +77,7 @@ export default function ReviewPage() {
 
   if (mode === "mistakes") {
     return (
-      <AppShell title="Koreksi Kesalahan" subtitle="Latihan dinamis dari kesalahanmu sendiri — biar benar-benar nempel.">
+      <AppShell title="Koreksi Kesalahan" subtitle="Latihan dinamis dari kesalahanmu — hasil & pembahasan muncul di akhir.">
         <AppGuard>
           <MistakeReviewSession errors={activeErrors} aiEnabled={aiEnabled} onExit={() => setMode("none")} />
         </AppGuard>
@@ -77,9 +87,9 @@ export default function ReviewPage() {
 
   if (mode === "vocab") {
     return (
-      <AppShell title="Review" subtitle="Spaced repetition: ulang di waktu yang tepat agar tidak lupa.">
+      <AppShell title="Review" subtitle="Spaced repetition — jawab dulu semua, pembahasan di akhir sesi.">
         <AppGuard>
-          <ReviewSession queue={queue} onExit={() => setMode("none")} />
+          <VocabReviewSession queue={queue} onExit={() => setMode("none")} />
         </AppGuard>
       </AppShell>
     );
@@ -172,7 +182,14 @@ function ReviewOverview({
         <StatCard label="Confidence" value={`${stats.confidence}%`} hint="estimasi level" accent="secondary" icon={<BookText className="h-5 w-5" />} />
       </div>
 
-      {/* Dynamic AI mistake correction — the headline review experience */}
+      <div className="mt-4 flex items-start gap-2 rounded-2xl border border-border bg-card p-4 text-sm text-muted">
+        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <span>
+          Di sesi review, kamu menjawab semua soal dulu tanpa diberi tahu benar/salah. Pembahasan
+          lengkap muncul di akhir — supaya kamu benar-benar berpikir, bukan cepat puas.
+        </span>
+      </div>
+
       {mistakeDue > 0 && (
         <div className="mt-5 card-base overflow-hidden border-primary/40">
           <div className="bg-gradient-to-br from-primary-soft/80 to-card p-6">
@@ -191,8 +208,7 @@ function ReviewOverview({
             </div>
             <p className="mt-4 text-sm text-ink/90">
               Kami ambil <span className="font-bold">{mistakeDue}</span> kesalahan teraktifmu (yang baru
-              atau kambuh lebih diprioritaskan), lalu {aiEnabled ? "AI menyusun variasi soal yang menguji konsep yang sama" : "kami uji ulang konsepnya"} —
-              lengkap dengan penjelasan dan trik mengingat.
+              atau kambuh diprioritaskan), uji konsepnya, lalu beri pembahasan di akhir.
             </p>
             <CTAButton onClick={onStartMistakes} size="lg" className="mt-5 w-fit">
               <Sparkles className="h-5 w-5" /> Mulai Koreksi ({mistakeDue})
@@ -201,15 +217,14 @@ function ReviewOverview({
         </div>
       )}
 
-      {/* Vocabulary spaced-repetition */}
       {queueLength > 0 && (
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
           <div className="card-base flex flex-col justify-between p-6 lg:col-span-2">
             <div>
               <h2 className="font-heading text-xl font-extrabold text-ink">Review Kosakata</h2>
               <p className="mt-2 text-muted">
-                Kartu disusun dari kata yang sudah mulai kamu pelajari. Jawaban benar menaikkan status
-                kata (learning → almost → mastered); jawaban salah mengembalikannya ke antrean.
+                Kartu disusun dari kata yang sudah mulai kamu pelajari. Jawab semuanya, lalu lihat
+                mana yang benar/salah beserta penjelasannya di akhir.
               </p>
               {reviewDoneToday && (
                 <p className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-success/15 px-2.5 py-1 text-xs font-bold text-success">
@@ -239,16 +254,13 @@ function ReviewOverview({
   );
 }
 
-// ---------- Dynamic AI mistake review ----------
+// ---------- Dynamic AI mistake review (deferred feedback) ----------
 
 function buildFallbackItems(errors: ErrorItem[]): AIReviewItem[] {
-  // Used when AI is unavailable: re-test the exact concept by asking the
-  // learner to pick the correct form over their previous wrong answer.
   return errors
     .filter((e) => e.correctAnswer && e.correctAnswer !== e.userAnswer)
     .map((e) => {
       const opts = [e.correctAnswer, e.userAnswer].filter(Boolean);
-      // shuffle deterministically by id length so it isn't always first
       const flip = e.id.length % 2 === 0;
       const options = flip ? [...opts].reverse() : opts;
       return {
@@ -278,11 +290,8 @@ function MistakeReviewSession({
   const profile = useAppStore((s) => s.profile);
   const placement = useAppStore((s) => s.placement);
 
-  const [items, setItems] = useState<AIReviewItem[] | null>(null);
+  const [items, setItems] = useState<QuizItem[] | null>(null);
   const [usedAI, setUsedAI] = useState(false);
-  const [index, setIndex] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
-  const [finished, setFinished] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -296,13 +305,19 @@ function MistakeReviewSession({
         });
       }
       if (cancelled) return;
-      if (result && result.length > 0) {
-        setItems(result);
-        setUsedAI(true);
-      } else {
-        setItems(buildFallbackItems(errors));
-        setUsedAI(false);
-      }
+      const source = result && result.length > 0 ? result : buildFallbackItems(errors);
+      setUsedAI(Boolean(result && result.length > 0));
+      setItems(
+        source.map((it) => ({
+          id: it.errorId,
+          category: it.category,
+          question: it.question,
+          options: it.options,
+          correctIndex: it.correctIndex,
+          explanation: it.explanation,
+          tip: it.tip,
+        }))
+      );
     }
     load();
     return () => {
@@ -311,86 +326,121 @@ function MistakeReviewSession({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (finished) {
-      playSound("complete");
-      completeReview();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finished]);
-
   if (items === null) {
     return (
       <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-3 py-20 text-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="font-heading font-bold text-ink">Menyusun latihan dari kesalahanmu...</p>
-        <p className="max-w-xs text-sm text-muted">
-          AI sedang membuat soal yang menargetkan konsep yang masih perlu kamu perbaiki.
-        </p>
+        <p className="max-w-xs text-sm text-muted">AI membuat soal yang menargetkan konsep yang masih perlu kamu perbaiki.</p>
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-xl">
-        <div className="card-base p-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success/15 text-success">
-            <Check className="h-9 w-9" />
-          </div>
-          <h2 className="mt-4 font-heading text-2xl font-extrabold text-ink">Tidak ada yang perlu dikoreksi</h2>
-          <p className="mt-2 text-muted">Mantap! Kesalahanmu sudah teratasi. Lanjutkan belajar untuk menambah tantangan.</p>
-          <CTAButton onClick={onExit} className="mt-6">Kembali</CTAButton>
-        </div>
-      </div>
+      <SessionDone
+        title="Tidak ada yang perlu dikoreksi"
+        message="Mantap! Kesalahanmu sudah teratasi. Lanjutkan belajar untuk menambah tantangan."
+        onExit={onExit}
+      />
     );
   }
+
+  return (
+    <DeferredQuizSession
+      items={items}
+      usedAI={usedAI}
+      onExit={onExit}
+      onComplete={(responses) => {
+        responses.forEach((r) => reviewError(r.item.id, r.picked === r.item.correctIndex));
+        completeReview();
+      }}
+    />
+  );
+}
+
+// ---------- Vocabulary review (deferred feedback) ----------
+
+function VocabReviewSession({ queue, onExit }: { queue: ReviewCard[]; onExit: () => void }) {
+  const reviewVocab = useAppStore((s) => s.reviewVocab);
+  const completeReview = useAppStore((s) => s.completeReview);
+
+  const items: QuizItem[] = queue
+    .filter((c) => c.options && c.options.length >= 2 && typeof c.correctIndex === "number")
+    .map((c) => ({
+      id: c.id,
+      category: "Kosakata",
+      question: c.question,
+      options: c.options!,
+      correctIndex: c.correctIndex!,
+      explanation: c.explanation,
+    }));
+
+  if (items.length === 0) {
+    return <SessionDone title="Antrean kosong" message="Belum ada kartu untuk direview." onExit={onExit} />;
+  }
+
+  return (
+    <DeferredQuizSession
+      items={items}
+      onExit={onExit}
+      onComplete={(responses) => {
+        responses.forEach((r) => reviewVocab(r.item.id, r.picked === r.item.correctIndex));
+        completeReview();
+      }}
+    />
+  );
+}
+
+// ---------- Shared deferred-feedback quiz ----------
+
+function DeferredQuizSession({
+  items,
+  usedAI,
+  onExit,
+  onComplete,
+}: {
+  items: QuizItem[];
+  usedAI?: boolean;
+  onExit: () => void;
+  onComplete: (responses: { item: QuizItem; picked: number }[]) => void;
+}) {
+  const [index, setIndex] = useState(0);
+  const [picked, setPicked] = useState<number | null>(null);
+  const [responses, setResponses] = useState<{ item: QuizItem; picked: number }[]>([]);
+  const [finished, setFinished] = useState(false);
 
   const total = items.length;
-
-  if (finished) {
-    const pct = Math.round((correctCount / total) * 100);
-    return (
-      <div className="mx-auto max-w-xl">
-        <div className="card-base p-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success/15 text-success">
-            <Check className="h-9 w-9" />
-          </div>
-          <h2 className="mt-4 font-heading text-2xl font-extrabold text-ink">Koreksi selesai!</h2>
-          <p className="mt-2 text-muted">
-            Kamu benar <span className="font-bold text-ink">{correctCount} dari {total}</span> ({pct}%).
-            Kesalahan yang kamu jawab benar naik menuju status &quot;aman&quot;; yang masih salah akan muncul lagi.
-          </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <CTAButton onClick={onExit} size="lg" className="flex-1">
-              <RotateCcw className="h-5 w-5" /> Kembali
-            </CTAButton>
-            <CTAButton href="/errors" variant="outline" size="lg" className="flex-1">
-              Lihat Error Notebook
-            </CTAButton>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const item = items[index];
 
-  function handleResult(correct: boolean) {
-    if (correct) setCorrectCount((c) => c + 1);
-    playSound(correct ? "correct" : "wrong");
-    reviewError(item.errorId, correct);
+  function choose(i: number) {
+    if (picked !== null) return;
+    setPicked(i);
+    playSound("tap");
   }
 
   function next() {
-    if (index < total - 1) setIndex((i) => i + 1);
-    else setFinished(true);
+    if (picked === null) return;
+    const updated = [...responses, { item, picked }];
+    setResponses(updated);
+    setPicked(null);
+    if (index < total - 1) {
+      setIndex((i) => i + 1);
+    } else {
+      setFinished(true);
+      playSound("complete");
+      onComplete(updated);
+    }
+  }
+
+  if (finished) {
+    return <QuizRecap responses={responses} onExit={onExit} />;
   }
 
   return (
     <div className="mx-auto max-w-xl">
       <div className="mb-4 flex items-center gap-3">
-        <button onClick={onExit} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted hover:text-ink focusable" aria-label="Keluar koreksi">
+        <button onClick={onExit} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted hover:text-ink focusable" aria-label="Keluar">
           <X className="h-5 w-5" />
         </button>
         <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-elevated">
@@ -407,237 +457,149 @@ function MistakeReviewSession({
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={item.errorId + index}
+          key={item.id + index}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -16 }}
           transition={{ duration: 0.22 }}
+          className="card-base p-6"
         >
-          <MistakeCardView item={item} onResult={handleResult} onNext={next} isLast={index === total - 1} />
+          {item.category && (
+            <span className="rounded-lg bg-elevated px-2.5 py-1 text-xs font-bold text-muted">{item.category}</span>
+          )}
+          <p className="mt-3 font-heading text-xl font-extrabold text-ink">{item.question}</p>
+
+          <div className="mt-5 grid gap-2.5">
+            {item.options.map((opt, i) => {
+              const isPicked = i === picked;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  data-no-sound
+                  onClick={() => choose(i)}
+                  disabled={picked !== null}
+                  className={cn(
+                    "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left font-body text-ink transition-all focusable",
+                    isPicked ? "border-primary bg-primary-soft" : "border-border bg-card",
+                    picked === null && "hover:border-primary hover:bg-primary-soft/40",
+                    picked !== null && !isPicked && "opacity-60"
+                  )}
+                >
+                  <span>{opt}</span>
+                  {isPicked && <Check className="h-5 w-5 text-primary" />}
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="mt-3 text-center text-xs text-muted">
+            Pilih jawabanmu. Pembahasan benar/salah muncul di akhir sesi.
+          </p>
+
+          {picked !== null && (
+            <CTAButton onClick={next} className="mt-4 w-full">
+              {index === total - 1 ? "Lihat Hasil & Pembahasan" : "Lanjut"} <ArrowRight className="h-4 w-4" />
+            </CTAButton>
+          )}
         </motion.div>
       </AnimatePresence>
     </div>
   );
 }
 
-function MistakeCardView({
-  item,
-  onResult,
-  onNext,
-  isLast,
+function QuizRecap({
+  responses,
+  onExit,
 }: {
-  item: AIReviewItem;
-  onResult: (correct: boolean) => void;
-  onNext: () => void;
-  isLast: boolean;
+  responses: { item: QuizItem; picked: number }[];
+  onExit: () => void;
 }) {
-  const [picked, setPicked] = useState<number | null>(null);
-  const answered = picked !== null;
-
-  function choose(i: number) {
-    if (answered) return;
-    setPicked(i);
-    onResult(i === item.correctIndex);
-  }
-
-  return (
-    <div className="card-base p-6">
-      <span className="rounded-lg bg-elevated px-2.5 py-1 text-xs font-bold text-muted">{item.category}</span>
-      <p className="mt-3 font-heading text-xl font-extrabold text-ink">{item.question}</p>
-
-      <div className="mt-5 grid gap-2.5">
-        {item.options.map((opt, i) => {
-          const isAnswer = i === item.correctIndex;
-          const isPicked = i === picked;
-          return (
-            <button
-              key={i}
-              type="button"
-              data-no-sound
-              onClick={() => choose(i)}
-              disabled={answered}
-              className={cn(
-                "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left font-body text-ink transition-all focusable",
-                !answered && "border-border bg-card hover:border-primary hover:bg-primary-soft/40",
-                answered && isAnswer && "border-success bg-success/10",
-                answered && isPicked && !isAnswer && "border-danger bg-danger/10",
-                answered && !isAnswer && !isPicked && "opacity-60"
-              )}
-            >
-              <span>{opt}</span>
-              {answered && isAnswer && <Check className="h-5 w-5 text-success" />}
-              {answered && isPicked && !isAnswer && <X className="h-5 w-5 text-danger" />}
-            </button>
-          );
-        })}
-      </div>
-
-      {answered && (item.explanation || item.tip) && (
-        <div className="mt-4 space-y-2 animate-fade-up">
-          {item.explanation && (
-            <p className="rounded-xl bg-elevated p-3 text-sm text-muted">{item.explanation}</p>
-          )}
-          {item.tip && (
-            <p className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary-soft/50 p-3 text-sm text-ink">
-              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <span><span className="font-bold">Trik ingat: </span>{item.tip}</span>
-            </p>
-          )}
-        </div>
-      )}
-
-      {answered && (
-        <CTAButton onClick={onNext} className="mt-4 w-full">
-          {isLast ? "Selesai" : "Lanjut"} <ArrowRight className="h-4 w-4" />
-        </CTAButton>
-      )}
-    </div>
-  );
-}
-
-function ReviewSession({ queue, onExit }: { queue: ReviewCard[]; onExit: () => void }) {
-  const reviewVocab = useAppStore((s) => s.reviewVocab);
-  const completeReview = useAppStore((s) => s.completeReview);
-  const [index, setIndex] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
-  const [finished, setFinished] = useState(false);
-
-  const card = queue[index];
-  const total = queue.length;
-
-  function handleResult(correct: boolean) {
-    if (correct) setCorrectCount((c) => c + 1);
-    playSound(correct ? "correct" : "wrong");
-    reviewVocab(card.id, correct);
-  }
-
-  function next() {
-    if (index < total - 1) setIndex((i) => i + 1);
-    else setFinished(true);
-  }
-
-  useEffect(() => {
-    if (finished) {
-      playSound("complete");
-      completeReview();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finished]);
-
-  if (finished) {
-    const pct = Math.round((correctCount / total) * 100);
-    return (
-      <div className="mx-auto max-w-xl">
-        <div className="card-base p-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success/15 text-success">
-            <Check className="h-9 w-9" />
-          </div>
-          <h2 className="mt-4 font-heading text-2xl font-extrabold text-ink">Review selesai!</h2>
-          <p className="mt-2 text-muted">
-            Kamu menjawab benar <span className="font-bold text-ink">{correctCount} dari {total}</span> kartu ({pct}%).
-            Status hafalan kata sudah diperbarui sesuai jawabanmu.
-          </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <CTAButton onClick={onExit} size="lg" className="flex-1">
-              <RotateCcw className="h-5 w-5" /> Kembali
-            </CTAButton>
-            <CTAButton href="/dashboard" variant="outline" size="lg" className="flex-1">
-              Ke Dashboard
-            </CTAButton>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const total = responses.length;
+  const correctCount = responses.filter((r) => r.picked === r.item.correctIndex).length;
+  const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0;
 
   return (
     <div className="mx-auto max-w-xl">
-      <div className="mb-4 flex items-center gap-3">
-        <button onClick={onExit} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted hover:text-ink focusable" aria-label="Keluar review">
-          <X className="h-5 w-5" />
-        </button>
-        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-elevated">
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(index / total) * 100}%` }} />
+      <div className="card-base p-6 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success/15 text-success">
+          <Check className="h-9 w-9" />
         </div>
-        <span className="font-mono text-xs font-bold text-muted">{index + 1}/{total}</span>
+        <h2 className="mt-4 font-heading text-2xl font-extrabold text-ink">Sesi selesai!</h2>
+        <p className="mt-2 text-muted">
+          Kamu benar <span className="font-bold text-ink">{correctCount} dari {total}</span> ({pct}%).
+          Berikut pembahasan lengkapnya — pelajari yang masih salah.
+        </p>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={card.id + index}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -16 }}
-          transition={{ duration: 0.22 }}
-        >
-          <ReviewCardView card={card} onResult={handleResult} onNext={next} isLast={index === total - 1} />
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function ReviewCardView({
-  card,
-  onResult,
-  onNext,
-  isLast,
-}: {
-  card: ReviewCard;
-  onResult: (correct: boolean) => void;
-  onNext: () => void;
-  isLast: boolean;
-}) {
-  const [picked, setPicked] = useState<number | null>(null);
-  const answered = picked !== null;
-
-  function choose(i: number) {
-    if (picked !== null) return;
-    setPicked(i);
-    onResult(i === card.correctIndex);
-  }
-
-  return (
-    <div className="card-base p-6">
-      <span className="rounded-lg bg-elevated px-2.5 py-1 text-xs font-bold text-muted">{card.due}</span>
-      <p className="mt-3 font-heading text-xl font-extrabold text-ink">{card.question}</p>
-
-      <div className="mt-5 grid gap-2.5">
-        {card.options!.map((opt, i) => {
-          const isAnswer = i === card.correctIndex;
-          const isPicked = i === picked;
+      <div className="mt-4 space-y-3">
+        {responses.map((r, idx) => {
+          const correct = r.picked === r.item.correctIndex;
           return (
-            <button
-              key={i}
-              type="button"
-              data-no-sound
-              onClick={() => choose(i)}
-              disabled={answered}
+            <div
+              key={idx}
               className={cn(
-                "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left font-body text-ink transition-all focusable",
-                !answered && "border-border bg-card hover:border-primary hover:bg-primary-soft/40",
-                answered && isAnswer && "border-success bg-success/10",
-                answered && isPicked && !isAnswer && "border-danger bg-danger/10",
-                answered && !isAnswer && !isPicked && "opacity-60"
+                "rounded-2xl border bg-card p-4",
+                correct ? "border-success/30" : "border-danger/30"
               )}
             >
-              <span>{opt}</span>
-              {answered && isAnswer && <Check className="h-5 w-5 text-success" />}
-              {answered && isPicked && !isAnswer && <X className="h-5 w-5 text-danger" />}
-            </button>
+              <div className="flex items-start gap-2">
+                <span
+                  className={cn(
+                    "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg",
+                    correct ? "bg-success/15 text-success" : "bg-danger/15 text-danger"
+                  )}
+                >
+                  {correct ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                </span>
+                <p className="font-heading text-sm font-bold text-ink">{r.item.question}</p>
+              </div>
+
+              <div className="mt-2 space-y-1 pl-8 text-sm">
+                {!correct && (
+                  <p className="text-danger">
+                    Jawabanmu: <span className="font-bold">{r.item.options[r.picked]}</span>
+                  </p>
+                )}
+                <p className="text-success">
+                  Benar: <span className="font-bold">{r.item.options[r.item.correctIndex]}</span>
+                </p>
+                {r.item.explanation && <p className="text-muted">{r.item.explanation}</p>}
+                {r.item.tip && (
+                  <p className="flex items-start gap-1.5 text-ink">
+                    <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span><span className="font-bold">Trik: </span>{r.item.tip}</span>
+                  </p>
+                )}
+              </div>
+            </div>
           );
         })}
       </div>
 
-      {answered && (
-        <p className="mt-4 rounded-xl bg-elevated p-3 text-sm text-muted animate-fade-up">{card.explanation}</p>
-      )}
-
-      {answered && (
-        <CTAButton onClick={onNext} className="mt-4 w-full">
-          {isLast ? "Selesai" : "Lanjut"} <ArrowRight className="h-4 w-4" />
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <CTAButton onClick={onExit} size="lg" className="flex-1">
+          <RotateCcw className="h-5 w-5" /> Kembali
         </CTAButton>
-      )}
+        <CTAButton href="/errors" variant="outline" size="lg" className="flex-1">
+          Lihat Error Notebook
+        </CTAButton>
+      </div>
+    </div>
+  );
+}
+
+function SessionDone({ title, message, onExit }: { title: string; message: string; onExit: () => void }) {
+  return (
+    <div className="mx-auto max-w-xl">
+      <div className="card-base p-8 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-success/15 text-success">
+          <Check className="h-9 w-9" />
+        </div>
+        <h2 className="mt-4 font-heading text-2xl font-extrabold text-ink">{title}</h2>
+        <p className="mt-2 text-muted">{message}</p>
+        <CTAButton onClick={onExit} className="mt-6">Kembali</CTAButton>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VocabularyItem, MemoryStatus } from "@/types";
 import { LevelBadge } from "@/components/ui/level-badge";
@@ -100,6 +101,21 @@ export function VocabularyCard({
         >
           <Plus className="h-4 w-4" /> Pelajari kata ini
         </button>
+      )}
+
+      {status !== "new" && status !== "mastered" && (
+        <Link
+          href="/review"
+          className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-sm font-bold text-ink transition-colors hover:bg-elevated focusable"
+        >
+          <RefreshCw className="h-4 w-4 text-primary" /> Latih di Review
+        </Link>
+      )}
+
+      {status === "mastered" && (
+        <p className="mt-3 rounded-xl bg-success/10 px-3 py-2 text-center text-xs font-bold text-success">
+          Sudah dikuasai 🎉
+        </p>
       )}
     </div>
   );

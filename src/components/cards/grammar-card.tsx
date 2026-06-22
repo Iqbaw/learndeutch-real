@@ -20,10 +20,15 @@ export function GrammarCard({
   const [practicing, setPracticing] = useState(false);
   const [picked, setPicked] = useState<number | null>(null);
 
-  // quick practice: pick the correct sentence between correct vs wrong
-  // deterministic order so SSR/CSR match: correct first for even-length titles
+  // quick recall practice — prefer the dedicated quiz (a DIFFERENT sentence than
+  // the worked example) so it tests memory, not copying. Falls back to the
+  // correct-vs-wrong example pair when a topic has no quiz yet.
   const correctFirst = topic.title.length % 2 === 0;
-  const options = correctFirst
+  const quizQuestion = topic.quiz?.question ?? "Mana kalimat yang benar?";
+  const quizExplanation = topic.quiz?.explanation ?? topic.whyWrong;
+  const options = topic.quiz
+    ? topic.quiz.options.map((text, i) => ({ text, correct: i === topic.quiz!.correctIndex }))
+    : correctFirst
     ? [{ text: topic.correct, correct: true }, { text: topic.wrong, correct: false }]
     : [{ text: topic.wrong, correct: false }, { text: topic.correct, correct: true }];
 
@@ -112,7 +117,7 @@ export function GrammarCard({
             </button>
           ) : (
             <div className="rounded-xl border border-border bg-card p-3">
-              <p className="font-heading text-sm font-bold text-ink">Mana kalimat yang benar?</p>
+              <p className="font-heading text-sm font-bold text-ink">{quizQuestion}</p>
               <div className="mt-2 grid gap-2">
                 {options.map((opt, i) => {
                   const answered = picked !== null;
@@ -140,7 +145,7 @@ export function GrammarCard({
               </div>
               {picked !== null && (
                 <p className="mt-2 flex items-start gap-1.5 text-xs text-muted animate-fade-up">
-                  <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /> {topic.whyWrong}
+                  <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /> {quizExplanation}
                 </p>
               )}
             </div>
