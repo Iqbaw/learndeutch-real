@@ -19,7 +19,6 @@ import {
 import { AppShell } from "@/components/layout/app-shell";
 import { AppGuard } from "@/components/app-guard";
 import { CTAButton } from "@/components/ui/cta-button";
-import { ExerciseCard } from "@/components/learning/exercise-card";
 import { ListenButton } from "@/components/ui/listen-button";
 import { speak } from "@/lib/speech";
 import { a1MockTest } from "@/data/mockTest";
@@ -60,17 +59,16 @@ type Phase = "intro" | "test" | "result";
 export default function MockTestPage() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, boolean>>({});
-
-  const recordAnswer = useAppStore((s) => s.recordAnswer);
-  const recordError = useAppStore((s) => s.recordError);
+  const [picked, setPicked] = useState<Record<number, number>>({});
 
   const total = flatQuestions.length;
   const current = flatQuestions[index];
+  const selected = picked[index];
 
-  function answer(correct: boolean) {
-    setAnswers((a) => ({ ...a, [index]: correct }));
-    recordAnswer(current.skill as Skill, correct);
+  function choose(optIndex: number) {
+    if (picked[index] !== undefined) return;
+    setPicked((p) => ({ ...p, [index]: optIndex }));
+    playSound("tap");
   }
 
   function next() {
@@ -79,7 +77,7 @@ export default function MockTestPage() {
   }
 
   return (
-    <AppShell title="Mock Test" subtitle="Simulasi ujian A1 untuk mengukur kesiapanmu — Reading, Listening, Grammar, Vocabulary, Writing, Speaking.">
+    <AppShell title="Mock Test" subtitle="Simulasi ujian A1 — jawab semua dulu, hasil & pembahasan muncul di akhir.">
       <AppGuard>
         {phase === "intro" && <Intro onStart={() => setPhase("test")} />}
 
@@ -109,15 +107,38 @@ export default function MockTestPage() {
                 className="card-base p-6"
               >
                 {current.audioText && <HoerenAudio audioText={current.audioText} qIndex={index} />}
-                <ExerciseCard
-                  exercise={current}
-                  onResult={answer}
-                  onAnswered={(correct, info) => {
-                    if (!correct) recordError({ ...info, category: categoryFromSkill(current.skill) });
-                  }}
-                />
-                {index in answers && (
-                  <CTAButton onClick={next} className="mt-5 w-full">
+
+                <p className="font-heading text-lg font-bold text-ink">{current.prompt}</p>
+                <div className="mt-5 grid gap-2.5">
+                  {current.options.map((opt, i) => {
+                    const isPicked = i === selected;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        data-no-sound
+                        onClick={() => choose(i)}
+                        disabled={selected !== undefined}
+                        className={cn(
+                          "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left font-body text-ink transition-all focusable",
+                          isPicked ? "border-primary bg-primary-soft" : "border-border bg-card",
+                          selected === undefined && "hover:border-primary hover:bg-primary-soft/40",
+                          selected !== undefined && !isPicked && "opacity-60"
+                        )}
+                      >
+                        <span>{opt}</span>
+                        {isPicked && <Check className="h-5 w-5 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <p className="mt-3 text-center text-xs text-muted">
+                  Ini ujian — jawaban benar/salah & pembahasan diberikan di akhir.
+                </p>
+
+                {selected !== undefined && (
+                  <CTAButton onClick={next} className="mt-4 w-full">
                     {index === total - 1 ? "Lihat Hasil" : "Soal Berikutnya"} <ArrowRight className="h-4 w-4" />
                   </CTAButton>
                 )}
@@ -126,7 +147,7 @@ export default function MockTestPage() {
           </div>
         )}
 
-        {phase === "result" && <Result answers={answers} total={total} />}
+        {phase === "result" && <Result picked={picked} total={total} />}
       </AppGuard>
     </AppShell>
   );
@@ -197,31 +218,45 @@ function Intro({ onStart }: { onStart: () => void }) {
   );
 }
 
-function Result({ answers, total }: { answers: Record<number, boolean>; total: number }) {
+function Result({ picked, total }: { picked: Record<number, number>; total: number }) {
   const recordMock = useAppStore((s) => s.recordMock);
+  const recordAnswer = useAppStore((s) => s.recordAnswer);
+  const recordError = useAppStore((s) => s.recordError);
   const recordedRef = useRef(false);
 
-  const correct = Object.values(answers).filter(Boolean).length;
+  const correctness = flatQuestions.map((q, i) => picked[i] === q.correctIndex);
+  const correct = correctness.filter(Boolean).length;
   const pct = Math.round((correct / total) * 100);
   const passed = pct >= 60;
   const confidence = Math.min(95, 55 + Math.floor(pct / 3));
 
-  // per-skill breakdown
   const skillScores = a1MockTest.sections.map((s) => {
     const offsetStart = flatQuestions.findIndex((q) => q.sectionId === s.id);
     const count = s.questions.length;
     let right = 0;
     for (let i = offsetStart; i < offsetStart + count; i++) {
-      if (answers[i]) right++;
+      if (correctness[i]) right++;
     }
     return { name: s.name, skill: s.skill, value: Math.round((right / count) * 100) };
   });
 
-  // persist the result once
+  // Record everything once, at the end of the exam.
   useEffect(() => {
     if (recordedRef.current) return;
     recordedRef.current = true;
     playSound(passed ? "levelup" : "complete");
+    flatQuestions.forEach((q, i) => {
+      const isCorrect = correctness[i];
+      recordAnswer(q.skill as Skill, isCorrect);
+      if (!isCorrect) {
+        recordError({
+          userAnswer: picked[i] !== undefined ? q.options[picked[i]] : "(tidak dijawab)",
+          correctAnswer: q.options[q.correctIndex],
+          explanation: q.explanation,
+          category: categoryFromSkill(q.skill),
+        });
+      }
+    });
     recordMock({
       id:
         typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -245,6 +280,7 @@ function Result({ answers, total }: { answers: Record<number, boolean>; total: n
           <div>
             <p className="text-sm text-muted">Skor keseluruhan</p>
             <p className="font-heading text-4xl font-extrabold text-ink">{pct}%</p>
+            <p className="text-sm text-muted">{correct} dari {total} benar</p>
           </div>
         </div>
 
@@ -291,13 +327,54 @@ function Result({ answers, total }: { answers: Record<number, boolean>; total: n
               : "Kamu belum siap lanjut. Kita perkuat dulu bagian dengan skor rendah lewat remedial otomatis, supaya levelmu benar-benar naik."}
           </p>
         </div>
+      </div>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <CTAButton href="/dashboard" size="lg" className="flex-1">Kembali ke Dashboard</CTAButton>
-          <CTAButton href={passed ? "/roadmap" : "/review"} variant="outline" size="lg" className="flex-1">
-            {passed ? "Lihat Roadmap" : "Mulai Remedial"}
-          </CTAButton>
-        </div>
+      {/* Pembahasan lengkap di akhir */}
+      <h3 className="mt-6 px-1 font-heading text-lg font-extrabold text-ink">Pembahasan</h3>
+      <div className="mt-3 space-y-3">
+        {flatQuestions.map((q, i) => {
+          const isCorrect = correctness[i];
+          return (
+            <div
+              key={i}
+              className={cn("rounded-2xl border bg-card p-4", isCorrect ? "border-success/30" : "border-danger/30")}
+            >
+              <div className="flex items-start gap-2">
+                <span
+                  className={cn(
+                    "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg",
+                    isCorrect ? "bg-success/15 text-success" : "bg-danger/15 text-danger"
+                  )}
+                >
+                  {isCorrect ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-muted">{q.sectionName}</p>
+                  <p className="font-heading text-sm font-bold text-ink">{q.prompt}</p>
+                </div>
+                {q.audioText && <ListenButton text={q.audioText} variant="icon" />}
+              </div>
+              <div className="mt-2 space-y-1 pl-8 text-sm">
+                {!isCorrect && (
+                  <p className="text-danger">
+                    Jawabanmu: <span className="font-bold">{picked[i] !== undefined ? q.options[picked[i]] : "(tidak dijawab)"}</span>
+                  </p>
+                )}
+                <p className="text-success">
+                  Benar: <span className="font-bold">{q.options[q.correctIndex]}</span>
+                </p>
+                <p className="text-muted">{q.explanation}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <CTAButton href="/dashboard" size="lg" className="flex-1">Kembali ke Dashboard</CTAButton>
+        <CTAButton href={passed ? "/roadmap" : "/review"} variant="outline" size="lg" className="flex-1">
+          {passed ? "Lihat Roadmap" : "Mulai Remedial"}
+        </CTAButton>
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { Lesson, LessonStep, LessonStepType, Skill, ErrorCategory } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, foldGerman } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { playSound } from "@/lib/sound";
 import { speak } from "@/lib/speech";
@@ -315,7 +315,7 @@ function InputStep({
     const userAnswer = value.trim();
 
     const normalize = (s: string) =>
-      s.toLowerCase().replace(/[.,!?;:'"„""]/g, "").replace(/\s+/g, " ").trim();
+      foldGerman(s).replace(/[.,!?;:'"„""]/g, "").replace(/\s+/g, " ").trim();
 
     const norm = normalize(userAnswer);
     let correct: boolean;

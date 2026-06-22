@@ -56,6 +56,16 @@ export default function ErrorsPage() {
               <StatCard label="Sudah aman" value={safe} hint="dikuasai" accent="success" />
             </div>
 
+            <div className="mt-5 flex items-start gap-2 rounded-2xl border border-border bg-card p-4 text-sm text-muted">
+              <NotebookPen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span>
+                Kata yang <span className="font-bold text-danger">disorot merah</span> = bagian yang perlu
+                diperbaiki; <span className="font-bold text-success">disorot hijau</span> = bentuk yang benar.
+                Tenang, mengetik tanpa tanda umlaut (ä/ö/ü/ß) <span className="font-bold text-ink">tetap dianggap
+                benar</span> — mis. &quot;schon&quot; = &quot;schön&quot;, &quot;ueben&quot; = &quot;üben&quot;.
+              </span>
+            </div>
+
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 text-sm font-bold text-muted">
                 <Filter className="h-4 w-4" /> Kategori:

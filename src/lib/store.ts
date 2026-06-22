@@ -171,7 +171,7 @@ export const MAJOR_LEVELS: MajorLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       hasHydrated: false,
       setHasHydrated: (v) => set({ hasHydrated: v }),
 
@@ -237,10 +237,34 @@ export const useAppStore = create<AppState>()(
           return { unlockedLevels };
         }),
 
-      skipToLevel: (level) => {
-        get().unlockLevel(level);
-        get().switchLevel(level);
-      },
+      skipToLevel: (level) =>
+        set((s) => {
+          const targetIdx = MAJOR_LEVELS.indexOf(level);
+          if (targetIdx < 0) return s;
+          const fullDays = Array.from({ length: 30 }, (_, i) => i + 1);
+          // Skipping ahead means every level below the target is considered
+          // "passed" — unlock ALL of its days (so they're replayable) and mark
+          // them completed, while preserving the current level's live progress
+          // only if it happens to be the target.
+          const levelArchive = { ...s.levelArchive };
+          for (let i = 0; i < targetIdx; i++) {
+            levelArchive[MAJOR_LEVELS[i]] = { currentDay: 30, completedDays: fullDays };
+          }
+          const unlockedLevels = Array.from(
+            new Set([...s.unlockedLevels, ...MAJOR_LEVELS.slice(0, targetIdx + 1)])
+          );
+          const restored =
+            s.activeLevel === level
+              ? { currentDay: s.currentDay, completedDays: s.completedDays }
+              : levelArchive[level] ?? { currentDay: 1, completedDays: [] };
+          return {
+            activeLevel: level,
+            unlockedLevels,
+            levelArchive,
+            currentDay: restored.currentDay,
+            completedDays: restored.completedDays,
+          };
+        }),
 
       ...initialProgress,
 

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, foldGerman } from "@/lib/utils";
 import type { ErrorItem, ErrorStatus } from "@/types";
 
 const statusStyle: Record<ErrorStatus, { label: string; cls: string }> = {
@@ -9,7 +9,9 @@ const statusStyle: Record<ErrorStatus, { label: string; cls: string }> = {
   relapsed: { label: "Kambuh lagi", cls: "bg-warning/15 text-warning" },
 };
 
-const normTok = (t: string) => t.toLowerCase().replace(/[.,!?;:"'„""()]/g, "");
+// Fold umlauts/ß so a missing "ä/ö/ü/ß" (not on every keyboard) is NOT flagged
+// as a mistake — "schon" matches "schön", "ueben" matches "üben", etc.
+const normTok = (t: string) => foldGerman(t.replace(/[.,!?;:"'„""()]/g, ""));
 const tokenize = (s: string) => s.split(/\s+/).filter(Boolean);
 
 export function ErrorCard({ item }: { item: ErrorItem }) {
