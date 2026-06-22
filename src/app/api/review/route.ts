@@ -39,6 +39,16 @@ function clean(s: unknown): string {
   return s.replace(/\*\*/g, "").replace(/`/g, "").trim();
 }
 
+/** Reject a question that asks to complete a sentence but has no sentence/gap. */
+function questionLooksComplete(q: string): boolean {
+  const p = q.trim();
+  if (p.length < 6) return false;
+  if (/[:：]\s*$/.test(p)) return false;
+  const wantsGap = /(lengkapi|melengkapi|isilah|isi titik|rumpang|kalimat berikut|lengkapilah|sisipkan)/i.test(p);
+  if (wantsGap && !p.includes("___") && !p.includes("…") && !p.includes("...")) return false;
+  return true;
+}
+
 function coerceItems(raw: unknown, errors: IncomingError[]): ReviewItem[] {
   const byId = new Map(errors.map((e) => [e.id, e]));
   const list = Array.isArray(raw)
@@ -68,6 +78,7 @@ function coerceItems(raw: unknown, errors: IncomingError[]): ReviewItem[] {
     const question = clean(o.question);
     if (
       !question ||
+      !questionLooksComplete(question) ||
       options.length < 2 ||
       options.length > 4 ||
       correctIndex < 0 ||
@@ -118,6 +129,8 @@ yang menguji KONSEP yang sama agar pelajar bisa memperbaikinya. Tiap soal:
 - DILARANG soal fonetik/pelafalan/transkripsi IPA. Fokus ke arti & tata bahasa.
 - 3 opsi BERBEDA, hanya 1 benar; 2 opsi lain harus JELAS SALAH (termasuk jenis kesalahan
   yang tadi dibuat pelajar), bukan jawaban yang juga benar. Jangan ada opsi duplikat.
+- WAJIB: soal yang melengkapi kalimat HARUS memuat kalimat Jerman LENGKAP dengan bagian
+  kosong ditandai "___" — jangan menulis instruksi tanpa kalimatnya.
 - "explanation" menjelaskan kenapa benar DAN mengaitkan dengan kesalahan pelajar sebelumnya.
 - "tip" = trik singkat agar mudah diingat.
 - Sertakan "errorId" persis sesuai yang diberikan agar bisa dilacak.

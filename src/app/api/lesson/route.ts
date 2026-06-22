@@ -52,6 +52,16 @@ function str(x: unknown): string | undefined {
   return typeof x === "string" && x.trim() ? x.trim() : undefined;
 }
 
+/** Reject a prompt that asks to complete a sentence but contains no actual sentence/gap. */
+function promptLooksComplete(prompt: string): boolean {
+  const p = prompt.trim();
+  if (p.length < 6) return false;
+  if (/[:：]\s*$/.test(p)) return false;
+  const wantsGap = /(lengkapi|melengkapi|isilah|isi titik|rumpang|kalimat berikut|lengkapilah|sisipkan)/i.test(p);
+  if (wantsGap && !p.includes("___") && !p.includes("…") && !p.includes("...")) return false;
+  return true;
+}
+
 /** Sanitize one AI step into a renderer-safe LessonStep, or null if unusable. */
 function coerceStep(raw: unknown): LessonStep | null {
   if (!raw || typeof raw !== "object") return null;
@@ -114,7 +124,7 @@ function coerceStep(raw: unknown): LessonStep | null {
       return true;
     });
     const correctIndex = typeof e.correctIndex === "number" ? e.correctIndex : -1;
-    if (prompt && options.length >= 2 && correctIndex >= 0 && correctIndex < options.length) {
+    if (prompt && promptLooksComplete(prompt) && options.length >= 2 && correctIndex >= 0 && correctIndex < options.length) {
       step.exercise = {
         prompt,
         options,
@@ -239,6 +249,8 @@ Aturan konten:
 - Buat 7–10 langkah dengan urutan yang masuk akal.
 - Wajib ada minimal: 1 "story", 1 "pattern", 1 "example", 2 "drill", 1 langkah produktif ("speaking" atau "writing"), 1 "mistake", diakhiri 1 "victory".
 - Setiap "drill" dan "listening" WAJIB punya objek "exercise" dengan 3 opsi BERBEDA.
+- WAJIB: soal yang melengkapi kalimat HARUS memuat kalimat Jerman LENGKAP dengan bagian
+  kosong ditandai "___" di field "prompt" — jangan menulis instruksi tanpa kalimatnya.
 - ATURAN OPSI (PENTING): hanya 1 opsi yang benar; 2 opsi lain harus JELAS SALAH (kesalahan
   umum), bukan jawaban yang juga benar. Jangan ada opsi yang sama/duplikat.
 - Penjelasan jawaban harus jelas dan mendidik (kenapa benar & kenapa yang lain salah).

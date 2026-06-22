@@ -21,12 +21,24 @@ interface QuestionResponse extends PlacementItem {
   source: "ai" | "fallback";
 }
 
+/** Reject prompts that promise a sentence to complete but don't actually contain one. */
+function promptLooksComplete(prompt: string): boolean {
+  const p = prompt.trim();
+  if (p.length < 8) return false;
+  // ends with a colon → the sentence/material is missing
+  if (/[:：]\s*$/.test(p)) return false;
+  const wantsGap = /(lengkapi|melengkapi|isilah|isi titik|rumpang|kalimat berikut|lengkapilah|sisipkan)/i.test(p);
+  if (wantsGap && !p.includes("___") && !p.includes("…") && !p.includes("...")) return false;
+  return true;
+}
+
 function isValidItem(x: unknown): x is PlacementItem {
   if (!x || typeof x !== "object") return false;
   const o = x as Record<string, unknown>;
   if (
     typeof o.prompt !== "string" ||
     o.prompt.trim().length === 0 ||
+    !promptLooksComplete(o.prompt) ||
     !Array.isArray(o.options) ||
     o.options.length !== 4 ||
     !o.options.every((opt) => typeof opt === "string" && opt.trim().length > 0) ||
@@ -79,6 +91,10 @@ async function generateQuestion(
   jangan terlalu sulit. Gunakan kosakata & situasi sehari-hari yang umum.
 - DILARANG membuat soal fonetik/pelafalan/transkripsi IPA atau soal "bunyi mana yang benar".
   Fokus ke arti, tata bahasa, dan pemahaman — bukan pengucapan.
+- WAJIB: jika soal meminta melengkapi/mengisi kalimat, tulis KALIMAT JERMAN LENGKAP di dalam
+  "prompt" dengan bagian yang kosong ditandai "___". JANGAN menulis instruksi saja
+  (mis. "Lengkapi kalimat berikut:") tanpa kalimatnya. Untuk jenis soal lain (arti kata,
+  pilih yang benar), materi Jerman yang diuji juga HARUS ada di dalam "prompt".
 - Aturan jawaban (PENTING): tepat 4 opsi dengan HANYA 1 yang benar. 3 opsi lain harus
   JELAS SALAH secara tata bahasa/arti (mewakili kesalahan umum), BUKAN jawaban yang juga
   bisa dianggap benar. Jangan pernah membuat lebih dari satu opsi yang benar.
