@@ -219,12 +219,12 @@ async function generateLesson(input: GenerateLessonInput): Promise<Lesson | null
     : "";
 
   const system =
-    "Kamu adalah guru bahasa Jerman ahli yang membuat pelajaran interaktif untuk pelajar " +
-    "Indonesia, mengikuti standar CEFR. Semua instruksi, cerita, dan penjelasan ditulis " +
-    "dalam bahasa Indonesia yang hangat dan mudah; materi bahasa Jerman akurat secara " +
-    "tata bahasa. Balas HANYA dengan satu objek JSON valid sesuai skema.";
+    "Kamu adalah guru bahasa Jerman terbaik (seperti penulis buku ajar Goethe) yang membuat " +
+    "pelajaran interaktif premium untuk pelajar Indonesia, mengikuti standar CEFR. Materi " +
+    "Jerman 100% akurat secara tata bahasa dan ejaan. Penjelasan dalam bahasa Indonesia yang " +
+    "hangat, jelas, dan memotivasi; sapa pelajar dengan namanya. Balas HANYA satu objek JSON valid.";
 
-  const user = `Buat SATU pelajaran interaktif bahasa Jerman yang dipersonalisasi.
+  const user = `Buat SATU pelajaran interaktif bahasa Jerman yang BERKUALITAS TINGGI dan dipersonalisasi.
 
 Profil pelajar:
 - Nama: ${input.profile.name || "Pelajar"}
@@ -240,42 +240,51 @@ Materi hari ini:
 - Tema: ${input.theme}
 - Target: ${input.goal.join("; ")}
 
-Aturan konten:
-- Sesuaikan TINGKAT KESULITAN dengan level pelajar (${input.subLevel}). Untuk A1/A2:
-  buat materi sederhana, kalimat pendek, kosakata sehari-hari yang umum — JANGAN terlalu sulit.
-- DILARANG membuat soal/langkah fonetik, pelafalan, atau transkripsi IPA (mis. "bunyi mana
-  yang benar", simbol IPA). Itu terlalu sulit untuk pemula. Fokus ke arti, tata bahasa,
-  membaca, dan kalimat praktis.
-- Sesuaikan contoh dengan tujuan & minat pelajar bila relevan.
-- Jika skill terlemah diketahui, tambahkan lebih banyak langkah latihan untuk skill itu.
-- Buat 7–10 langkah dengan urutan yang masuk akal.
-- Wajib ada minimal: 1 "story", 1 "pattern", 1 "example", 2 "drill", 1 langkah produktif ("speaking" atau "writing"), 1 "mistake", diakhiri 1 "victory".
-- Setiap "drill" dan "listening" WAJIB punya objek "exercise" dengan 3 opsi BERBEDA.
-- Langkah "listening" WAJIB punya "audioText": kalimat/dialog Jerman yang akan DIPUTAR sebagai
-  audio. Untuk listening, "prompt" berisi PERTANYAAN saja (bahasa Indonesia) — JANGAN menuliskan
-  teks Jermannya di prompt (biar pelajar benar-benar mendengar).
-- WAJIB: soal yang melengkapi kalimat HARUS memuat kalimat Jerman LENGKAP dengan bagian
-  kosong ditandai "___" di field "prompt" — jangan menulis instruksi tanpa kalimatnya.
-- ATURAN OPSI (PENTING): hanya 1 opsi yang benar; 2 opsi lain harus JELAS SALAH (kesalahan
-  umum), bukan jawaban yang juga benar. Jangan ada opsi yang sama/duplikat.
-- Penjelasan jawaban harus jelas dan mendidik (kenapa benar & kenapa yang lain salah).
+Standar KUALITAS (penting):
+- Sesuaikan kesulitan dengan level ${input.subLevel}. Untuk A1/A2: kalimat pendek, kosakata
+  sehari-hari, tidak bertele-tele. Tetap menantang tapi bisa dipahami.
+- "story": buka dengan skenario nyata yang relatable & relevan dengan TUJUAN pelajar
+  (mis. kuliah/kerja/liburan), sebut nama pelajar, 2–4 kalimat hangat. Bukan definisi kaku.
+- "pattern": jelaskan pola dengan analogi sederhana + "formula" yang RAPI. Tulis formula
+  memakai " · " untuk memisahkan item (mis. konjugasi) dan " + " untuk pola kalimat
+  (mis. "Subjekt + Verb (Pos.2) + Rest"). Pakai "→" untuk transformasi (mis. "der → den").
+- "example": WAJIB ada 2 contoh. Setiap contoh punya "german", "indonesian", dan "tokens"
+  berwarna (pisahkan TIAP kata jadi token dengan role yang tepat) agar struktur terlihat.
+- Personalisasi: kaitkan contoh & kosakata dengan tujuan/minat pelajar bila relevan.
+- Jika skill terlemah diketahui, tambah latihan untuk skill itu; jika ada kategori kesalahan
+  terakhir, sisipkan satu drill yang menyasar kesalahan itu.
+- DILARANG soal fonetik/pelafalan/IPA.
+
+Struktur WAJIB (8–11 langkah, urut natural):
+- 1 "story", 1 "pattern", 2 "example", 3 "drill", 1 "listening", 1 langkah produktif
+  ("speaking" ATAU "writing"), 1 "mistake" (khas kesalahan orang Indonesia), diakhiri 1 "victory".
+- Setiap "drill"/"listening" punya "exercise" dengan 3 opsi BERBEDA, hanya 1 benar; 2 distraktor
+  harus MIRIP tapi JELAS SALAH (mewakili kesalahan umum), bukan jawaban yang juga benar.
+- "listening" WAJIB punya "audioText" (kalimat/dialog Jerman natural yang DIPUTAR); "prompt"
+  listening berisi PERTANYAAN saja (Indonesia), jangan tampilkan teks Jermannya.
+- Soal melengkapi kalimat WAJIB memuat kalimat Jerman LENGKAP dengan bagian kosong "___".
+- "explanation" tiap soal: jelaskan kenapa benar DAN kenapa opsi lain salah (mendidik, singkat).
+- "mistake": tunjukkan "wrong" (kesalahan umum) vs "correct" + "body" penjelasan singkat.
+- "victory": 2–3 "achievements" konkret yang BERBEDA (jangan mengulang kalimat yang sama).
 
 Skema JSON (ikuti persis nama field):
 {
-  "title": "judul pelajaran (Indonesia)",
+  "title": "judul pelajaran (Indonesia, menarik)",
   "goal": ["target 1", "target 2", "target 3"],
   "estimatedMinutes": 35,
   "steps": [
     { "type": "story", "title": "...", "body": "..." },
-    { "type": "pattern", "title": "...", "body": "...", "formula": "..." },
+    { "type": "pattern", "title": "...", "body": "...", "formula": "Subjekt + Verb (Pos.2) + Rest" },
     { "type": "example", "title": "...", "german": "...", "indonesian": "...",
-      "tokens": [ { "text": "Ich", "role": "subject" }, { "text": "lerne", "role": "verb" } ] },
+      "tokens": [ { "text": "Ich", "role": "subject" }, { "text": "lerne", "role": "verb" }, { "text": "Deutsch", "role": "object" } ] },
+    { "type": "example", "title": "...", "german": "...", "indonesian": "...", "tokens": [ ... ] },
     { "type": "drill", "title": "...", "exercise": { "prompt": "...", "options": ["a","b","c"], "correctIndex": 0, "explanation": "..." } },
-    { "type": "listening", "title": "...", "exercise": { "prompt": "pertanyaan saja (Indonesia)", "audioText": "kalimat/dialog Jerman yang diputar", "options": ["a","b","c"], "correctIndex": 1, "explanation": "..." } },
-    { "type": "speaking", "title": "...", "prompt": "Ucapkan: ...", "expected": "kalimat Jerman", "body": "tips" },
-    { "type": "writing", "title": "...", "prompt": "Tulis: ...", "expected": "kalimat Jerman", "keywords": ["kata wajib"] },
+    { "type": "drill", "title": "...", "exercise": { "prompt": "kalimat dgn ___", "options": ["a","b","c"], "correctIndex": 1, "explanation": "..." } },
+    { "type": "drill", "title": "...", "exercise": { "prompt": "...", "options": ["a","b","c"], "correctIndex": 2, "explanation": "..." } },
+    { "type": "listening", "title": "...", "exercise": { "prompt": "pertanyaan saja (Indonesia)", "audioText": "kalimat/dialog Jerman", "options": ["a","b","c"], "correctIndex": 1, "explanation": "..." } },
+    { "type": "writing", "title": "...", "prompt": "Tulis dalam bahasa Jerman: ...", "expected": "kalimat Jerman", "keywords": ["kata wajib"] },
     { "type": "mistake", "title": "...", "wrong": "salah", "correct": "benar", "body": "penjelasan" },
-    { "type": "victory", "title": "Mini Victory!", "achievements": ["..."], "body": "..." }
+    { "type": "victory", "title": "Mini Victory!", "achievements": ["...", "..."], "body": "..." }
   ]
 }
 Field "role" pada tokens hanya boleh: subject, verb, info, object, time, plain.`;
@@ -286,7 +295,7 @@ Field "role" pada tokens hanya boleh: subject, verb, info, object, time, plain.`
         { role: "system", content: system },
         { role: "user", content: user },
       ],
-      { temperature: 0.65, maxTokens: 3200, timeoutMs: 45_000 }
+      { temperature: 0.6, maxTokens: 4000, timeoutMs: 60_000 }
     );
     return coerceLesson(result, input);
   } catch (err) {

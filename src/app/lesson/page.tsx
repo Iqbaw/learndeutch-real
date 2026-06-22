@@ -262,11 +262,15 @@ function LessonInner() {
                   <BrainCircuit className="h-4 w-4 text-primary" /> Disesuaikan untukmu
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  Pelajaran ini akan dibuat khusus berdasarkan level, tujuan
+                  <span className="font-bold text-ink">Versi AI</span> dibuat khusus untukmu — materi,
+                  contoh, dan soal disusun ulang sesuai level, tujuan
                   {profile.weakSkill && profile.weakSkill !== "Belum tahu"
                     ? `, dan kelemahanmu di ${profile.weakSkill.toLowerCase()}`
                     : ""}
-                  {errors.length > 0 ? ", serta kesalahan yang sering kamu buat" : ""}.
+                  {errors.length > 0 ? ", serta kesalahan yang sering kamu buat" : ""}. Setiap kali
+                  bisa berbeda dan lebih menantang. <span className="font-bold text-ink">Versi standar</span>{" "}
+                  adalah materi tetap bawaan kursus — sama untuk semua orang, cocok kalau kamu ingin
+                  konsisten atau sedang offline.
                 </p>
               </div>
             )}

@@ -58,11 +58,13 @@ function coerceItems(raw: unknown, errors: IncomingError[]): ReviewItem[] {
     : [];
 
   const out: ReviewItem[] = [];
-  for (const entry of list) {
-    if (!entry || typeof entry !== "object") continue;
+  list.forEach((entry, idx) => {
+    if (!entry || typeof entry !== "object") return;
     const o = entry as Record<string, unknown>;
-    const errorId = typeof o.errorId === "string" ? o.errorId : "";
-    const src = byId.get(errorId);
+    const rawId = typeof o.errorId === "string" ? o.errorId : "";
+    // map to a real error: by id, else by position in the request list
+    const src = byId.get(rawId) ?? errors[idx];
+    const errorId = src?.id ?? rawId;
     let options = Array.isArray(o.options)
       ? o.options.map(clean).filter((x) => x.length > 0)
       : [];
@@ -84,10 +86,10 @@ function coerceItems(raw: unknown, errors: IncomingError[]): ReviewItem[] {
       correctIndex < 0 ||
       correctIndex >= options.length
     ) {
-      continue;
+      return;
     }
     out.push({
-      errorId: src ? errorId : errors[out.length]?.id ?? errorId,
+      errorId,
       category: clean(o.category) || src?.category || "Grammar",
       question,
       options,
@@ -95,7 +97,7 @@ function coerceItems(raw: unknown, errors: IncomingError[]): ReviewItem[] {
       explanation: clean(o.explanation),
       tip: clean(o.tip),
     });
-  }
+  });
   return out;
 }
 
@@ -125,15 +127,19 @@ ${mistakeLines}
 
 Untuk SETIAP kesalahan, buat SATU soal latihan BARU (variasi, bukan menyalin soal lama persis)
 yang menguji KONSEP yang sama agar pelajar bisa memperbaikinya. Tiap soal:
+- Soal harus NATURAL dan bisa dijawab sendiri (standalone) — JANGAN menyebut "kesalahanmu",
+  "errorId", atau merujuk soal lama di teks soal.
 - Sesuaikan tingkat kesulitan dengan level pelajar (${profile.estimatedLevel || "A1"}) — jangan terlalu sulit.
 - DILARANG soal fonetik/pelafalan/transkripsi IPA. Fokus ke arti & tata bahasa.
-- 3 opsi BERBEDA, hanya 1 benar; 2 opsi lain harus JELAS SALAH (termasuk jenis kesalahan
-  yang tadi dibuat pelajar), bukan jawaban yang juga benar. Jangan ada opsi duplikat.
-- WAJIB: soal yang melengkapi kalimat HARUS memuat kalimat Jerman LENGKAP dengan bagian
-  kosong ditandai "___" — jangan menulis instruksi tanpa kalimatnya.
-- "explanation" menjelaskan kenapa benar DAN mengaitkan dengan kesalahan pelajar sebelumnya.
+- Untuk kesalahan ARTIKEL → buat frasa dan tanyakan artikel yang tepat (der/die/das).
+- Untuk pilihan KATA/kosakata atau tata bahasa → buat KALIMAT Jerman dengan bagian kosong "___"
+  dan minta pelajar memilih kata yang tepat.
+- 3 opsi BERBEDA, hanya 1 benar; 2 distraktor harus MIRIP/menggoda tapi JELAS SALAH
+  (boleh menyertakan bentuk keliru yang umum). Jangan ada opsi duplikat atau yang juga benar.
+- "explanation" menjelaskan kenapa benar dan kenapa opsi lain salah, lalu kaitkan singkat dengan
+  konsep yang perlu pelajar perbaiki (tanpa menyebut errorId).
 - "tip" = trik singkat agar mudah diingat.
-- Sertakan "errorId" persis sesuai yang diberikan agar bisa dilacak.
+- Sertakan "errorId" persis sesuai yang diberikan di daftar agar bisa dilacak.
 
 Format JSON:
 {
@@ -184,6 +190,9 @@ export async function POST(request: Request) {
       explanation: String(e.explanation ?? ""),
     }))
     .filter((e) => e.id && e.correctAnswer)
+    // Pronunciation/listening mistakes can't be re-tested well as a text MC —
+    // they belong in Speaking Lab, not here. Keep grammar/vocab/spelling/etc.
+    .filter((e) => e.category !== "Pronunciation")
     .slice(0, 8);
 
   const profile =

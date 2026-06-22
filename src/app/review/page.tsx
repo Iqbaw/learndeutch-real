@@ -65,7 +65,8 @@ export default function ReviewPage() {
   const activeErrors = useMemo(
     () =>
       [...errors]
-        .filter((e) => e.status !== "safe")
+        // pronunciation mistakes belong in Speaking Lab, not a text quiz
+        .filter((e) => e.status !== "safe" && e.category !== "Pronunciation")
         .sort((a, b) => statusWeight(b.status) - statusWeight(a.status))
         .slice(0, 8),
     [errors]
@@ -260,13 +261,28 @@ function buildFallbackItems(errors: ErrorItem[]): AIReviewItem[] {
   return errors
     .filter((e) => e.correctAnswer && e.correctAnswer !== e.userAnswer)
     .map((e) => {
+      // Article mistakes → a clean der/die/das choice.
+      if (e.category === "Article" && ["der", "die", "das"].includes(e.correctAnswer.toLowerCase())) {
+        const options = ["der", "die", "das"];
+        return {
+          errorId: e.id,
+          category: e.category,
+          question: e.explanation?.match(/[A-ZÄÖÜ][a-zäöü]+/)
+            ? `Pilih artikel yang benar untuk: ${e.explanation.match(/[A-ZÄÖÜ][a-zäöü]+/)?.[0]}`
+            : "Pilih artikel yang benar.",
+          options,
+          correctIndex: options.indexOf(e.correctAnswer.toLowerCase()),
+          explanation: e.explanation || `Yang benar adalah "${e.correctAnswer}".`,
+          tip: "Hafalkan kata benda bersama artikelnya.",
+        };
+      }
       const opts = [e.correctAnswer, e.userAnswer].filter(Boolean);
       const flip = e.id.length % 2 === 0;
       const options = flip ? [...opts].reverse() : opts;
       return {
         errorId: e.id,
         category: e.category,
-        question: `Pilih bentuk yang benar (${e.category}):`,
+        question: "Pilih bentuk yang benar:",
         options,
         correctIndex: options.indexOf(e.correctAnswer),
         explanation: e.explanation || `Bentuk yang benar adalah "${e.correctAnswer}".`,
