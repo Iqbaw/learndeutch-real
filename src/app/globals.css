@@ -50,6 +50,20 @@ html {
   scroll-behavior: smooth;
 }
 
+/*
+ * Installed app / PWA only: disable the browser's native pull-to-refresh
+ * (tarik ke bawah untuk refresh) and the overscroll bounce/glow. There is no
+ * custom refresh gesture in this app — if a user wants a fresh load while in
+ * the installed app, they can simply close and reopen it. Regular browser
+ * tabs are unaffected and keep their default behavior.
+ */
+@media (display-mode: standalone), (display-mode: minimal-ui), (display-mode: fullscreen) {
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+}
+
 body {
   background-color: rgb(var(--bg));
   color: rgb(var(--ink));
