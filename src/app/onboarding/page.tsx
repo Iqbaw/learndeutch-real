@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { FormattedText } from "@/components/ui/formatted-text";
 import { useAppStore, type OnboardingAnswers, type Profile } from "@/lib/store";
 import { playSound } from "@/lib/sound";
 import { placementQuestions, evaluatePlacement, type PlacementOutcome } from "@/data/placement";
@@ -475,7 +476,7 @@ function ResultCard({
         </div>
       </div>
 
-      <p className="mt-4 text-muted">{outcome.summary}</p>
+      <p className="mt-4 text-muted"><FormattedText text={outcome.summary} /></p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl bg-elevated p-4">
