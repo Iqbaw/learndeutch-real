@@ -9,10 +9,10 @@ export function MobileBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
+    <nav className="mobile-dock" aria-label="Navigasi utama">
+      <ul>
         {bottomNav.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active = pathname === item.href || pathname.startsWith(item.href + "/") || (item.href === "/library" && ["/vocabulary", "/grammar", "/review", "/roadmap", "/notes", "/errors", "/mock-test"].includes(pathname));
           const Icon = item.icon;
           return (
             <li key={item.href} className="flex-1">
@@ -24,7 +24,7 @@ export function MobileBottomNav() {
                 )}
                 aria-current={active ? "page" : undefined}
               >
-                <Icon className="h-5 w-5" />
+                <span className="dock-icon"><Icon className="h-5 w-5" /></span>
                 {item.label}
               </Link>
             </li>

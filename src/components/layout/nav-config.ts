@@ -38,9 +38,9 @@ export const sidebarNav: NavItem[] = [
 
 // Mobile bottom navigation (PRD section 15.5)
 export const bottomNav: NavItem[] = [
-  { label: "Today", href: "/lesson", icon: BookOpen },
-  { label: "Review", href: "/review", icon: RefreshCw },
-  { label: "Speak", href: "/speaking", icon: Mic },
-  { label: "Stats", href: "/statistics", icon: BarChart3 },
-  { label: "Profile", href: "/settings", icon: Settings },
+  { label: "Beranda", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Jelajahi", href: "/library", icon: Library },
+  { label: "Bicara", href: "/speaking", icon: Mic },
+  { label: "Progres", href: "/statistics", icon: BarChart3 },
+  { label: "Profil", href: "/settings", icon: Settings },
 ];

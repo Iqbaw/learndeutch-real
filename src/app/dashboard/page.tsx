@@ -1,32 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { motion } from "framer-motion";
-import {
-  AlertCircle,
-  RefreshCw,
-  Flame,
-  Trophy,
-  ArrowRight,
-  Activity,
-  CalendarDays,
-  BookOpen,
-} from "lucide-react";
+import { ArrowRight, BookOpen, Flame, Trophy, Mic, RefreshCw, ChevronRight, Clock, Check, Sparkles, Map, ArrowUpRight } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppGuard } from "@/components/app-guard";
-import { MissionCard } from "@/components/learning/mission-card";
-import { DayMap } from "@/components/learning/day-map";
-import { SkillRadar } from "@/components/stats/skill-radar";
-import { AIInsightCard } from "@/components/cards/ai-insight-card";
-import { StatCard } from "@/components/cards/stat-card";
-import { CTAButton } from "@/components/ui/cta-button";
-import { LevelBadge } from "@/components/ui/level-badge";
-import { EmptyState } from "@/components/ui/empty-state";
+import { useAppStore } from "@/lib/store";
 import { getLessonByDay } from "@/data/lessons";
 import { daysForLevel } from "@/data/levels";
-import { useAppStore } from "@/lib/store";
-import { buildRoadmap, buildReviewQueue, deriveStats } from "@/lib/derive";
+import { buildReviewQueue } from "@/lib/derive";
+import { CTAButton } from "@/components/ui/cta-button";
 
 export default function DashboardPage() {
   const profile = useAppStore((s) => s.profile);
@@ -34,240 +16,23 @@ export default function DashboardPage() {
   const completedDays = useAppStore((s) => s.completedDays);
   const streak = useAppStore((s) => s.streak);
   const xp = useAppStore((s) => s.xp);
-  const errors = useAppStore((s) => s.errors);
   const vocabStatus = useAppStore((s) => s.vocabStatus);
-  const skillStats = useAppStore((s) => s.skillStats);
-  const grammarStats = useAppStore((s) => s.grammarStats);
-  const speakingAttempts = useAppStore((s) => s.speakingAttempts);
-  const placement = useAppStore((s) => s.placement);
   const activeLevel = useAppStore((s) => s.activeLevel);
-
-  const name = profile?.name ?? "Pelajar";
+  const dailyTarget = useAppStore((s) => s.dailyTargetMinutes);
   const lesson = getLessonByDay(activeLevel === "A1" ? currentDay : -1);
   const dayMeta = daysForLevel(activeLevel).find((d) => d.day === currentDay);
-  const roadmap = buildRoadmap(currentDay, completedDays, daysForLevel(activeLevel));
   const reviewDue = buildReviewQueue(vocabStatus).length;
-  const stats = deriveStats({
-    startLevel: profile?.startLevel ?? "A1.1",
-    currentDay,
-    completedDays,
-    skillStats,
-    grammarStats,
-    vocabStatus,
-    speakingAttempts,
-    placement,
-  });
+  const progress = Math.min(100, Math.round(completedDays.length / 30 * 100));
+  const firstDay = Math.min(24, Math.max(1, currentDay - 2));
 
-  // weakness box from real error categories
-  const weakness = topErrorCategories(errors);
-  // overall A1 progress (days completed out of 30) — never stuck at 0 after a day
-  const dayProgress = Math.round((completedDays.length / 30) * 100);
-
-  return (
-    <AppShell title={`Hallo, ${name}! 👋`} subtitle="Ini kondisi belajarmu hari ini. Ayo lanjutkan.">
-      <AppGuard>
-        <div className="grid gap-5 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            {lesson ? (
-              <MissionCard lesson={lesson} progress={dayProgress} />
-            ) : (
-              <div className="card-base p-6">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-onprimary">
-                    {activeLevel} · Hari {currentDay}
-                  </span>
-                  {dayMeta && <LevelBadge level={dayMeta.subLevel} variant="soft" />}
-                </div>
-                <h2 className="mt-3 font-heading text-xl font-extrabold text-ink">
-                  {dayMeta?.theme ?? `Hari ${currentDay}`}
-                </h2>
-                <p className="mt-1 text-muted">
-                  {dayMeta?.skill ? `Fokus: ${dayMeta.skill}. ` : ""}
-                  Pelajaran ini dibuat khusus untukmu oleh AI sesuai level {activeLevel}.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <CTAButton href="/lesson">Mulai Belajar</CTAButton>
-                  <CTAButton href="/review" variant="outline">Review</CTAButton>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="card-base flex items-center gap-4 p-5">
-              <PopIcon active={streak > 0} glow="rgba(245, 158, 11, 0.55)" className="bg-secondary-soft text-secondary">
-                <Flame className="h-7 w-7" />
-              </PopIcon>
-              <div>
-                <p className="font-heading text-2xl font-extrabold text-ink">{streak} hari</p>
-                <p className="text-sm text-muted">Streak konsistensi</p>
-              </div>
-            </div>
-            <div className="card-base flex items-center gap-4 p-5">
-              <PopIcon active={xp > 0} glow="rgba(99, 102, 241, 0.5)" delay={0.12} className="bg-primary-soft text-primary">
-                <Trophy className="h-7 w-7" />
-              </PopIcon>
-              <div>
-                <p className="font-heading text-2xl font-extrabold text-ink">
-                  {xp.toLocaleString("id-ID")} XP
-                </p>
-                <p className="text-sm text-muted">{completedDays.length} hari selesai</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-5 lg:grid-cols-3">
-          <div className="card-base p-5 lg:col-span-2">
-            <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-2 font-heading text-lg font-extrabold text-ink">
-                <Activity className="h-5 w-5 text-primary" /> CEFR Skill Radar
-              </h2>
-              <Link href="/statistics" className="text-sm font-bold text-primary hover:underline">
-                Detail
-              </Link>
-            </div>
-            {stats.hasData ? (
-              <SkillRadar data={stats.skills} />
-            ) : (
-              <EmptyState
-                icon={<Activity className="h-6 w-6" />}
-                title="Belum ada data skill"
-                description="Selesaikan pelajaran dan latihan untuk melihat radar kemampuanmu terisi."
-              />
-            )}
-          </div>
-
-          <div className="flex flex-col gap-5">
-            <AIInsightCard>{stats.aiInsight}</AIInsightCard>
-            <div className="card-base p-5">
-              <h3 className="flex items-center gap-2 font-heading text-base font-bold text-ink">
-                <AlertCircle className="h-5 w-5 text-warning" /> Weakness Box
-              </h3>
-              {weakness.length > 0 ? (
-                <>
-                  <ul className="mt-3 space-y-2 text-sm text-muted">
-                    {weakness.map((w) => (
-                      <li key={w.category} className="flex items-start gap-2">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
-                        {w.category} ({w.count}×)
-                      </li>
-                    ))}
-                  </ul>
-                  <CTAButton href="/errors" variant="outline" size="sm" className="mt-4 w-full">
-                    Buka Error Notebook
-                  </CTAButton>
-                </>
-              ) : (
-                <p className="mt-3 text-sm text-muted">
-                  Belum ada kelemahan terdeteksi. Selesaikan latihan, dan kesalahanmu akan muncul
-                  di sini untuk dilatih ulang.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-5 lg:grid-cols-3">
-          <div className="card-base flex flex-col justify-between p-5 lg:col-span-1">
-            <div>
-              <h3 className="flex items-center gap-2 font-heading text-base font-bold text-ink">
-                <RefreshCw className="h-5 w-5 text-primary" /> Review Queue
-              </h3>
-              <p className="mt-2 text-sm text-muted">
-                <span className="font-heading text-3xl font-extrabold text-ink">{reviewDue}</span>{" "}
-                {reviewDue === 0 ? "kartu menunggu — mulai belajar kata baru dulu." : "kata perlu direview hari ini."}
-              </p>
-            </div>
-            <CTAButton href={reviewDue > 0 ? "/review" : "/vocabulary"} className="mt-4 w-full">
-              {reviewDue > 0 ? "Mulai Review" : "Pelajari Kosakata"} <ArrowRight className="h-4 w-4" />
-            </CTAButton>
-          </div>
-
-          <StatCard
-            label="Estimasi Level"
-            value={
-              <span className="flex items-center gap-2">
-                {stats.estimatedLevel} <LevelBadge level={`${stats.confidence}%`} />
-              </span>
-            }
-            hint={`Aktif ${stats.activeLevel} · Pasif ${stats.passiveLevel}`}
-            icon={<Activity className="h-5 w-5" />}
-          />
-          <StatCard
-            label="Retention"
-            value={`${stats.retention}%`}
-            hint="Kekuatan ingatan dari kata yang kamu pelajari"
-            accent="secondary"
-            icon={<RefreshCw className="h-5 w-5" />}
-          />
-        </div>
-
-        <div className="mt-5 card-base p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-heading text-lg font-extrabold text-ink">
-              <CalendarDays className="h-5 w-5 text-primary" /> 30-Day Map · A1
-            </h2>
-            <Link href="/roadmap" className="text-sm font-bold text-primary hover:underline">
-              Lihat roadmap penuh
-            </Link>
-          </div>
-          <div className="mt-4">
-            <DayMap days={roadmap} />
-          </div>
-        </div>
-      </AppGuard>
-    </AppShell>
-  );
-}
-
-function topErrorCategories(errors: { category: string }[]) {
-  const counts = new Map<string, number>();
-  for (const e of errors) counts.set(e.category, (counts.get(e.category) ?? 0) + 1);
-  return Array.from(counts.entries())
-    .map(([category, count]) => ({ category, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3);
-}
-
-
-// A subtle "ignite" pop for the streak & XP icons when you open the dashboard.
-// Kept brief (a couple of pulses) so it celebrates without breaking the
-// minimalist feel.
-function PopIcon({
-  children,
-  active,
-  glow,
-  className = "",
-  delay = 0,
-}: {
-  children: ReactNode;
-  active: boolean;
-  glow: string;
-  className?: string;
-  delay?: number;
-}) {
-  return (
-    <motion.div
-      initial={{ scale: 0.6, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 320, damping: 15, delay }}
-      className={`relative flex h-14 w-14 items-center justify-center rounded-2xl ${className}`}
-    >
-      {active && (
-        <motion.span
-          aria-hidden
-          className="absolute inset-0 rounded-2xl"
-          animate={{ boxShadow: ["0 0 0 0 rgba(0,0,0,0)", `0 0 20px 4px ${glow}`, "0 0 0 0 rgba(0,0,0,0)"] }}
-          transition={{ duration: 1.5, repeat: 2, delay: delay + 0.2 }}
-        />
-      )}
-      <motion.span
-        animate={active ? { scale: [1, 1.16, 1], rotate: [0, -5, 0] } : undefined}
-        transition={{ duration: 0.9, repeat: 2, delay: delay + 0.25 }}
-      >
-        {children}
-      </motion.span>
-    </motion.div>
-  );
+  return <AppGuard><AppShell title="Ruang belajarmu" subtitle="Sedikit setiap hari, semakin percaya diri.">
+    <div className="learning-home">
+      <section className="home-greeting"><div><span className="eyebrow">DEIN TÄGLICHER FORTSCHRITT</span><h1>Hallo, {profile?.name || "Teman"}<span className="greeting-dot">.</span></h1><p>{completedDays.length ? "Senang melihatmu kembali. Kita lanjut, yuk." : "Hari yang baik untuk memulai sesuatu yang baru."}</p></div><Link className="level-token" href="/roadmap"><span>LEVELMU</span><b>{activeLevel}</b><ArrowUpRight size={16} /></Link></section>
+      <div className="home-layout"><div className="home-main">
+        <section className="daily-lesson"><div className="lesson-card-top"><span className="lesson-tag"><span /> PELAJARAN HARI INI</span><span>{String(currentDay).padStart(2, "0")} / 30</span></div><div className="lesson-card-body"><div><h2>{lesson?.title || dayMeta?.theme || `Petualangan hari ${currentDay}`}</h2><p>{lesson?.goal[0] || `Bangun kemampuan bahasa Jermanmu di level ${activeLevel}.`}</p></div><div className="lesson-letter" aria-hidden="true">{currentDay === 1 ? "Aa" : activeLevel}<span>✦</span></div></div><div className="lesson-meta"><span><Clock size={15} /> {lesson?.estimatedMinutes || dailyTarget} menit</span><span><BookOpen size={15} /> {lesson?.subLevel || dayMeta?.subLevel || activeLevel}</span></div><CTAButton href="/lesson" size="lg" className="lesson-start">{completedDays.length ? "Lanjutkan belajar" : "Mulai pelajaran pertama"}<ArrowRight size={19} /></CTAButton></section>
+        <div className="home-stats"><Link href="/statistics"><span className="stat-symbol streak-symbol"><Flame size={21} /></span><span><b>{streak} hari</b><small>Streak belajar</small></span></Link><Link href="/statistics"><span className="stat-symbol xp-symbol"><Trophy size={21} /></span><span><b>{xp.toLocaleString("id-ID")} XP</b><small>Total pencapaian</small></span></Link><Link href="/roadmap"><span className="stat-symbol progress-symbol"><Check size={21} /></span><span><b>{completedDays.length}<em> / 30</em></b><small>Hari selesai</small></span></Link></div>
+        <section className="practice-section"><div className="section-line"><h2>Sedikit latihan lagi?</h2><Link href="/library">Lihat semua <ArrowUpRight size={15} /></Link></div><div className="practice-grid"><Link href="/speaking" className="practice-card speaking-card"><span className="practice-icon"><Mic size={22} /></span><ArrowUpRight className="practice-arrow" size={18} /><h3>Berani bicara</h3><p>Latihan percakapan nyata</p><span className="practice-caption">SPEAKING LAB</span></Link><Link href={reviewDue ? "/review" : "/vocabulary"} className="practice-card review-card"><span className="practice-icon"><RefreshCw size={22} /></span><ArrowUpRight className="practice-arrow" size={18} /><h3>{reviewDue ? `${reviewDue} kata menunggu` : "Tambah kosakata"}</h3><p>{reviewDue ? "Jaga kata-katamu tetap ingat" : "Kenalan dengan kata baru"}</p><span className="practice-caption">{reviewDue ? "DAILY REVIEW" : "WORTSCHATZ"}</span></Link></div></section>
+      </div><aside className="home-aside"><section className="journey-panel"><div className="section-line"><h2>Perjalananmu</h2><Map size={18} /></div><div className="journey-title"><span>Fondasi {activeLevel}</span><b>{progress}%</b></div><div className="journey-track" role="progressbar" aria-label="Progres level" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${progress}%` }} /></div><div className="journey-days">{Array.from({ length: 7 }, (_, i) => firstDay + i).map((day) => <span key={day} className={completedDays.includes(day) ? "day-done" : day === currentDay ? "day-current" : ""} aria-label={`Hari ${day}${completedDays.includes(day) ? " selesai" : day === currentDay ? " saat ini" : ""}`}>{completedDays.includes(day) ? <Check size={15} /> : day}</span>)}</div><p>{completedDays.length === 0 ? "Satu pelajaran pertama. Awal dari kebiasaan baru." : `${completedDays.length} hari sudah kamu lalui. Teruskan langkahmu.`}</p><Link href="/roadmap" className="journey-link">Buka peta belajar <ChevronRight size={17} /></Link></section><section className="daily-note"><span className="eyebrow"><Sparkles size={15} /> KLEINE ERINNERUNG</span><p>“Übung macht<br />den Meister.”</p><span>Latihan membuatmu semakin mahir.</span><div>Tak perlu terburu-buru.<br />{dailyTarget} menit hari ini sudah berarti.</div></section><Link href="/placement" className="placement-link"><span><b>Sudah pernah belajar Jerman?</b><small>Temukan titik mulai yang pas.</small></span><ArrowUpRight size={20} /></Link></aside></div>
+    </div>
+  </AppShell></AppGuard>;
 }

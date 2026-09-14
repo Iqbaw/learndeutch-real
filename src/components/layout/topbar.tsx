@@ -15,11 +15,11 @@ export function Topbar({ title, subtitle }: TopbarProps) {
   const streak = useAppStore((s) => s.streak);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-bg/90 backdrop-blur supports-[backdrop-filter]:bg-bg/70">
+    <header className="app-topbar sticky top-0 z-30 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <div className="flex items-center gap-3 min-w-0">
           {/* Mobile brand */}
-          <Link href="/" className="lg:hidden shrink-0 focusable rounded-xl">
+          <Link href="/dashboard" className="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center focusable rounded-xl" aria-label="Beranda belajar">
             <Logo className="h-9 w-9" />
           </Link>
           <div className="min-w-0">

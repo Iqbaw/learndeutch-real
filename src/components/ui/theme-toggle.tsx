@@ -19,7 +19,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={isDark ? "Aktifkan mode terang" : "Aktifkan mode gelap"}
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className={cn(
-        "inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-ink transition-colors hover:bg-elevated focusable",
+        "inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-ink transition-colors hover:bg-elevated focusable",
         className
       )}
     >

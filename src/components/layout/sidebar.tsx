@@ -18,7 +18,7 @@ export function Sidebar() {
   return (
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 border-r border-border bg-card">
       <div className="flex items-center gap-2.5 px-5 h-16 border-b border-border">
-        <Link href="/" className="flex items-center gap-2.5 focusable rounded-lg">
+        <Link href="/dashboard" className="flex items-center gap-2.5 focusable rounded-lg">
           <Logo className="h-10 w-10" />
           <span className="flex flex-col leading-tight">
             <span className="font-heading text-sm font-extrabold text-ink">Deutsch 30</span>
@@ -36,6 +36,7 @@ export function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
                     "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focusable",
                     active

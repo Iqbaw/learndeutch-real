@@ -20,7 +20,7 @@ import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { HeroMockup } from "@/components/marketing/hero-mockup";
 import { FAQ } from "@/components/marketing/faq";
-import { MobileLanding } from "@/components/marketing/mobile-landing";
+import { EntryGate } from "@/components/entry-gate";
 import { SectionHeader } from "@/components/ui/section-header";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
@@ -51,7 +51,7 @@ export default function LandingPage() {
     <>
       {/* Mobile: swipeable slide deck (no vertical scroll) */}
       <div className="md:hidden">
-        <MobileLanding />
+        <EntryGate />
       </div>
 
       {/* Desktop / tablet: full vertical marketing page */}

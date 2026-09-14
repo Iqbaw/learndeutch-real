@@ -65,6 +65,9 @@ interface AppState {
   hasHydrated: boolean;
   setHasHydrated: (v: boolean) => void;
 
+  introCompleted: boolean;
+  finishIntro: () => void;
+
   // --- onboarding & profile ---
   onboarding: OnboardingAnswers;
   profile: Profile | null;
@@ -175,6 +178,8 @@ export const useAppStore = create<AppState>()(
       hasHydrated: false,
       setHasHydrated: (v) => set({ hasHydrated: v }),
 
+      introCompleted: false,
+      finishIntro: () => set({ introCompleted: true }),
       onboarding: {},
       profile: null,
       placement: null,
@@ -410,6 +415,7 @@ export const useAppStore = create<AppState>()(
           ...initialProgress,
           profile: null,
           placement: null,
+          introCompleted: false,
           onboarding: {},
           dailyTargetMinutes: 30,
           audioSpeed: 1,
@@ -424,6 +430,7 @@ export const useAppStore = create<AppState>()(
         state?.setHasHydrated(true);
       },
       partialize: (s) => ({
+        introCompleted: s.introCompleted,
         onboarding: s.onboarding,
         profile: s.profile,
         placement: s.placement,
