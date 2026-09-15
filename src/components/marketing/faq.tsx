@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const faqs = [
   {
     q: "Apakah benar bisa fasih bahasa Jerman dalam 30 hari?",
-    a: "Tidak. Konsep kami jujur: 30 hari adalah sprint intensif untuk satu level CEFR. Jadi A1 butuh 30 hari, A2 butuh 30 hari, dan seterusnya. Hasil akhir tergantung konsistensi, durasi belajar, dan hasil test.",
+    a: "Tidak. Konsep kami jujur: 30 hari adalah satu sprint latihan. Pencapaian level tergantung bekal awal, waktu belajar, dan kemampuan yang dibuktikan lewat tugas serta evaluasi. Satu level dapat memerlukan beberapa sprint.",
   },
   {
     q: "Saya benar-benar nol, apakah cocok?",
@@ -19,15 +19,15 @@ const faqs = [
   },
   {
     q: "Apakah ada latihan speaking?",
-    a: "Ya. Speaking Lab menyediakan roleplay situasi nyata dengan feedback pengucapan, kelancaran, dan koreksi grammar yang ramah — bukan sekadar 'benar/salah'.",
+    a: "Ya. Speaking Lab menyediakan roleplay situasi nyata dan mencocokkan transkrip dengan contoh. Isi respons dapat ditinjau, tetapi pelafalan dan kelancaran audio memerlukan penilaian audio atau pengajar.",
   },
   {
-    q: "Bagaimana saya tahu level asli saya?",
-    a: "Statistik kami mengukur 8 skill terpisah dan membedakan level aktif (bicara/menulis) dengan level pasif (membaca/mendengar), lengkap dengan confidence score.",
+    q: "Bagaimana saya tahu kemampuan saya berkembang?",
+    a: "Lihat tiga bukti secara terpisah: akurasi soal, misi mandiri yang memenuhi kriteria, dan keberhasilan pada situasi baru setelah jeda. Tes penempatan memberi perkiraan awal; hasil internal bukan sertifikat CEFR.",
   },
   {
     q: "Apakah sertifikatnya resmi seperti Goethe/telc?",
-    a: "Tidak. Sertifikat kami menunjukkan penyelesaian program internal. Untuk kebutuhan resmi visa, studi, atau kerja, gunakan ujian resmi yang diakui.",
+    a: "Tidak. Aplikasi mencatat penyelesaian dan hasil latihan internal, bukan menerbitkan sertifikat kemampuan. Untuk kebutuhan resmi visa, studi, atau kerja, gunakan ujian resmi yang diakui.",
   },
 ];
 

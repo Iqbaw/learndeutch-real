@@ -14,8 +14,8 @@ export function MarketingFooter() {
               </span>
             </div>
             <p className="mt-3 text-sm text-muted">
-              30 hari per level. Terstruktur, terukur, dan realistis. Belajar bahasa
-              Jerman dengan pola, bukan hafalan buta.
+              Sprint belajar 30 hari dengan misi sesuai tujuanmu. Latih pola, gunakan
+              dalam situasi nyata, lalu cek lagi setelah jeda.
             </p>
           </div>
 

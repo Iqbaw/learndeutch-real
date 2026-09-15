@@ -20,7 +20,7 @@ const statusStyle: Record<MemoryStatus, { label: string; cls: string }> = {
   learning: { label: "Sedang dipelajari", cls: "bg-secondary-soft text-secondary" },
   review: { label: "Perlu diulang", cls: "bg-warning/15 text-warning" },
   almost: { label: "Hampir hafal", cls: "bg-primary-soft text-primary" },
-  mastered: { label: "Dikuasai", cls: "bg-success/15 text-success" },
+  mastered: { label: "Lancar di review", cls: "bg-success/15 text-success" },
 };
 
 export function VocabularyCard({
@@ -114,7 +114,7 @@ export function VocabularyCard({
 
       {status === "mastered" && (
         <p className="mt-3 rounded-xl bg-success/10 px-3 py-2 text-center text-xs font-bold text-success">
-          Sudah dikuasai 🎉
+          Lancar di review 🎉
         </p>
       )}
     </div>

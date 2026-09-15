@@ -144,7 +144,7 @@ export function evaluatePlacement(correct: boolean[], selfLevel?: string): Place
       scorePct,
       correctCount,
       summary:
-        "Kamu sudah menguasai dasar A1.1. Kamu bisa langsung lompat ke A1.2, atau mengulang fondasi dari Hari 1.",
+        "Jawaban tes internalmu menunjukkan materi A1.1 cukup kuat untuk mencoba A1.2. Kamu tetap bisa mengulang fondasi dari Hari 1.",
     };
   }
 

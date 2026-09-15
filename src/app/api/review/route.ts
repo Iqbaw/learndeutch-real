@@ -190,9 +190,9 @@ export async function POST(request: Request) {
       explanation: String(e.explanation ?? ""),
     }))
     .filter((e) => e.id && e.correctAnswer)
-    // Pronunciation/listening mistakes can't be re-tested well as a text MC —
-    // they belong in Speaking Lab, not here. Keep grammar/vocab/spelling/etc.
-    .filter((e) => e.category !== "Pronunciation")
+    // Speaking attempts cannot be re-tested well as a text multiple-choice
+    // item. Keep the legacy category for previously persisted attempts.
+    .filter((e) => e.category !== "Speaking" && e.category !== "Pronunciation")
     .slice(0, 8);
 
   const profile =

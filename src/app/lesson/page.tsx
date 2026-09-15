@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { LessonPlayer } from "@/components/learning/lesson-player";
 import { getLessonByDay, lessons } from "@/data/lessons";
+import { personalizeA1Lesson } from "@/data/daily-missions";
+import { useLearningEvidence } from "@/lib/learning-evidence";
 import { daysForLevel } from "@/data/levels";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
@@ -43,6 +45,8 @@ function LessonInner() {
   const profile = useAppStore((s) => s.profile);
   const placement = useAppStore((s) => s.placement);
   const errors = useAppStore((s) => s.errors);
+  const dailyMinutes = useAppStore((s) => s.dailyTargetMinutes);
+  const missions = useLearningEvidence((s) => s.missions);
   const currentDay = useAppStore((s) => s.currentDay);
   const completedDays = useAppStore((s) => s.completedDays);
   const activeLevel = useAppStore((s) => s.activeLevel);
@@ -80,8 +84,9 @@ function LessonInner() {
     // Hand-authored lessons exist only for A1; other levels use AI generation.
     if (activeLevel !== "A1") return undefined;
     const lastAvailableDay = lessons[lessons.length - 1]?.day ?? 1;
-    return getLessonByDay(targetDay) ?? getLessonByDay(Math.min(targetDay, lastAvailableDay));
-  }, [targetDay, activeLevel]);
+    const base = getLessonByDay(targetDay) ?? getLessonByDay(Math.min(targetDay, lastAvailableDay));
+    return base ? personalizeA1Lesson(base, profile?.goal ?? "") : undefined;
+  }, [targetDay, activeLevel, profile?.goal]);
 
   const dayMeta = useMemo(
     () => daysForLevel(activeLevel).find((d) => d.day === targetDay),
@@ -131,7 +136,7 @@ function LessonInner() {
     const lesson = await fetchPersonalizedLesson(buildRequest());
     setGenerating(false);
     if (lesson) {
-      setActiveLesson(lesson);
+      setActiveLesson(activeLevel === "A1" ? personalizeA1Lesson(lesson, profile?.goal ?? "") : lesson);
       setStarted(true);
     } else if (staticLesson) {
       // graceful fallback to the bundled lesson
@@ -256,21 +261,25 @@ function LessonInner() {
               ))}
             </ul>
 
+            {staticLesson?.application && <section className="mt-5 rounded-2xl border border-primary/30 bg-primary-soft/40 p-4">
+              <h2 className="font-heading font-bold text-ink">Dipakai untuk: {staticLesson.application.track}</h2>
+              <p className="mt-2 text-sm text-ink">{staticLesson.application.task}</p>
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">{staticLesson.application.criteria.map((c) => <li key={c}>{c}</li>)}</ul>
+              <p className="mt-3 text-sm text-muted">Target waktumu {dailyMinutes} menit per hari. Boleh membagi sesi ini menjadi beberapa kali belajar; posisi dan draf jawaban tersimpan di browser ini.</p>
+              {Object.values(missions).filter((m) => m.day === targetDay && m.goal === profile.goal).map((m) => <p key={m.id} className="mt-3 text-sm font-bold text-ink">
+                Misi: {m.status === "correct" ? "tugas teks terpenuhi" : m.status === "needs-work" ? "perlu latihan lagi" : "perlu ditinjau"} · {m.delayedPasses} uji ulang berhasil setelah jeda.
+              </p>)}
+            </section>}
+
             {canUseAI && (
               <div className="mt-5 rounded-2xl border border-primary/30 bg-primary-soft/40 p-4">
                 <p className="flex items-center gap-2 font-heading text-sm font-bold text-ink">
                   <BrainCircuit className="h-4 w-4 text-primary" /> Disesuaikan untukmu
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  <span className="font-bold text-ink">Versi AI</span> dibuat khusus untukmu — materi,
-                  contoh, dan soal disusun ulang sesuai level, tujuan
-                  {profile.weakSkill && profile.weakSkill !== "Belum tahu"
-                    ? `, dan kelemahanmu di ${profile.weakSkill.toLowerCase()}`
-                    : ""}
-                  {errors.length > 0 ? ", serta kesalahan yang sering kamu buat" : ""}. Setiap kali
-                  bisa berbeda dan lebih menantang. <span className="font-bold text-ink">Versi standar</span>{" "}
-                  adalah materi tetap bawaan kursus — sama untuk semua orang, cocok kalau kamu ingin
-                  konsisten atau sedang offline.
+                  Versi AI membuat variasi penjelasan dan soal sesuai tujuan serta area latihanmu.
+                  Pada A1, kedua versi tetap memiliki misi harian sesuai tujuanmu. Versi bawaan
+                  menyediakan materi tetap yang bisa diulang dengan konsisten. Hasil AI perlu ditinjau jika terasa keliru.
                 </p>
               </div>
             )}

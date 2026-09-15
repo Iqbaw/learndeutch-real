@@ -1,17 +1,16 @@
-import { cn, foldGerman } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { ErrorItem, ErrorStatus } from "@/types";
 
 const statusStyle: Record<ErrorStatus, { label: string; cls: string }> = {
   new: { label: "Baru salah", cls: "bg-danger/15 text-danger" },
   reviewed: { label: "Sudah direview", cls: "bg-primary-soft text-primary" },
-  almost: { label: "Hampir dikuasai", cls: "bg-secondary-soft text-secondary" },
-  safe: { label: "Aman", cls: "bg-success/15 text-success" },
+  almost: { label: "Sudah dua kali direview", cls: "bg-secondary-soft text-secondary" },
+  safe: { label: "Selesai direview", cls: "bg-success/15 text-success" },
   relapsed: { label: "Kambuh lagi", cls: "bg-warning/15 text-warning" },
 };
 
-// Fold umlauts/ß so a missing "ä/ö/ü/ß" (not on every keyboard) is NOT flagged
-// as a mistake — "schon" matches "schön", "ueben" matches "üben", etc.
-const normTok = (t: string) => foldGerman(t.replace(/[.,!?;:"'„""()]/g, ""));
+// Keep umlauts and ß meaningful: schon/schön and Maße/Masse can have different meanings.
+const normTok = (t: string) => t.toLocaleLowerCase("de-DE").replace(/[.,!?;:"'„""()]/g, "");
 const tokenize = (s: string) => s.split(/\s+/).filter(Boolean);
 
 export function ErrorCard({ item }: { item: ErrorItem }) {

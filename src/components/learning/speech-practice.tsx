@@ -18,7 +18,7 @@ interface SpeechPracticeProps {
   allowSave?: boolean;
   /** called when the user saves the attempt to the Error Notebook */
   onSave?: (info: { userAnswer: string; correctAnswer: string; explanation: string }) => void;
-  /** fired once per attempt with whether the pronunciation passed */
+  /** fired once per attempt with whether the ordered transcript matched */
   onResult?: (passed: boolean) => void;
   className?: string;
 }
@@ -46,7 +46,7 @@ export function SpeechPractice({
     setEvaluating(false);
     if (!result.noSpeech) {
       const passed =
-        result.pronunciation >= 60 && result.matchedWords / Math.max(1, result.totalWords) >= 0.6;
+        result.transcriptMatch === 100;
       playSound(passed ? "correct" : "wrong");
       onResultRef.current?.(passed);
     }
@@ -137,7 +137,7 @@ export function SpeechPractice({
 
         <p className="text-center text-sm text-muted">
           {evaluating
-            ? "Menilai pengucapanmu..."
+            ? "Mencocokkan transkrip…"
             : listening
             ? "Mendengarkan... bicara sekarang, lalu ketuk untuk berhenti."
             : feedback
@@ -172,8 +172,7 @@ export function SpeechPractice({
 
       {feedback && !feedback.noSpeech && (() => {
         const speechPassed =
-          feedback.pronunciation >= 60 &&
-          feedback.matchedWords / Math.max(1, feedback.totalWords) >= 0.6;
+          feedback.transcriptMatch === 100;
         return (
         <div className="mt-4 animate-fade-up">
           <p className="text-xs font-bold uppercase tracking-wide text-muted">Kamu mengucapkan</p>
@@ -182,10 +181,10 @@ export function SpeechPractice({
           </p>
 
           <div className="mt-4 flex items-center gap-4">
-            <ProgressRing value={feedback.pronunciation} size={60} stroke={7} sublabel="ucap" />
+            <ProgressRing value={feedback.transcriptMatch} size={60} stroke={7} sublabel="teks" />
             <div className="flex-1 space-y-2">
-              <ScoreBar label="Kelancaran" value={feedback.fluency} />
-              <ScoreBar label="Kata tepat" value={feedback.grammar} />
+              <ScoreBar label="Kata dalam urutan contoh" value={feedback.wordOrder} />
+              <p className="text-xs text-muted">Pelafalan dan kelancaran audio belum dinilai.</p>
             </div>
           </div>
 
@@ -210,7 +209,7 @@ export function SpeechPractice({
                   onSave?.({
                     userAnswer: feedback.transcript || "(tidak terdeteksi)",
                     correctAnswer: feedback.betterAnswer || expectedRef.current,
-                    explanation: feedback.feedback || "Latih pengucapan kalimat ini sampai lancar.",
+                    explanation: feedback.feedback || "Bandingkan kata dan urutan transkrip dengan contoh, lalu coba lagi.",
                   });
                   setSaved(true);
                 }}

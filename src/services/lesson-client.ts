@@ -36,16 +36,21 @@ export async function fetchAIEnabled(): Promise<boolean> {
 }
 
 export async function fetchPersonalizedLesson(req: LessonRequest): Promise<Lesson | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 65000);
   try {
     const res = await fetch("/api/lesson", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(req),
+      signal: controller.signal,
     });
     if (!res.ok) return null;
     const data = (await res.json()) as { lesson?: Lesson | null };
     return data.lesson ?? null;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }

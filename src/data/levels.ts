@@ -69,7 +69,7 @@ export const levels: Level[] = [
   },
   {
     id: "C2",
-    title: "Mendekati native, presisi & gaya bahasa",
+    title: "Presisi tinggi & gaya bahasa",
     durationDays: 30,
     focus: "Idiom, nuansa makna, ironi, advanced writing, cultural fluency.",
     outcome:
@@ -156,7 +156,7 @@ export const a1Days: A1Day[] = [
   { day: 27, subLevel: "A1.2", theme: "Menulis pesan pendek", skill: "Writing" },
   { day: 28, subLevel: "A1.2", theme: "Simulasi A1", skill: "Mock test" },
   { day: 29, subLevel: "A1.2", theme: "Remedial otomatis", skill: "Latihan kelemahan" },
-  { day: 30, subLevel: "A1.2", theme: "Final A1 Test", skill: "Sertifikat internal" },
+  { day: 30, subLevel: "A1.2", theme: "Evaluasi akhir sprint A1", skill: "Evaluasi internal" },
 ].map((d) => ({ ...d, estimatedMinutes: 35 + (d.day % 5) * 3 } as A1Day));
 
 
@@ -212,7 +212,7 @@ export const a2Days: CourseDay[] = ([
   { day: 27, subLevel: "A2.2", theme: "Menulis email/pesan informal", skill: "Writing" },
   { day: 28, subLevel: "A2.2", theme: "Simulasi ujian A2", skill: "Mock test" },
   { day: 29, subLevel: "A2.2", theme: "Remedial otomatis", skill: "Latihan kelemahan" },
-  { day: 30, subLevel: "A2.2", theme: "Final A2 Test", skill: "Sertifikat internal" },
+  { day: 30, subLevel: "A2.2", theme: "Evaluasi akhir sprint A2", skill: "Evaluasi internal" },
 ] as Omit<CourseDay, "estimatedMinutes">[]).map(withMinutes);
 
 function capitalize(s: string): string {
@@ -251,7 +251,7 @@ function genericDays(level: Level): CourseDay[] {
       skill = "Latihan kelemahan";
     } else if (day === 30) {
       theme = `Final ${level.id} Test`;
-      skill = "Sertifikat internal";
+      skill = "Evaluasi internal";
     } else {
       const topic = topics.length ? topics[(day - 1) % topics.length] : level.focus;
       theme = capitalize(topic);

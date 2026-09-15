@@ -82,12 +82,16 @@ export function ExerciseCard({ exercise, onResult, onAnswered }: ExerciseCardPro
           <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
             <span className="font-bold">
-              {isCorrect ? "Tepat sekali! " : "Hampir benar. "}
+              {isCorrect ? "Tepat sekali! " : "Belum tepat. "}
             </span>
             <FormattedText text={exercise.explanation} />
           </p>
         </div>
       )}
+      {answered && exercise.audioText && <details className="rounded-xl border border-border bg-card p-3 text-sm text-ink">
+        <summary className="cursor-pointer font-bold focusable">Lihat transkrip setelah menjawab</summary>
+        <p className="mt-2">{exercise.audioText}</p>
+      </details>}
     </div>
   );
 }

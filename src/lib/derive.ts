@@ -25,8 +25,6 @@ export const SKILLS: Skill[] = [
   "Writing",
   "Grammar",
   "Vocabulary",
-  "Pronunciation",
-  "Retention",
 ];
 
 const EXAM_DAYS = new Set([15, 28, 30]);
@@ -312,7 +310,7 @@ export function deriveStats(input: DeriveStatsInput): DerivedStats {
       ? capPercent(((vocab.almost + vocab.mastered) / vocab.started) * 100)
       : 0;
 
-  const realUse = avg([get("Speaking"), get("Writing"), get("Pronunciation")]);
+  const realUse = avg([get("Speaking"), get("Writing")]);
 
   const weekly = hasData
     ? [{ week: "Minggu ini", accuracy: overallAccuracy, minutes: input.completedDays.length * 35 }]

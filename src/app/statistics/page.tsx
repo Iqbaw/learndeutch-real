@@ -7,7 +7,6 @@ import {
   BookText,
   Network,
   RefreshCw,
-  Globe,
   TrendingUp,
   BarChart3,
 } from "lucide-react";
@@ -17,11 +16,11 @@ import { SkillRadar } from "@/components/stats/skill-radar";
 import { WeeklyChart } from "@/components/stats/weekly-chart";
 import { AIInsightCard } from "@/components/cards/ai-insight-card";
 import { StatCard } from "@/components/cards/stat-card";
-import { LevelBadge } from "@/components/ui/level-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CTAButton } from "@/components/ui/cta-button";
 import { useAppStore } from "@/lib/store";
 import { deriveStats } from "@/lib/derive";
+import { useLearningEvidence } from "@/lib/learning-evidence";
 
 export default function StatisticsPage() {
   const profile = useAppStore((s) => s.profile);
@@ -32,6 +31,10 @@ export default function StatisticsPage() {
   const vocabStatus = useAppStore((s) => s.vocabStatus);
   const speakingAttempts = useAppStore((s) => s.speakingAttempts);
   const placement = useAppStore((s) => s.placement);
+  const missions = useLearningEvidence((s) => s.missions);
+  const missionEvidence = Object.values(missions);
+  const missionPasses = missionEvidence.filter((m) => m.status === "correct").length;
+  const delayedPasses = missionEvidence.reduce((sum, m) => sum + m.delayedPasses, 0);
 
   const stats = deriveStats({
     startLevel: profile?.startLevel ?? "A1.1",
@@ -46,40 +49,34 @@ export default function StatisticsPage() {
 
   return (
     <AppShell
-      title="Statistics"
-      subtitle="Tahu level aslimu, bukan cuma merasa sudah bisa. Statistik yang jujur dan berguna."
+      title="Statistik"
+      subtitle="Lihat sesi yang selesai, akurasi latihan, misi mandiri, dan kemampuan yang bertahan setelah jeda."
     >
       <AppGuard>
         {!stats.hasData ? (
           <EmptyState
             icon={<BarChart3 className="h-6 w-6" />}
             title="Statistik akan muncul setelah kamu mulai belajar"
-            description="Selesaikan pelajaran, review kosakata, dan latihan speaking. Setiap aktivitas mengisi radar skill, mastery grammar, dan estimasi level CEFR-mu di sini — semuanya dari data nyatamu."
+            description="Selesaikan pelajaran, kerjakan misi mandiri, dan ulangi pada situasi baru. Tes penempatan memberi perkiraan awal; latihan harian tidak otomatis menetapkan level CEFR."
             action={<CTAButton href="/lesson">Mulai Hari Ini</CTAButton>}
           />
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="card-base p-5">
-                <p className="text-xs font-bold uppercase tracking-wide text-muted">Estimasi CEFR</p>
-                <p className="mt-1 font-heading text-3xl font-extrabold text-ink">{stats.estimatedLevel}</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-xs text-muted">Confidence</span>
-                  <LevelBadge level={`${stats.confidence}%`} />
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-elevated">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${stats.confidence}%` }} />
-                </div>
+                <p className="text-xs font-bold uppercase tracking-wide text-muted">Tes penempatan</p>
+                <p className="mt-1 font-heading text-3xl font-extrabold text-ink">{placement?.estimatedLevel ?? "Belum ada"}</p>
+                <p className="mt-2 text-xs text-muted">{placement ? `Perkiraan awal · keyakinan model ${placement.confidence}%` : "Kerjakan tes penempatan jika ingin perkiraan awal."}</p>
               </div>
-              <StatCard label="Level Aktif" value={stats.activeLevel} hint="bicara & menulis" accent="secondary" icon={<Mic className="h-5 w-5" />} />
-              <StatCard label="Level Pasif" value={stats.passiveLevel} hint="membaca & mendengar" icon={<BookText className="h-5 w-5" />} />
-              <StatCard label="Real Use Score" value={`${stats.realUse}%`} hint="pakai bahasa di situasi nyata" accent="success" icon={<Globe className="h-5 w-5" />} />
+              <StatCard label="Sesi selesai" value={completedDays.length} hint="penyelesaian, belum otomatis dikuasai" accent="secondary" icon={<BookText className="h-5 w-5" />} />
+              <StatCard label="Misi teks terpenuhi" value={`${missionPasses}/${missionEvidence.length}`} hint="berdasarkan kriteria tugas" icon={<Mic className="h-5 w-5" />} />
+              <StatCard label="Lolos setelah jeda" value={delayedPasses} hint="situasi baru saat review jatuh tempo" accent="success" icon={<RefreshCw className="h-5 w-5" />} />
             </div>
 
             <div className="mt-5 grid gap-5 lg:grid-cols-3">
               <div className="card-base p-5 lg:col-span-2">
                 <h2 className="flex items-center gap-2 font-heading text-lg font-extrabold text-ink">
-                  <Activity className="h-5 w-5 text-primary" /> CEFR Skill Radar
+                  <Activity className="h-5 w-5 text-primary" /> Akurasi Format Latihan
                 </h2>
                 <SkillRadar data={stats.skills} height={300} />
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -91,19 +88,21 @@ export default function StatisticsPage() {
                   ))}
                 </div>
               </div>
-              <AIInsightCard title="AI Insight" className="lg:self-start">
-                {stats.aiInsight}
+              <AIInsightCard title="Ringkasan bukti" className="lg:self-start">
+                {missionEvidence.length === 0
+                  ? "Kerjakan misi mandiri di akhir pelajaran. Setelah jatuh tempo, Review akan memberi situasi baru untuk melihat apakah kemampuan masih bisa dipakai."
+                  : `${missionPasses} dari ${missionEvidence.length} misi terakhir memenuhi kriteria teks. ${delayedPasses} uji ulang berhasil setelah jeda. Tinjauan transkrip tidak menilai pelafalan atau kelancaran audio.`}
               </AIInsightCard>
             </div>
 
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
               <div className="card-base p-5">
                 <h2 className="flex items-center gap-2 font-heading text-lg font-extrabold text-ink">
-                  <BookText className="h-5 w-5 text-primary" /> Vocabulary Mastery
+                  <BookText className="h-5 w-5 text-primary" /> Status Latihan Vocabulary
                 </h2>
                 <div className="mt-4 grid grid-cols-2 gap-3">
-                  <MiniStat label="Pasif dikenal" value={stats.vocab.passive} color="text-primary" />
-                  <MiniStat label="Aktif dikuasai" value={stats.vocab.active} color="text-success" />
+                  <MiniStat label="Sudah dimulai" value={stats.vocab.passive} color="text-primary" />
+                  <MiniStat label="Lancar di review" value={stats.vocab.active} color="text-success" />
                   <MiniStat label="Perlu review" value={stats.vocab.weak} color="text-warning" />
                   <MiniStat label="Sedang belajar" value={stats.vocab.learning} color="text-secondary" />
                 </div>
@@ -111,7 +110,7 @@ export default function StatisticsPage() {
 
               <div className="card-base p-5">
                 <h2 className="flex items-center gap-2 font-heading text-lg font-extrabold text-ink">
-                  <Network className="h-5 w-5 text-primary" /> Grammar Mastery
+                  <Network className="h-5 w-5 text-primary" /> Akurasi Latihan Grammar
                 </h2>
                 <div className="mt-4 space-y-3">
                   {stats.grammarMastery.map((g) => (
@@ -132,7 +131,7 @@ export default function StatisticsPage() {
             <div className="mt-5 grid gap-5 lg:grid-cols-3">
               <div className="card-base p-5 lg:col-span-2">
                 <h2 className="flex items-center gap-2 font-heading text-lg font-extrabold text-ink">
-                  <TrendingUp className="h-5 w-5 text-primary" /> Weekly Report
+                  <TrendingUp className="h-5 w-5 text-primary" /> Laporan Mingguan
                 </h2>
                 <p className="mb-2 mt-1 text-sm text-muted">Akurasi latihanmu.</p>
                 {stats.weekly.length > 0 ? (
@@ -144,15 +143,14 @@ export default function StatisticsPage() {
               <div className="card-base flex flex-col justify-center p-5">
                 <div className="flex items-center gap-2">
                   <RefreshCw className="h-5 w-5 text-secondary" />
-                  <h3 className="font-heading font-bold text-ink">Retention</h3>
+                  <h3 className="font-heading font-bold text-ink">Kemajuan kartu vocabulary</h3>
                 </div>
                 <p className="mt-3 font-heading text-5xl font-extrabold text-ink">{stats.retention}%</p>
-                <p className="mt-1 text-sm text-muted">Bagian kata yang sudah mencapai status hampir/dikuasai.</p>
+                <p className="mt-1 text-sm text-muted">Bagian kata yang mencapai status hampir hafal atau lancar di review aplikasi.</p>
                 <div className="mt-4 flex items-center gap-2 rounded-xl bg-elevated p-3">
                   <Gauge className="h-5 w-5 text-primary" />
                   <p className="text-sm text-ink">
-                    Confidence keseluruhan <span className="font-bold">{stats.confidence}%</span>. Makin
-                    banyak latihan, makin akurat estimasinya.
+                    <span className="font-bold">{delayedPasses}</span> misi berhasil dipakai lagi setelah jeda. Nilai kartu vocabulary tidak menggantikan uji ulang misi.
                   </p>
                 </div>
               </div>

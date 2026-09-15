@@ -34,10 +34,10 @@ const slides: Slide[] = [
         </span>
         <h1 className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight text-ink">
           Belajar Bahasa Jerman{" "}
-          <span className="text-primary">30 Hari per Level</span>
+          lewat <span className="text-primary">Sprint 30 Hari</span>
         </h1>
         <p className="mt-3 max-w-xs text-muted">
-          Dari nol sampai percaya diri. Terstruktur, terukur, dan realistis.
+          Dari nol sampai berani memakai kalimatmu sendiri. Terstruktur dan sesuai tujuanmu.
         </p>
       </div>
     ),
@@ -94,9 +94,9 @@ const slides: Slide[] = [
           <CalendarCheck className="h-8 w-8" />
         </div>
         <h2 className="mt-5 font-heading text-2xl font-extrabold tracking-tight text-ink">
-          30 hari, satu sprint per level
+          30 hari, satu siklus latihan
         </h2>
-        <p className="mt-3 max-w-xs text-muted">A1, A2, B1, B2, C1, C2 — masing-masing dibagi dua sublevel.</p>
+        <p className="mt-3 max-w-xs text-muted">Selesaikan materi, kerjakan misi mandiri, lalu uji lagi setelah jeda. Satu level dapat memerlukan beberapa sprint.</p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           {["A1", "A2", "B1", "B2", "C1", "C2"].map((l, i) => (
             <span
@@ -121,15 +121,15 @@ const slides: Slide[] = [
           <BarChart3 className="h-8 w-8" />
         </div>
         <h2 className="mt-5 font-heading text-2xl font-extrabold tracking-tight text-ink">
-          Tahu level aslimu
+          Lihat bukti belajarmu
         </h2>
         <p className="mt-3 max-w-xs text-muted">
-          Statistik CEFR jujur: listening, speaking, grammar, vocabulary, dan AI tutor yang
-          menjelaskan kesalahanmu dengan ramah.
+          Lihat akurasi latihan, misi yang memenuhi kriteria, dan uji ulang setelah jeda.
+          Hasil internal tidak menggantikan ujian CEFR resmi.
         </p>
         <div className="mt-5 flex items-center gap-3">
           <Mic className="h-6 w-6 text-primary" />
-          <span className="text-sm text-muted">Latihan speaking dengan mikrofon asli</span>
+          <span className="text-sm text-muted">Speaking dengan transkrip untuk meninjau isi</span>
         </div>
       </div>
     ),

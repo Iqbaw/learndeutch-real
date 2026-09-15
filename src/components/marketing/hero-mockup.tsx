@@ -32,7 +32,7 @@ export function HeroMockup() {
         {/* Skill radar (bar style for mock) */}
         <div className="rounded-2xl border border-border p-3">
           <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-ink">
-            <TrendingUp className="h-3.5 w-3.5 text-primary" /> CEFR Skill Radar
+            <TrendingUp className="h-3.5 w-3.5 text-primary" /> Akurasi Latihan
           </p>
           <div className="space-y-1.5">
             {skills.map((s) => (

@@ -97,8 +97,11 @@ export interface LessonStep {
   // speaking/writing prompt
   prompt?: string;
   expected?: string;
-  // for writing: if set, answer is correct when it contains ALL these
-  // words (lets names/free parts vary, e.g. "Mein Vater heißt <nama>")
+  acceptedAnswers?: string[];
+  assessment?: "closed" | "open";
+  criteria?: string[];
+  missionId?: string;
+  // Legacy metadata: marks a free-response task, never a sufficient answer key.
   keywords?: string[];
   // mistake explanation
   wrong?: string;
@@ -114,6 +117,7 @@ export interface Lesson {
   goal: string[];
   estimatedMinutes: number;
   steps: LessonStep[];
+  application?: { track: string; outcome: string; task: string; criteria: string[]; fieldTask: string };
 }
 
 // ---------- Vocabulary ----------
@@ -166,6 +170,7 @@ export type ErrorCategory =
   | "Article"
   | "Case"
   | "Vocabulary"
+  | "Speaking"
   | "Pronunciation"
   | "Listening"
   | "Spelling"

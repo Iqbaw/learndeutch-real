@@ -4,6 +4,7 @@
 // ready to be swapped for a real LLM / speech backend later.
 // ============================================================
 
+import { normalizeAnswer } from "@/lib/assessment";
 import type { ErrorCategory } from "@/types";
 
 export interface CorrectionResult {
@@ -14,9 +15,8 @@ export interface CorrectionResult {
 }
 
 export interface SpeakingFeedback {
-  pronunciation: number; // 0-100
-  fluency: number;
-  grammar: number;
+  transcriptMatch: number;
+  wordOrder: number;
   feedback: string;
   betterAnswer: string;
   transcript: string;
@@ -74,125 +74,36 @@ export const writingCorrectionService = {
     return {
       corrected: input,
       explanation:
-        "Mantap! Polanya sudah benar. Kalau mau lebih natural, coba tambahkan keterangan waktu atau tempat.",
+        "Pemeriksa pola terbatas ini belum menemukan koreksi. Itu belum membuktikan kalimat benar; gunakan tugas menulis dengan kriteria atau minta tinjauan pengajar.",
       category: "Grammar",
       miniPractice: ["Coba buat satu kalimat lagi dengan pola yang sama."],
     };
   },
 };
 
-/** Normalize German text for comparison: lowercase, strip punctuation, fold umlauts. */
-function normalizeForCompare(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[.,!?;:"'„“”]/g, "")
-    .replace(/ä/g, "a")
-    .replace(/ö/g, "o")
-    .replace(/ü/g, "u")
-    .replace(/ß/g, "ss")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/** Levenshtein distance between two strings (for per-word similarity). */
-function levenshtein(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-  const prev = new Array<number>(n + 1);
-  const curr = new Array<number>(n + 1);
-  for (let j = 0; j <= n; j++) prev[j] = j;
-  for (let i = 1; i <= m; i++) {
-    curr[0] = i;
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
-    }
-    for (let j = 0; j <= n; j++) prev[j] = curr[j];
-  }
-  return prev[n];
-}
-
-function wordSimilarity(a: string, b: string): number {
-  if (!a || !b) return 0;
-  const dist = levenshtein(a, b);
-  return 1 - dist / Math.max(a.length, b.length);
-}
-
 export interface SpeechScore {
-  pronunciation: number;
-  fluency: number;
-  grammar: number;
+  transcriptMatch: number;
+  wordOrder: number;
   matchedWords: number;
   totalWords: number;
   feedback: string;
 }
 
-/**
- * Compare what the learner actually said (from the microphone) with the
- * expected German sentence and produce real, transcript-based scores.
- */
+/** Ordered transcript alignment for imitation practice. Never acoustic scoring. */
 export function scoreSpeech(transcript: string, expected: string): SpeechScore {
-  const said = normalizeForCompare(transcript);
-  const target = normalizeForCompare(expected);
-  const saidWords = said ? said.split(" ") : [];
-  const targetWords = target ? target.split(" ") : [];
-  const totalWords = targetWords.length || 1;
-
-  // Greedy word matching: each target word matched to best remaining spoken word.
-  const available = [...saidWords];
-  let matchedWords = 0;
-  let similaritySum = 0;
-  for (const tw of targetWords) {
-    let bestIdx = -1;
-    let bestSim = 0;
-    for (let i = 0; i < available.length; i++) {
-      const sim = wordSimilarity(tw, available[i]);
-      if (sim > bestSim) {
-        bestSim = sim;
-        bestIdx = i;
-      }
-    }
-    similaritySum += bestSim;
-    if (bestSim >= 0.7) {
-      matchedWords++;
-      if (bestIdx >= 0) available.splice(bestIdx, 1);
-    }
+  const said = normalizeAnswer(transcript).split(" ").filter(Boolean);
+  const target = normalizeAnswer(expected).split(" ").filter(Boolean);
+  const dp = Array.from({ length: said.length + 1 }, () => Array(target.length + 1).fill(0));
+  for (let i = 1; i <= said.length; i++) for (let j = 1; j <= target.length; j++) {
+    dp[i][j] = said[i - 1] === target[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
   }
-
-  const coverage = matchedWords / totalWords; // how many words got said
-  const avgSim = similaritySum / totalWords; // how close the pronunciation was
-
-  const pronunciation = Math.round(Math.min(100, avgSim * 100));
-  const grammar = Math.round(Math.min(100, coverage * 100));
-  // fluency rewards saying roughly the right number of words without huge extras
-  const lengthRatio = saidWords.length / totalWords;
-  const lengthPenalty = Math.min(1, Math.abs(1 - lengthRatio));
-  const fluency = Math.round(Math.min(100, Math.max(0, (coverage * 0.7 + (1 - lengthPenalty) * 0.3) * 100)));
-
-  let feedback: string;
-  if (coverage >= 0.85 && pronunciation >= 80) {
-    feedback = "Bagus sekali! Pengucapanmu jelas dan hampir semua kata terdengar tepat.";
-  } else if (coverage >= 0.6) {
-    const missed = targetWords.filter(
-      (tw) => !saidWords.some((sw) => wordSimilarity(tw, sw) >= 0.7)
-    );
-    feedback = missed.length
-      ? `Hampir benar! Beberapa kata belum terdengar jelas: "${missed.slice(0, 3).join(", ")}". Coba ucapkan lebih perlahan.`
-      : "Hampir benar! Coba ucapkan setiap kata sedikit lebih jelas.";
-  } else if (saidWords.length > 0) {
-    feedback = "Belum cukup mirip. Dengarkan contohnya dulu, lalu tirukan kata per kata.";
-  } else {
-    feedback = "Aku belum menangkap suaramu. Pastikan mikrofon aktif lalu coba lagi.";
-  }
-
-  if (/\bik\b/.test(said) && /\bich\b/.test(target)) {
-    feedback +=
-      ' Tip: "ich" diucapkan lembut seperti hembusan kecil, bukan "ik" yang keras.';
-  }
-
-  return { pronunciation, fluency, grammar, matchedWords, totalWords, feedback };
+  const matchedWords = dp[said.length][target.length];
+  const score = Math.round(100 * matchedWords / Math.max(1, said.length, target.length));
+  return { transcriptMatch: score, wordOrder: score, matchedWords, totalWords: target.length,
+    feedback: score === 100 ? "Transkrip cocok dengan contoh. Ini menunjukkan kecocokan kata dan urutan, bukan nilai pelafalan atau kelancaran."
+      : said.length ? "Transkrip belum sama dengan contoh. Bandingkan kata dan urutannya. Pengenalan suara juga bisa keliru; ungkapan lain yang sah perlu dinilai sebagai jawaban bebas."
+      : "Belum ada transkrip yang tertangkap. Coba lagi atau lanjutkan melalui latihan tertulis.",
+  };
 }
 
 /** Speaking feedback — specific, never just "good job" (PRD section 13.6). */
@@ -208,9 +119,8 @@ export const speakingFeedbackService = {
 
     if (!said) {
       return {
-        pronunciation: 0,
-        fluency: 0,
-        grammar: 0,
+        transcriptMatch: 0,
+        wordOrder: 0,
         feedback: "Aku belum menangkap suaramu. Pastikan mikrofon aktif lalu coba lagi.",
         betterAnswer: target,
         transcript: "",
@@ -222,9 +132,8 @@ export const speakingFeedbackService = {
 
     const score = scoreSpeech(said, target);
     return {
-      pronunciation: score.pronunciation,
-      fluency: score.fluency,
-      grammar: score.grammar,
+      transcriptMatch: score.transcriptMatch,
+      wordOrder: score.wordOrder,
       feedback: score.feedback,
       betterAnswer: target,
       transcript: said,

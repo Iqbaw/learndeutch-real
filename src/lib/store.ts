@@ -10,6 +10,7 @@ import type {
   MemoryStatus,
   Skill,
 } from "@/types";
+import { useLearningEvidence } from "./learning-evidence";
 import { vocabulary } from "@/data/vocabulary";
 
 // ============================================================
@@ -75,6 +76,7 @@ interface AppState {
   setOnboardingAnswer: (key: keyof OnboardingAnswers, value: string) => void;
   setPlacement: (snapshot: PlacementSnapshot) => void;
   completeOnboarding: (profile: Profile, startDay?: number) => void;
+  setLearningGoal: (goal: string) => void;
 
   // --- progress ---
   currentDay: number;
@@ -210,6 +212,11 @@ export const useAppStore = create<AppState>()(
         }),
       completeOnboarding: (profile, startDay = 1) =>
         set({ profile, currentDay: Math.max(1, startDay) }),
+      setLearningGoal: (goal) =>
+        set((s) => ({
+          onboarding: { ...s.onboarding, goal },
+          profile: s.profile ? { ...s.profile, goal } : s.profile,
+        })),
 
       switchLevel: (level) =>
         set((s) => {
@@ -381,7 +388,7 @@ export const useAppStore = create<AppState>()(
             currentDay: Math.min(30, Math.max(s.currentDay, day + 1)),
             streak,
             lastStudyDate: today,
-            xp: s.xp + opts.xp,
+            xp: s.xp + (s.completedDays.includes(day) ? 0 : opts.xp),
             vocabStatus,
           };
         }),
@@ -408,9 +415,10 @@ export const useAppStore = create<AppState>()(
 
       recordSpeaking: () => set((s) => ({ speakingAttempts: s.speakingAttempts + 1 })),
 
-      resetProgress: () => set({ ...initialProgress }),
+      resetProgress: () => { useLearningEvidence.getState().clear(); set({ ...initialProgress }); },
 
-      resetAll: () =>
+      resetAll: () => {
+        useLearningEvidence.getState().clear();
         set({
           ...initialProgress,
           profile: null,
@@ -421,7 +429,8 @@ export const useAppStore = create<AppState>()(
           audioSpeed: 1,
           explanationLang: "Indonesia",
           soundEnabled: true,
-        }),
+        });
+      },
     }),
     {
       name: "deutsch30-store",

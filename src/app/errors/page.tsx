@@ -32,7 +32,7 @@ export default function ErrorsPage() {
   return (
     <AppShell
       title="Error Notebook"
-      subtitle="Kesalahanmu jadi bahan latihan otomatis. Setiap kesalahan tersimpan dan muncul lagi sampai dikuasai."
+      subtitle="Kesalahanmu jadi bahan latihan otomatis. Setiap kesalahan tersimpan dan muncul lagi sampai beberapa kali berhasil direview."
     >
       <AppGuard>
         {errors.length === 0 ? (
@@ -53,7 +53,7 @@ export default function ErrorsPage() {
                 icon={<NotebookPen className="h-5 w-5" />}
               />
               <StatCard label="Kambuh lagi" value={relapsed} hint="butuh latihan lebih sering" accent="secondary" />
-              <StatCard label="Sudah aman" value={safe} hint="dikuasai" accent="success" />
+              <StatCard label="Selesai direview" value={safe} hint="status aplikasi" accent="success" />
             </div>
 
             <div className="mt-5 flex items-start gap-2 rounded-2xl border border-border bg-card p-4 text-sm text-muted">

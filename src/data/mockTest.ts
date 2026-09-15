@@ -141,55 +141,5 @@ export const a1MockTest: MockTest = {
         },
       ],
     },
-    {
-      id: "writing",
-      name: "Schreiben (Writing)",
-      skill: "Writing",
-      questions: [
-        {
-          prompt: "Mana penulisan yang benar untuk 'Saya berasal dari Indonesia.'?",
-          options: ["Ich komme aus Indonesien.", "Ich kommen aus Indonesien.", "Ich komme von Indonesien."],
-          correctIndex: 0,
-          explanation: "kommen aus + negara; bentuk ich → komme.",
-        },
-        {
-          prompt: "Mana kalimat yang benar?",
-          options: ["Sie heißt Anna.", "Sie heißen Anna.", "Sie heiße Anna."],
-          correctIndex: 0,
-          explanation: "Subjek sie (dia, pr) → heißt.",
-        },
-        {
-          prompt: "Mana penulisan yang benar untuk 'Saya berumur 20 tahun.'?",
-          options: ["Ich bin 20 Jahre alt.", "Ich habe 20 Jahre.", "Ich bin 20 Jahre."],
-          correctIndex: 0,
-          explanation: "Umur: 'Ich bin ... Jahre alt.'",
-        },
-      ],
-    },
-    {
-      id: "speaking",
-      name: "Sprechen (Speaking)",
-      skill: "Speaking",
-      questions: [
-        {
-          prompt: "Pilih jawaban lisan terbaik untuk 'Wie heißt du?'",
-          options: ["Ich heiße Max.", "Ich bin gut.", "Danke schön."],
-          correctIndex: 0,
-          explanation: "Pertanyaan menanyakan nama, jawab dengan 'Ich heiße ...'.",
-        },
-        {
-          prompt: "Respons paling tepat untuk 'Wie geht es dir?'",
-          options: ["Mir geht es gut, danke.", "Ich heiße Tom.", "Ich komme aus Berlin."],
-          correctIndex: 0,
-          explanation: "Menanyakan kabar → 'Mir geht es gut, danke.'",
-        },
-        {
-          prompt: "Cara sopan memesan: 'Saya mau satu teh.'",
-          options: ["Ich möchte einen Tee, bitte.", "Ich will Tee jetzt.", "Gib mir Tee."],
-          correctIndex: 0,
-          explanation: "'Ich möchte ..., bitte' adalah bentuk sopan.",
-        },
-      ],
-    },
   ],
 };

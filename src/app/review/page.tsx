@@ -19,6 +19,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
+import { MissionReview } from "@/components/learning/mission-review";
 import { AppGuard } from "@/components/app-guard";
 import { StatCard } from "@/components/cards/stat-card";
 import { CTAButton } from "@/components/ui/cta-button";
@@ -65,8 +66,14 @@ export default function ReviewPage() {
   const activeErrors = useMemo(
     () =>
       [...errors]
-        // pronunciation mistakes belong in Speaking Lab, not a text quiz
-        .filter((e) => e.status !== "safe" && e.category !== "Pronunciation")
+        // Speaking attempts belong in Speaking Lab, not a text quiz. Keep the
+        // legacy Pronunciation category for previously persisted attempts.
+        .filter(
+          (e) =>
+            e.status !== "safe" &&
+            e.category !== "Speaking" &&
+            e.category !== "Pronunciation"
+        )
         .sort((a, b) => statusWeight(b.status) - statusWeight(a.status))
         .slice(0, 8),
     [errors]
@@ -99,6 +106,7 @@ export default function ReviewPage() {
   return (
     <AppShell title="Review" subtitle="Spaced repetition: ulang di waktu yang tepat agar tidak lupa.">
       <AppGuard>
+        <MissionReview />
         {queue.length === 0 && mistakeDue === 0 ? (
           <EmptyState
             icon={<Library className="h-6 w-6" />}
@@ -179,8 +187,8 @@ function ReviewOverview({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Kartu vocab" value={queueLength} hint="dalam antrean" icon={<RefreshCw className="h-5 w-5" />} />
         <StatCard label="Kesalahan aktif" value={mistakeDue} hint="siap dikoreksi" accent="danger" icon={<AlertTriangle className="h-5 w-5" />} />
-        <StatCard label="Retention" value={`${stats.retention}%`} hint="kekuatan ingatan" icon={<Gauge className="h-5 w-5" />} />
-        <StatCard label="Confidence" value={`${stats.confidence}%`} hint="estimasi level" accent="secondary" icon={<BookText className="h-5 w-5" />} />
+        <StatCard label="Kemajuan vocab" value={`${stats.retention}%`} hint="status hampir/lancar" icon={<Gauge className="h-5 w-5" />} />
+        <StatCard label="Akurasi soal" value={`${stats.overallAccuracy}%`} hint="jawaban yang tercatat" accent="secondary" icon={<BookText className="h-5 w-5" />} />
       </div>
 
       <div className="mt-4 flex items-start gap-2 rounded-2xl border border-border bg-card p-4 text-sm text-muted">
@@ -241,10 +249,10 @@ function ReviewOverview({
           <div className="card-base p-6">
             <div className="flex items-center gap-2">
               <Gauge className="h-5 w-5 text-primary" />
-              <h3 className="font-heading font-bold text-ink">Retention Score</h3>
+              <h3 className="font-heading font-bold text-ink">Status kosakata</h3>
             </div>
             <p className="mt-3 font-heading text-4xl font-extrabold text-ink">{stats.retention}%</p>
-            <p className="text-sm text-muted">Bagian kata yang sudah mencapai status hampir/dikuasai.</p>
+            <p className="text-sm text-muted">Bagian kata yang sudah mencapai status hampir hafal atau lancar dalam review aplikasi.</p>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-elevated">
               <div className="h-full rounded-full bg-primary" style={{ width: `${stats.retention}%` }} />
             </div>

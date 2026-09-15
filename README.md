@@ -1,9 +1,9 @@
 # Deutsch Lernen in 30 Tagen 🇩🇪
 
-Website belajar bahasa Jerman **30 hari per level** untuk orang Indonesia, dari nol sampai percaya diri. Menggabungkan kurikulum CEFR, AI tutor, latihan speaking, grammar visual, dan statistik kemampuan yang jujur — dibangun berdasarkan PRD di repository ini (`prd website ini.md`).
+Website belajar bahasa Jerman **Sprint belajar 30 hari** untuk orang Indonesia, dari nol sampai percaya diri. Menggabungkan kurikulum CEFR, AI tutor, latihan speaking, grammar visual, dan statistik kemampuan yang jujur — dibangun berdasarkan PRD di repository ini (`prd website ini.md`).
 
-> **30 hari per level. Terstruktur, terukur, dan realistis.**
-> Bukan janji "fasih instan". Setiap level besar CEFR (A1–C2) dikerjakan dalam sprint 30 hari, dibagi menjadi dua sublevel (mis. A1.1 dan A1.2).
+> **Sprint belajar 30 hari. Terstruktur, terukur, dan realistis.**
+> Bukan janji "fasih instan". Tiga puluh hari adalah satu sprint latihan; pencapaian satu level dapat memerlukan beberapa sprint dan harus dibuktikan melalui tugas yang sesuai.
 
 ---
 
@@ -11,18 +11,18 @@ Website belajar bahasa Jerman **30 hari per level** untuk orang Indonesia, dari 
 
 | Halaman | Deskripsi |
 | --- | --- |
-| **Landing** (`/`) | Hero, problem/solution, 30-day level system, German King Method, daily flow, AI tutor preview, statistik, testimoni, pricing, FAQ. |
+| **Landing** (`/`) | Hero, problem/solution, roadmap sprint, metode belajar, alur harian, bukti belajar, akses saat ini, dan FAQ. |
 | **Onboarding** (`/onboarding`) | Konsultasi 5 pertanyaan → Personal German Roadmap. |
-| **Dashboard** (`/dashboard`) | Today's Mission, CEFR Skill Radar, 30-Day Map, Weakness Box, Review Queue, AI Coach, streak. |
+| **Dashboard** (`/dashboard`) | Misi hari ini, peta 30 sesi, area latihan, antrean review, dan streak. |
 | **Belajar Hari Ini** (`/lesson`) | Lesson player step-by-step: story → pattern → contoh → drill → listening → speaking → writing → mistake → victory. |
 | **Roadmap** (`/roadmap`) | Peta 30 hari A1 + overview semua level A1–C2. |
 | **Review** (`/review`) | Spaced repetition: pilih arti, ketik arti, pilih artikel, susun & perbaiki kalimat. |
-| **Speaking Lab** (`/speaking`) | Roleplay situasi nyata dengan feedback pengucapan, kelancaran, dan grammar. |
+| **Speaking Lab** (`/speaking`) | Roleplay situasi nyata dengan pencocokan transkrip; penilaian audio tetap memerlukan pengajar atau sistem akustik khusus. |
 | **Vocabulary** (`/vocabulary`) | Kamus pribadi 50+ kata dengan artikel, plural, contoh, status hafalan. |
 | **Grammar Map** (`/grammar`) | Topik grammar A1 visual dengan rumus, contoh benar/salah, mnemonic, mastery. |
 | **Error Notebook** (`/errors`) | Kesalahan otomatis terkategori dengan status (baru salah → aman → kambuh). |
-| **Statistics** (`/statistics`) | CEFR skill report, level aktif vs pasif, confidence, vocabulary & grammar mastery, weekly report. |
-| **Mock Test** (`/mock-test`) | Simulasi ujian A1 (6 bagian) dengan score per skill dan rekomendasi. |
+| **Statistics** (`/statistics`) | Akurasi format latihan, sesi selesai, misi yang memenuhi kriteria, uji ulang setelah jeda, vocabulary, dan grammar. |
+| **Mock Test** (`/mock-test`) | Latihan internal reading/listening/grammar/vocabulary serta tugas writing dan speaking yang ditinjau terpisah. |
 | **Settings** (`/settings`) | Tema light/dark/system, target harian, kecepatan audio, bahasa penjelasan. |
 
 ## 🧠 German King Method
@@ -121,9 +121,9 @@ Dapatkan API key di [platform.deepseek.com](https://platform.deepseek.com/).
 > Catatan model: nama `deepseek-chat` / `deepseek-reasoner` masih bisa dipakai untuk
 > kompatibilitas, tetapi nama resmi V4 adalah `deepseek-v4-flash` dan `deepseek-v4-pro`.
 
-## ⚠️ Catatan Sertifikat
+## ⚠️ Catatan Hasil Internal
 
-Sertifikat internal **tidak setara** dengan sertifikat resmi Goethe/telc. Untuk kebutuhan resmi visa, studi, atau kerja, gunakan ujian resmi yang diakui.
+Aplikasi tidak menerbitkan sertifikat kemampuan. Skor, status kartu, dan penyelesaian sprint adalah hasil latihan internal. Untuk kebutuhan resmi visa, studi, atau kerja, gunakan ujian resmi yang diakui seperti Goethe atau telc.
 
 ---
 

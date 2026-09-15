@@ -18,15 +18,18 @@ import {
   Award,
   LogOut,
   Music,
+  Target,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppGuard } from "@/components/app-guard";
 import { CTAButton } from "@/components/ui/cta-button";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { useAppStore } from "@/lib/store";
+import { useLearningEvidence } from "@/lib/learning-evidence";
 import { computeVocabCounts, deriveBadges } from "@/lib/derive";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
+import { learningGoals } from "@/data/daily-missions";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -49,6 +52,7 @@ export default function SettingsPage() {
   const setSoundEnabled = useAppStore((s) => s.setSoundEnabled);
   const resetProgress = useAppStore((s) => s.resetProgress);
   const resetAll = useAppStore((s) => s.resetAll);
+  const setLearningGoal = useAppStore((s) => s.setLearningGoal);
 
   useEffect(() => setMounted(true), []);
 
@@ -57,7 +61,7 @@ export default function SettingsPage() {
   const badges = deriveBadges({ streak, completedDays, xp, speakingAttempts, masteredVocab });
 
   function exportProgress() {
-    const data = JSON.stringify(useAppStore.getState(), null, 2);
+    const data = JSON.stringify({ ...useAppStore.getState(), learningEvidence: useLearningEvidence.getState() }, null, 2);
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -83,6 +87,30 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        <SettingGroup title="Tujuan belajar" icon={<Target className="h-5 w-5" />}>
+          <p className="mb-3 text-sm text-muted">
+            Contoh, konteks, dan misi harian akan mengikuti tujuan ini mulai dari pelajaran berikutnya.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {learningGoals.map((goal) => (
+              <button
+                key={goal}
+                type="button"
+                aria-pressed={profile?.goal === goal}
+                onClick={() => setLearningGoal(goal)}
+                className={cn(
+                  "rounded-xl border px-4 py-3 text-left text-sm font-bold transition-colors focusable",
+                  profile?.goal === goal
+                    ? "border-primary bg-primary-soft text-primary"
+                    : "border-border bg-card text-muted hover:text-ink"
+                )}
+              >
+                {goal}
+              </button>
+            ))}
+          </div>
+        </SettingGroup>
 
         <div className="card-base mb-5 p-5">
           <h2 className="flex items-center gap-2 font-heading font-bold text-ink">

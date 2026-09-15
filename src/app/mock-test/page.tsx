@@ -22,6 +22,7 @@ import { CTAButton } from "@/components/ui/cta-button";
 import { ListenButton } from "@/components/ui/listen-button";
 import { speak } from "@/lib/speech";
 import { a1MockTest } from "@/data/mockTest";
+import { ProductionExam } from "@/components/learning/production-exam";
 import { useAppStore } from "@/lib/store";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
@@ -48,13 +49,13 @@ function categoryFromSkill(skill: string): ErrorCategory {
     case "Vocabulary":
       return "Vocabulary";
     case "Speaking":
-      return "Pronunciation";
+      return "Speaking";
     default:
       return "Grammar";
   }
 }
 
-type Phase = "intro" | "test" | "result";
+type Phase = "intro" | "test" | "production" | "result";
 
 export default function MockTestPage() {
   const [phase, setPhase] = useState<Phase>("intro");
@@ -73,7 +74,7 @@ export default function MockTestPage() {
 
   function next() {
     if (index < total - 1) setIndex((i) => i + 1);
-    else setPhase("result");
+    else setPhase("production");
   }
 
   return (
@@ -139,7 +140,7 @@ export default function MockTestPage() {
 
                 {selected !== undefined && (
                   <CTAButton onClick={next} className="mt-4 w-full">
-                    {index === total - 1 ? "Lihat Hasil" : "Soal Berikutnya"} <ArrowRight className="h-4 w-4" />
+                    {index === total - 1 ? "Lanjut ke tugas mandiri" : "Soal Berikutnya"} <ArrowRight className="h-4 w-4" />
                   </CTAButton>
                 )}
               </motion.div>
@@ -147,6 +148,7 @@ export default function MockTestPage() {
           </div>
         )}
 
+        {phase === "production" && <ProductionExam onFinish={() => setPhase("result")} />}
         {phase === "result" && <Result picked={picked} total={total} />}
       </AppGuard>
     </AppShell>
@@ -184,9 +186,9 @@ function Intro({ onStart }: { onStart: () => void }) {
         </div>
         <h2 className="mt-4 font-heading text-2xl font-extrabold text-ink">{a1MockTest.title}</h2>
         <p className="mt-2 text-muted">
-          Test ini meniru format kemampuan CEFR A1. Selesaikan semua bagian untuk mendapat estimasi
-          level, score per skill, dan rekomendasi langkah berikutnya. Hasilnya tercatat di
-          statistikmu.
+          Evaluasi internal materi A1: pemahaman membaca dan mendengar, grammar, kosakata,
+          lalu tiga tugas menulis dan merespons dengan kalimat sendiri. Nilai pemahaman dan
+          tinjauan tugas mandiri ditampilkan terpisah. Ini bukan replika ujian Goethe atau penetapan level CEFR.
         </p>
 
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -205,7 +207,7 @@ function Intro({ onStart }: { onStart: () => void }) {
         <div className="mt-5 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm text-ink">
           <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <p>
-            Sertifikat ini menunjukkan penyelesaian program internal Deutsch Lernen in 30 Tagen.
+            Hasil ini menunjukkan performa pada tugas yang dikerjakan, bukan sertifikat kemampuan.
             Untuk kebutuhan resmi visa, studi, atau kerja, gunakan ujian resmi yang diakui.
           </p>
         </div>
@@ -228,7 +230,6 @@ function Result({ picked, total }: { picked: Record<number, number>; total: numb
   const correct = correctness.filter(Boolean).length;
   const pct = Math.round((correct / total) * 100);
   const passed = pct >= 60;
-  const confidence = Math.min(95, 55 + Math.floor(pct / 3));
 
   const skillScores = a1MockTest.sections.map((s) => {
     const offsetStart = flatQuestions.findIndex((q) => q.sectionId === s.id);
@@ -262,7 +263,7 @@ function Result({ picked, total }: { picked: Record<number, number>; total: numb
         typeof crypto !== "undefined" && "randomUUID" in crypto
           ? crypto.randomUUID()
           : `mock${Date.now()}`,
-      level: passed ? "A1.2" : "A1.1",
+      level: "Latihan A1",
       score: pct,
       date: new Date().toISOString().slice(0, 10),
       perSkill: skillScores.map((s) => ({ skill: s.skill, value: s.value })),
@@ -278,7 +279,7 @@ function Result({ picked, total }: { picked: Record<number, number>; total: numb
             {passed ? <Award className="h-9 w-9" /> : <ClipboardCheck className="h-9 w-9" />}
           </div>
           <div>
-            <p className="text-sm text-muted">Skor keseluruhan</p>
+            <p className="text-sm text-muted">Skor pemahaman pilihan ganda</p>
             <p className="font-heading text-4xl font-extrabold text-ink">{pct}%</p>
             <p className="text-sm text-muted">{correct} dari {total} benar</p>
           </div>
@@ -286,18 +287,18 @@ function Result({ picked, total }: { picked: Record<number, number>; total: numb
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl bg-elevated p-4">
-            <p className="text-xs text-muted">Estimasi CEFR</p>
-            <p className="font-heading text-xl font-extrabold text-ink">{passed ? "A1.2" : "A1.1"}</p>
+            <p className="text-xs text-muted">Materi yang diuji</p>
+            <p className="font-heading text-xl font-extrabold text-ink">Latihan A1</p>
           </div>
           <div className="rounded-xl bg-elevated p-4">
             <p className="text-xs text-muted">Status internal</p>
             <p className={cn("font-heading text-xl font-extrabold", passed ? "text-success" : "text-warning")}>
-              {passed ? "Lulus" : "Belum"}
+              {passed ? "Cukup dipahami" : "Perlu review"}
             </p>
           </div>
           <div className="rounded-xl bg-elevated p-4">
-            <p className="text-xs text-muted">Confidence</p>
-            <p className="font-heading text-xl font-extrabold text-ink">{confidence}%</p>
+            <p className="text-xs text-muted">Kemampuan produksi</p>
+            <p className="font-heading text-base font-bold text-ink">Lihat tinjauan tugas mandiri</p>
           </div>
         </div>
 
@@ -323,8 +324,8 @@ function Result({ picked, total }: { picked: Record<number, number>; total: numb
           <p className="font-bold text-primary">Rekomendasi</p>
           <p className="mt-1">
             {passed
-              ? "Kerja bagus! Kamu siap lanjut ke materi A1.2 berikutnya. Tetap jaga konsistensi review harianmu."
-              : "Kamu belum siap lanjut. Kita perkuat dulu bagian dengan skor rendah lewat remedial otomatis, supaya levelmu benar-benar naik."}
+              ? "Pemahaman pada soal ini cukup baik. Gunakan juga hasil tugas mandiri, lalu coba situasi baru setelah jeda sebelum menentukan materi lanjutan."
+              : "Ulangi bagian dengan skor rendah dan perbaiki tugas mandiri yang belum terpenuhi. Nilai ini tidak menentukan level CEFR atau kemampuan berbicaramu."}
           </p>
         </div>
       </div>

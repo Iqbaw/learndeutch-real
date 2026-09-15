@@ -19,7 +19,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { Lesson, LessonStep, LessonStepType, Skill, ErrorCategory } from "@/types";
-import { cn, foldGerman } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { playSound } from "@/lib/sound";
 import { speak } from "@/lib/speech";
@@ -29,7 +29,8 @@ import { FormulaBlock } from "@/components/ui/formula-block";
 import { ListenButton } from "@/components/ui/listen-button";
 import { ExerciseCard } from "./exercise-card";
 import { TokenSentence } from "./token-sentence";
-import { SpeechPractice } from "./speech-practice";
+import { ProductionTask } from "./production-task";
+import { useLearningEvidence } from "@/lib/learning-evidence";
 
 function stepSkill(type: LessonStepType): Skill {
   switch (type) {
@@ -49,7 +50,7 @@ function stepCategory(type: LessonStepType): ErrorCategory {
     case "listening":
       return "Listening";
     case "speaking":
-      return "Pronunciation";
+      return "Speaking";
     default:
       return "Grammar";
   }
@@ -68,7 +69,14 @@ const stepIcon: Record<LessonStepType, typeof BookOpen> = {
 };
 
 export function LessonPlayer({ lesson }: { lesson: Lesson }) {
-  const [index, setIndex] = useState(0);
+  const profile = useAppStore((s) => s.profile);
+  // A regenerated AI lesson must not inherit a different lesson's step position.
+  const fingerprint = JSON.stringify(lesson.steps).split("").reduce((hash, char) => Math.imul(hash, 31) + char.charCodeAt(0) | 0, 0);
+  const progressId = [lesson.subLevel, lesson.day, profile?.goal, fingerprint].join("-");
+  const savePosition = useLearningEvidence((s) => s.savePosition);
+  const recordMission = useLearningEvidence((s) => s.record);
+  const [index, setIndex] = useState(() => Math.min(useLearningEvidence.getState().positions[progressId] ?? 0, lesson.steps.length - 1));
+  const attempted = useRef(new Set<number>());
   const [done, setDone] = useState(false);
   const [answered, setAnswered] = useState(false);
 
@@ -84,37 +92,42 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
   const isLast = index === total - 1;
 
   // Typed (writing) steps must be checked with "Periksa" before moving on.
-  const mustCheckFirst = step.type === "writing" && !!step.prompt;
+  const mustCheckFirst = !!step.exercise || (["writing", "speaking"].includes(step.type) && !!step.prompt);
   const blockNext = mustCheckFirst && !answered;
 
   // reset the "answered" gate whenever the step changes
   useEffect(() => {
-    setAnswered(false);
-  }, [index]);
+    setAnswered(attempted.current.has(index));
+    savePosition(progressId, index);
+  }, [index, progressId, savePosition]);
 
   // record the completed lesson exactly once when the user reaches the end
   useEffect(() => {
     if (done && !completedRef.current) {
       completedRef.current = true;
       completeLesson(lesson.day, { xp: 50, subLevel: lesson.subLevel });
+      savePosition(progressId, 0);
     }
-  }, [done, completeLesson, lesson.day, lesson.subLevel]);
+  }, [done, completeLesson, lesson.day, lesson.subLevel, savePosition, progressId]);
 
   function handleExercise(
     type: LessonStepType,
     correct: boolean,
     info: { userAnswer: string; correctAnswer: string; explanation: string }
   ) {
+    setAnswered(true);
+    if (attempted.current.has(index)) return;
+    attempted.current.add(index);
     recordAnswer(stepSkill(type), correct);
     if (!correct) {
       recordError({ ...info, category: stepCategory(type) });
     }
   }
 
-  function handleSpeak(passed: boolean) {
-    recordSpeaking();
-    recordAnswer("Speaking", passed);
-    recordAnswer("Pronunciation", passed);
+  function handleSpeak() {
+    setAnswered(true);
+    if (!attempted.current.has(index)) recordSpeaking();
+    attempted.current.add(index);
   }
 
   function next() {
@@ -161,6 +174,10 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
             >
               <StepView
                 step={step}
+                draftId={`${progressId}-${index}`}
+                onMission={(result, answer) => {
+                  if (step.missionId) recordMission(step.missionId, lesson.day, profile?.goal ?? "", answer, result);
+                }}
                 onExercise={(correct, info) => handleExercise(step.type, correct, info)}
                 onSpeak={handleSpeak}
                 onWritten={() => setAnswered(true)}
@@ -177,7 +194,7 @@ export function LessonPlayer({ lesson }: { lesson: Lesson }) {
         <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border bg-bg/90 py-4 backdrop-blur">
           {blockNext && (
             <p className="text-center text-xs font-medium text-muted">
-              Tekan <span className="font-bold text-primary">Periksa</span> dulu untuk melihat jawaban sebelum lanjut.
+              Selesaikan percobaan latihan ini sebelum lanjut. Jawaban tidak harus langsung benar.
             </p>
           )}
           <div className="flex items-center justify-between gap-3">
@@ -215,11 +232,15 @@ function StepBadge({ type, title }: { type: LessonStepType; title: string }) {
 
 function StepView({
   step,
+  draftId,
+  onMission,
   onExercise,
   onSpeak,
   onWritten,
 }: {
   step: LessonStep;
+  draftId: string;
+  onMission: (result: import("@/lib/assessment").AssessmentResult, answer: string) => void;
   onExercise?: (
     correct: boolean,
     info: { userAnswer: string; correctAnswer: string; explanation: string }
@@ -231,7 +252,7 @@ function StepView({
     <div>
       <StepBadge type={step.type} title={step.title} />
 
-      {step.body && step.type !== "mistake" && (
+      {step.body && step.type !== "mistake" && step.type !== "victory" && (
         <p className="text-lg leading-relaxed text-ink">
           <FormattedText text={step.body} />
         </p>
@@ -250,7 +271,7 @@ function StepView({
         </div>
       )}
 
-      {(step.german || step.indonesian) && (
+      {step.type !== "listening" && (step.german || step.indonesian) && (
         <div className="mt-4 rounded-2xl border border-border bg-card p-4">
           {step.german && (
             <p className="font-heading text-xl font-extrabold text-ink">{step.german}</p>
@@ -263,8 +284,8 @@ function StepView({
         </div>
       )}
 
-      {step.type === "listening" && step.exercise && (
-        <HoerenBlock text={step.exercise.audioText || step.german || step.exercise.prompt} />
+      {step.type === "listening" && step.exercise?.audioText && (
+        <HoerenBlock text={step.exercise.audioText!} />
       )}
 
       {step.exercise && (
@@ -274,12 +295,16 @@ function StepView({
       )}
 
       {(step.type === "speaking" || step.type === "writing") && step.prompt && (
-        <InputStep
-          step={step}
-          onSpeak={onSpeak}
-          onWriteResult={onExercise ? (correct, info) => onExercise(correct, info) : undefined}
-          onWritten={onWritten}
-        />
+        <ProductionTask task={step} draftId={draftId} onComplete={(result, answer, spoken) => {
+          // Only independent, graded WRITING contributes to writing accuracy.
+          // Speech recognition is not acoustic assessment.
+          if (spoken) onSpeak?.(result.status === "correct");
+          else if (step.type === "writing" && result.status !== "ungraded") onExercise?.(result.status === "correct", {
+            userAnswer: answer, correctAnswer: step.expected ?? "", explanation: result.feedback,
+          });
+          onMission(result, answer);
+          onWritten?.();
+        }} />
       )}
 
       {step.type === "mistake" && <MistakeStep step={step} />}
@@ -289,138 +314,6 @@ function StepView({
       )}
     </div>
   );
-}
-
-function InputStep({
-  step,
-  onSpeak,
-  onWriteResult,
-  onWritten,
-}: {
-  step: LessonStep;
-  onSpeak?: (passed: boolean) => void;
-  onWriteResult?: (correct: boolean, info: { userAnswer: string; correctAnswer: string; explanation: string }) => void;
-  onWritten?: () => void;
-}) {
-  const [value, setValue] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  const speaking = step.type === "speaking";
-
-  function checkWritten() {
-    if (submitted || !value.trim()) return;
-    setSubmitted(true);
-
-    const expected = (step.expected ?? "").trim();
-    const userAnswer = value.trim();
-
-    const normalize = (s: string) =>
-      foldGerman(s).replace(/[.,!?;:'"„""]/g, "").replace(/\s+/g, " ").trim();
-
-    const norm = normalize(userAnswer);
-    let correct: boolean;
-
-    if (step.keywords && step.keywords.length > 0) {
-      // Flexible mode: answer is correct if it contains all required words.
-      // This lets names / free parts vary (e.g. "Mein Vater heißt <nama bebas>").
-      correct = step.keywords.every((kw) => norm.includes(normalize(kw)));
-    } else {
-      // Exact-ish mode with small typo tolerance.
-      const target = normalize(expected);
-      const maxDist = target.length <= 10 ? 1 : 2;
-      correct = norm === target || levenshteinDist(norm, target) <= maxDist;
-    }
-
-    setIsCorrect(correct);
-    playSound(correct ? "correct" : "wrong");
-    onWritten?.();
-    onWriteResult?.(correct, {
-      userAnswer,
-      correctAnswer: expected,
-      explanation: correct
-        ? "Penulisanmu benar!"
-        : `Jawaban yang tepat: "${expected}". Perhatikan ejaan dan urutan kata.`,
-    });
-  }
-
-  return (
-    <div className="mt-4">
-      <p className="rounded-2xl bg-primary-soft/60 p-4 font-heading text-lg font-bold text-ink">
-        {step.prompt}
-      </p>
-      {step.body && <p className="mt-2 text-sm text-muted"><FormattedText text={step.body} /></p>}
-
-      {speaking ? (
-        <SpeechPractice expected={step.expected ?? step.prompt ?? ""} onResult={onSpeak} className="mt-4" />
-      ) : (
-        <div className="mt-4">
-          <textarea
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="Ketik jawabanmu di sini..."
-            rows={2}
-            disabled={submitted}
-            className="w-full rounded-2xl border border-border bg-card p-4 font-body text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-70"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); checkWritten(); }
-            }}
-          />
-          {!submitted && (
-            <CTAButton onClick={checkWritten} variant="outline" size="sm" className="mt-2" disabled={!value.trim()}>
-              Periksa
-            </CTAButton>
-          )}
-        </div>
-      )}
-
-      {!speaking && submitted && step.expected && (
-        <div
-          className={cn(
-            "mt-3 flex items-start gap-2 rounded-2xl border p-4 text-sm animate-fade-up",
-            isCorrect
-              ? "border-success/30 bg-success/10 text-success"
-              : "border-danger/30 bg-danger/10 text-ink"
-          )}
-        >
-          {isCorrect ? (
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-          ) : (
-            <X className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
-          )}
-          <div>
-            <p className="font-bold">
-              {isCorrect ? "Benar! " : "Belum tepat. "}
-            </p>
-            {!isCorrect && (
-              <p className="mt-1">
-                Contoh jawaban yang benar: <span className="font-bold text-ink">{step.expected}</span>
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Simple Levenshtein distance for comparing typed answers */
-function levenshteinDist(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-  const prev = Array.from({ length: n + 1 }, (_, j) => j);
-  for (let i = 1; i <= m; i++) {
-    let prevDiag = prev[0];
-    prev[0] = i;
-    for (let j = 1; j <= n; j++) {
-      const temp = prev[j];
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, prevDiag + cost);
-      prevDiag = temp;
-    }
-  }
-  return prev[n];
 }
 
 function MistakeStep({ step }: { step: LessonStep }) {
@@ -494,8 +387,9 @@ function VictoryView({ lesson }: { lesson: Lesson }) {
         Hari {lesson.day} Selesai! 🎉
       </h2>
       <p className="mt-2 text-muted">
-        Konsistensimu luar biasa. Kesalahanmu otomatis masuk Error Notebook, dan kosakata
-        baru masuk Review Queue.
+        Sesi latihan selesai. Hasil misi tersimpan terpisah dari penyelesaian hari.
+        Kembali ke Review untuk mencoba tugas baru setelah jeda. Jawaban yang belum
+        dinilai tidak dihitung sebagai penguasaan.
       </p>
       <div className="mt-7 flex flex-col gap-3 sm:flex-row">
         <CTAButton href="/dashboard" size="lg" className="flex-1">

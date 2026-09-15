@@ -16,7 +16,7 @@ export const lessonsWeek3: Lesson[] = [
       { type: "drill", title: "Rutinitas", exercise: { prompt: "'Kami bekerja.' → Wir ___.", options: ["arbeite", "arbeitet", "arbeiten"], correctIndex: 2, explanation: "wir → arbeiten." } },
       { type: "writing", title: "Tulis rutinitasmu", prompt: "Tulis: 'Saya belajar bahasa Jerman setiap hari.'", expected: "Ich lerne jeden Tag Deutsch." },
       { type: "speaking", title: "Ceritakan pagi", prompt: "Ucapkan: 'Ich stehe um 6 Uhr auf und frühstücke.'", expected: "Ich stehe um 6 Uhr auf und frühstücke." },
-      { type: "mistake", title: "Akhiran salah", wrong: "Du lernen Deutsch.", correct: "Du lernst Deutsch.", body: "Untuk 'du' selalu pakai akhiran '-st': lernst, spielst, arbeitest." },
+      { type: "mistake", title: "Akhiran salah", wrong: "Du lernen Deutsch.", correct: "Du lernst Deutsch.", body: "Pada contoh ini: du lernst, du spielst, du arbeitest. Beberapa kata kerja memerlukan -est, dan kata kerja tidak beraturan punya bentuk khusus." },
       { type: "victory", title: "Mini Victory!", achievements: ["Paham konjugasi reguler.", "Bisa cerita rutinitas.", "Paham akhiran per subjek."], body: "Selamat datang di A1.2! Kamu sudah bisa menceritakan hari-harimu." },
     ],
   },
@@ -28,7 +28,7 @@ export const lessonsWeek3: Lesson[] = [
     goal: ["Pakai gehen + zu/nach/in.", "Menyebut tempat tujuan.", "Bedakan wo (di mana) vs wohin (ke mana)."],
     steps: [
       { type: "story", title: "Ke mana hari ini?", body: "Max pergi ke sekolah, ke toko, ke rumah teman. Setiap tujuan pakai preposisi berbeda. Mari pelajari polanya." },
-      { type: "pattern", title: "Preposisi tujuan", formula: "zum/zur + tempat · nach Hause (pulang) · in die/den + tempat tertutup", body: "zum (maskulin/netral) atau zur (feminin) + tempat. nach Hause = pulang." },
+      { type: "pattern", title: "Preposisi tujuan", formula: "zum/zur + tempat · nach Hause (pulang) · in + Akkusativ", body: "zum (maskulin/netral) atau zur (feminin) menuju orang/lembaga; nach Hause berarti pulang. Untuk masuk ke tempat, gunakan in + Akkusativ, misalnya in die Schule atau ins Kino." },
       { type: "example", title: "Contoh", german: "Ich gehe zum Supermarkt. Ich gehe zur Schule. Ich gehe nach Hause.", indonesian: "Saya pergi ke supermarket. Saya pergi ke sekolah. Saya pulang." },
       { type: "drill", title: "Pilih preposisi", exercise: { prompt: "Ich gehe ___ Schule. (feminin)", options: ["zum", "zur", "nach"], correctIndex: 1, explanation: "Schule feminin → zur Schule." } },
       { type: "drill", title: "Wo vs wohin", exercise: { prompt: "'Ke mana kamu pergi?' = ...", options: ["Wo gehst du?", "Wohin gehst du?", "Woher gehst du?"], correctIndex: 1, explanation: "Wohin = ke mana (tujuan). Wo = di mana (lokasi)." } },
@@ -45,7 +45,7 @@ export const lessonsWeek3: Lesson[] = [
     goal: ["Bertanya dan menyebut harga.", "Angka dalam konteks uang.", "Percakapan di toko."],
     steps: [
       { type: "story", title: "Di toko", body: "Kamu mau beli roti. Berapa harganya? Bagaimana bertanya dan memahami jawaban harga dalam bahasa Jerman?" },
-      { type: "pattern", title: "Tanya harga", formula: "Was kostet das? · Das kostet + angka + Euro.", body: "kostet = berharga. Selalu pakai 'Euro' di akhir." },
+      { type: "pattern", title: "Tanya harga", formula: "Was kostet das? · Das kostet + angka + Euro.", body: "kostet = berharga. Sebut mata uang bila belum jelas; contoh harga dengan sen: zwei Euro fünfzig." },
       { type: "example", title: "Contoh", german: "Was kostet das Brot? — Das kostet zwei Euro fünfzig.", indonesian: "Berapa harga rotinya? — Harganya 2,50 Euro." },
       { type: "drill", title: "Pahami harga", exercise: { prompt: "'Das kostet fünf Euro.' Berapa harganya?", options: ["€3", "€5", "€15"], correctIndex: 1, explanation: "fünf = 5." } },
       { type: "drill", title: "Bertanya", exercise: { prompt: "Bagaimana bertanya 'Berapa harganya?'", options: ["Wie heißt das?", "Was kostet das?", "Wo ist das?"], correctIndex: 1, explanation: "Was kostet das? = Berapa harganya?" } },
@@ -103,7 +103,7 @@ export const lessonsWeek3: Lesson[] = [
       { type: "drill", title: "Negasi", exercise: { prompt: "Das ist ___ gut. (itu tidak baik)", options: ["kein", "nicht", "keine"], correctIndex: 1, explanation: "Menolak kata sifat → nicht." } },
       { type: "drill", title: "Verb position", exercise: { prompt: "'Besok saya belajar.' → Morgen ___ ich.", options: ["lerne", "lernen", "lernst"], correctIndex: 0, explanation: "ich → lerne, di posisi 2 setelah Morgen." } },
       { type: "speaking", title: "Kalimat lengkap", prompt: "Ucapkan: 'Morgen möchte ich Deutsch lernen.'", expected: "Morgen möchte ich Deutsch lernen." },
-      { type: "victory", title: "Review selesai!", achievements: ["Konjugasi reguler lancar.", "möchte + infinitiv dipahami.", "nicht vs kein dikuasai."], body: "Pola-polamu semakin kuat!" },
+      { type: "victory", title: "Review selesai!", achievements: ["Mengerjakan ulang konjugasi reguler.", "Melatih möchte + infinitiv.", "Membedakan nicht dan kein pada soal."], body: "Lihat kesalahan yang tersimpan dan uji lagi pola ini setelah jeda." },
     ],
   },
   {

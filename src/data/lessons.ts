@@ -25,7 +25,7 @@ export const lessonsWeek1: Lesson[] = [
         type: "pattern",
         title: "Empat huruf spesial",
         body: "Bahasa Jerman punya empat huruf tambahan. Anggap saja huruf biasa yang memakai 'topi'.",
-        formula: "ä ≈ e · ö ≈ eu (bibir bulat) · ü ≈ i (bibir bulat) · ß = ss",
+        formula: "ä ≈ e · ö: bentuk bibir seperti o, lidah seperti e · ü ≈ i (bibir bulat) · ß = ss",
       },
       {
         type: "example",
@@ -48,7 +48,7 @@ export const lessonsWeek1: Lesson[] = [
         type: "listening",
         title: "Dengarkan dan pilih arti",
         exercise: {
-          prompt: "Audio mengucapkan: 'Danke'. Apa artinya?",
+          audioText: "Danke", prompt: "Dengarkan audio. Apa artinya?",
           options: ["Halo", "Terima kasih", "Maaf"],
           correctIndex: 1,
           explanation: "'Danke' berarti terima kasih.",
@@ -66,13 +66,13 @@ export const lessonsWeek1: Lesson[] = [
         title: "Ketik ulang",
         prompt: "Ketik kata Jerman untuk 'terima kasih'.",
         expected: "Danke",
-        body: "Perhatikan huruf besar di awal — kata benda dan sapaan sering diawali huruf kapital.",
+        body: "Danke diawali huruf besar di sini karena berada di awal kalimat. Kata benda Jerman selalu diawali huruf besar; kata danke di tengah kalimat tidak otomatis kapital.",
       },
       {
         type: "mistake",
         title: "Kesalahan yang umum",
         wrong: "ich (dibaca 'ik')",
-        correct: "ich (dibaca lembut, 'iħ')",
+        correct: "ich (bunyi ch lembut, bukan k)",
         body: "Banyak pemula Indonesia mengucapkan 'ich' seperti 'ik'. Coba keluarkan udara lembut dari mulut depan.",
       },
       {
@@ -120,7 +120,7 @@ export const lessonsWeek1: Lesson[] = [
       {
         type: "speaking",
         title: "Perkenalkan dirimu",
-        prompt: "Ucapkan: 'Hallo, ich heiße ...' (sebut namamu).",
+        assessment: "open", criteria: ["Menyapa dan menyebut nama sendiri."], prompt: "Perkenalkan dirimu: sapa dan sebut namamu.",
         expected: "Hallo, ich heiße Max.",
       },
       {
@@ -252,7 +252,7 @@ export const lessonsWeek1: Lesson[] = [
         type: "listening",
         title: "Dengarkan dan pilih",
         exercise: {
-          prompt: "Audio: 'Ich wohne in Berlin.' Apa yang sedang dijelaskan?",
+          audioText: "Ich wohne in Berlin.", prompt: "Dengarkan audio. Apa yang sedang dijelaskan?",
           options: ["Asal negara", "Tempat tinggal sekarang", "Pekerjaan"],
           correctIndex: 1,
           explanation: "'wohnen in' menyatakan tempat tinggal sekarang.",
@@ -298,14 +298,14 @@ export const lessonsWeek1: Lesson[] = [
     goal: ["Mengenal angka 0–100.", "Memahami pola angka belasan dan puluhan."],
     steps: [
       { type: "story", title: "Berapa harganya?", body: "Di toko, Raka harus paham angka untuk tahu harga. Angka Jerman punya pola unik: satuan disebut dulu baru puluhan." },
-      { type: "pattern", title: "Pola angka unik", formula: "21 = einundzwanzig (satu-dan-dua puluh)", body: "Untuk 21–99, sebut satuan dulu, lalu 'und', lalu puluhan." },
+      { type: "pattern", title: "Pola angka unik", formula: "21 = einundzwanzig (satu-dan-dua puluh)", body: "Untuk 21–99 yang bukan puluhan bulat, sebut satuan, und, lalu puluhan. Puluhan bulat: dreißig, vierzig, fünfzig, sechzig, siebzig, achtzig, neunzig. Satuan 1 menjadi ein: einundzwanzig." },
       { type: "example", title: "Contoh", german: "dreiundvierzig", indonesian: "43 (tiga-dan-empat puluh)" },
       {
         type: "drill",
         title: "Pilih angka yang benar",
         exercise: { prompt: "Berapakah 'siebenundzwanzig'?", options: ["72", "27", "17"], correctIndex: 1, explanation: "sieben (7) und zwanzig (20) = 27." },
       },
-      { type: "listening", title: "Dengarkan angka", exercise: { prompt: "Audio: 'zwölf'. Berapa itu?", options: ["2", "12", "20"], correctIndex: 1, explanation: "zwölf = 12." } },
+      { type: "listening", title: "Dengarkan angka", exercise: { audioText: "zwölf", prompt: "Dengarkan audio. Berapa itu?", options: ["2", "12", "20"], correctIndex: 1, explanation: "zwölf = 12." } },
       { type: "victory", title: "Mini Victory!", achievements: ["Paham pola angka Jerman.", "Bisa membaca angka sampai 100."], body: "Sekarang kamu siap memahami harga dan nomor." },
     ],
   },

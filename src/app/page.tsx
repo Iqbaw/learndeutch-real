@@ -13,7 +13,6 @@ import {
   BarChart3,
   CheckCircle2,
   XCircle,
-  Quote,
   Check,
 } from "lucide-react";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
@@ -70,11 +69,11 @@ export default function LandingPage() {
             </span>
             <h1 className="mt-4 font-heading text-4xl font-extrabold leading-[1.1] tracking-tight text-ink sm:text-5xl">
               Belajar Bahasa Jerman{" "}
-              <span className="text-primary">30 Hari per Level</span>, dari Nol sampai Percaya Diri.
+              <span className="text-primary">lewat Sprint 30 Hari</span>, dari Nol sampai Berani Mencoba.
             </h1>
             <p className="mt-4 max-w-xl text-lg text-muted">
-              Kurikulum terstruktur, AI tutor, latihan speaking, dan statistik CEFR yang
-              membantu kamu tahu level asli kemampuanmu — bukan sekadar merasa sudah bisa.
+              Materi terstruktur, latihan speaking, dan misi nyata yang disesuaikan dengan
+              tujuan kuliah, karier/Ausbildung, atau kebutuhan sehari-hari.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <CTAButton href="/onboarding" size="lg">
@@ -85,7 +84,7 @@ export default function LandingPage() {
               </CTAButton>
             </div>
             <p className="mt-5 text-sm font-medium text-muted">
-              30 hari per level. Terstruktur, terukur, dan realistis.
+              Sprint belajar 30 hari. Terstruktur, terukur, dan realistis.
             </p>
           </div>
           <div className="lg:pl-6">
@@ -106,7 +105,7 @@ export default function LandingPage() {
             {[
               { t: "Grammar terasa menakutkan", d: "der/die/das, akusatif, datif, posisi verb — semua datang sekaligus dan bikin cepat takut." },
               { t: "Belajar random bikin cepat lupa", d: "Aplikasi main-main memberi latihan pendek, tapi tidak ada sistem harian yang jelas." },
-              { t: "Tidak tahu level asli", d: "Merasa sudah belajar banyak, tapi tidak tahu benar-benar sudah A1, A2, atau B1." },
+              { t: "Tidak tahu apa yang benar-benar bisa dilakukan", d: "Materi selesai, tetapi belum pernah mencoba pesan, percakapan, atau tugas baru tanpa menyalin contoh." },
             ].map((p) => (
               <div key={p.t} className="card-base p-5">
                 <XCircle className="h-7 w-7 text-danger" />
@@ -128,9 +127,9 @@ export default function LandingPage() {
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { icon: Brain, t: "Rumus cepat", d: "Pola kalimat ala bimbel, bukan tabel grammar yang bikin pusing." },
-            { icon: Mic, t: "Latihan speaking", d: "Roleplay situasi nyata dengan feedback pengucapan." },
+            { icon: Mic, t: "Latihan speaking", d: "Roleplay situasi nyata dengan transkrip untuk meninjau isi dan urutan kata." },
             { icon: Sparkles, t: "AI correction", d: "Kesalahan dijelaskan dengan bahasa Indonesia yang ramah." },
-            { icon: BarChart3, t: "Statistik CEFR", d: "Tahu level aktif & pasif dengan confidence score." },
+            { icon: BarChart3, t: "Bukti belajar", d: "Bedakan sesi selesai, tugas terpenuhi, dan kemampuan yang masih bertahan setelah jeda." },
           ].map((s) => {
             const Icon = s.icon;
             return (
@@ -150,9 +149,9 @@ export default function LandingPage() {
       <section id="roadmap" className="border-y border-border bg-card/50">
         <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
           <SectionHeader
-            eyebrow="Sistem 30 Hari per Level"
-            title="Dari A1 sampai C2, setiap level adalah sprint 30 hari"
-            description="Setiap level besar dibagi menjadi dua sublevel. Jujur, terukur, dan tidak ada klaim palsu."
+            eyebrow="Sprint Belajar 30 Hari"
+            title="Dari A1 sampai C2, belajar bertahap lewat sprint 30 hari"
+            description="Tiga puluh hari adalah satu siklus latihan. Lanjutkan atau ulangi berdasarkan hasil tugas, bukan kalender semata."
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {levels.map((lvl) => (
@@ -160,7 +159,7 @@ export default function LandingPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-heading text-3xl font-extrabold text-primary">{lvl.id}</span>
                   <span className="rounded-full bg-elevated px-2.5 py-1 text-xs font-bold text-muted">
-                    {lvl.durationDays} hari
+                    {lvl.durationDays} sesi
                   </span>
                 </div>
                 <h3 className="mt-2 font-heading text-base font-bold text-ink">{lvl.title}</h3>
@@ -205,7 +204,7 @@ export default function LandingPage() {
           <SectionHeader
             eyebrow="Daily Learning Flow"
             title="Satu paket belajar harian, satu layar satu fokus"
-            description="Estimasi 35–60 menit per hari. Mode ringan 15 menit, mode intensif 90 menit."
+            description="Satu paket lengkap sekitar 45–60 menit. Jika target harianmu lebih singkat, lanjutkan dari langkah terakhir pada sesi berikutnya."
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {dailyFlow.map((f) => (
@@ -250,7 +249,7 @@ export default function LandingPage() {
             <p className="mt-4 text-xs font-bold uppercase tracking-wide text-muted">AI Tutor</p>
             <div className="mt-1 rounded-xl bg-primary-soft/60 px-3 py-3">
               <p className="text-sm text-ink">
-                Hampir benar! Dalam bahasa Jerman, kalau kalimat diawali waktu seperti
+                Urutannya perlu diperbaiki. Dalam bahasa Jerman, kalau kalimat diawali waktu seperti
                 “Heute”, kata kerja tetap di posisi kedua.
               </p>
               <p className="mt-2 font-body font-bold text-success">Heute lerne ich Deutsch.</p>
@@ -267,95 +266,73 @@ export default function LandingPage() {
         <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
           <SectionHeader
             eyebrow="Statistik Nyata"
-            title="Tahu level aslimu, bukan cuma merasa sudah bisa"
-            description="Progress berdasarkan kemampuan nyata: listening, reading, speaking, writing, grammar, vocabulary, pronunciation, dan retention."
+            title="Lihat bukti latihanmu, bukan sekadar jumlah hari"
+            description="Pisahkan akurasi soal, misi yang memenuhi kriteria, dan uji ulang setelah jeda. Pelafalan tidak dinilai dari teks transkrip."
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             <div className="card-base p-5">
-              <p className="text-sm text-muted">Estimasi Level</p>
-              <p className="font-heading text-3xl font-extrabold text-ink">A1.2</p>
-              <p className="text-sm text-muted">Confidence 78%</p>
+              <p className="text-sm text-muted">Sesi selesai</p>
+              <p className="font-heading text-3xl font-extrabold text-ink">12</p>
+              <p className="text-sm text-muted">Belum otomatis berarti dikuasai</p>
             </div>
             <div className="card-base p-5">
-              <p className="text-sm text-muted">Level Aktif vs Pasif</p>
-              <p className="font-heading text-3xl font-extrabold text-ink">A1.1 / A2.1</p>
-              <p className="text-sm text-muted">Paham bacaan, speaking masih pasif</p>
+              <p className="text-sm text-muted">Misi mandiri</p>
+              <p className="font-heading text-3xl font-extrabold text-ink">9 / 12</p>
+              <p className="text-sm text-muted">Memenuhi kriteria tugas teks</p>
             </div>
             <div className="card-base p-5">
-              <p className="text-sm text-muted">Vocabulary</p>
-              <p className="font-heading text-3xl font-extrabold text-ink">412 / 176</p>
-              <p className="text-sm text-muted">Pasif dikenal / aktif dipakai</p>
+              <p className="text-sm text-muted">Uji ulang setelah jeda</p>
+              <p className="font-heading text-3xl font-extrabold text-ink">5</p>
+              <p className="text-sm text-muted">Berhasil pada situasi yang berbeda</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Learning evidence */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
         <SectionHeader
-          eyebrow="Cerita Belajar"
-          title="Apa kata pengguna awal kami"
+          eyebrow="Bukti Belajar"
+          title="Setiap kemajuan punya dasar yang bisa diperiksa"
           align="center"
           className="mx-auto items-center"
         />
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {[
-            { name: "Raka", role: "Calon Ausbildung", text: "Akhirnya paham kenapa verb pindah-pindah. Polanya dijelaskan, bukan disuruh hafal." },
-            { name: "Dinda", role: "Pernah belajar A1", text: "Statistiknya jujur. Aku jadi tahu speaking-ku ketinggalan dan harus latihan lebih." },
-            { name: "Andi", role: "Persiapan ujian", text: "Mock test dan Error Notebook bikin latihan terasa terarah, tidak random." },
+            { title: "Respons asli", text: "Draf dan jawaban misi tersimpan agar pengguna bisa melihat apa yang benar-benar pernah ia hasilkan." },
+            { title: "Kriteria tugas", text: "Misi dinilai dari informasi dan struktur yang diminta. Contoh bukan satu-satunya jawaban yang diterima." },
+            { title: "Uji ulang setelah jeda", text: "Keberhasilan hari ini dipisahkan dari kemampuan memakai pola yang sama lagi pada situasi baru." },
           ].map((t) => (
-            <figure key={t.name} className="card-base p-5">
-              <Quote className="h-6 w-6 text-primary" />
-              <blockquote className="mt-2 text-sm text-ink/90">“{t.text}”</blockquote>
-              <figcaption className="mt-3 text-sm">
-                <span className="font-heading font-bold text-ink">{t.name}</span>
-                <span className="text-muted"> · {t.role}</span>
-              </figcaption>
-            </figure>
+            <article key={t.title} className="card-base p-5">
+              <CheckCircle2 className="h-6 w-6 text-primary" />
+              <h3 className="mt-3 font-heading font-bold text-ink">{t.title}</h3>
+              <p className="mt-2 text-sm text-muted">{t.text}</p>
+            </article>
           ))}
         </div>
-        <p className="mt-4 text-center text-xs text-muted">
-          *Testimoni placeholder untuk ilustrasi produk.
-        </p>
       </section>
 
-      {/* Pricing */}
+      {/* Current access */}
       <section className="border-y border-border bg-card/50">
         <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
           <SectionHeader
-            eyebrow="Harga"
-            title="Mulai gratis, upgrade kapan saja"
+            eyebrow="Akses Saat Ini"
+            title="Coba sprint A1 lengkap tanpa pembayaran"
             align="center"
             className="mx-auto items-center"
           />
-          <div className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
-            <div className="card-base p-6">
-              <h3 className="font-heading text-xl font-extrabold text-ink">Gratis</h3>
-              <p className="mt-1 text-sm text-muted">Cocok untuk mencoba A1.1.</p>
-              <p className="mt-4 font-heading text-3xl font-extrabold text-ink">Rp0</p>
-              <ul className="mt-4 space-y-2 text-sm text-ink/90">
-                {["Akses A1.1", "Daily lesson", "Vocabulary & review dasar"].map((f) => (
-                  <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-success" /> {f}</li>
-                ))}
-              </ul>
-              <CTAButton href="/onboarding" variant="outline" className="mt-5 w-full">Mulai gratis</CTAButton>
-            </div>
-            <div className="card-base border-primary/40 p-6 shadow-glow">
-              <div className="flex items-center justify-between">
-                <h3 className="font-heading text-xl font-extrabold text-ink">Pro</h3>
-                <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-onprimary">Populer</span>
-              </div>
-              <p className="mt-1 text-sm text-muted">Semua level, AI tutor & speaking lab.</p>
-              <p className="mt-4 font-heading text-3xl font-extrabold text-ink">Rp99k<span className="text-base font-medium text-muted">/bln</span></p>
-              <ul className="mt-4 space-y-2 text-sm text-ink/90">
-                {["Semua level A1–C2", "AI tutor & speaking feedback", "Mock test & statistik lengkap"].map((f) => (
-                  <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-success" /> {f}</li>
-                ))}
-              </ul>
-              <CTAButton href="/onboarding" className="mt-5 w-full">Coba Pro</CTAButton>
-            </div>
+          <div className="card-base mx-auto mt-8 max-w-xl p-6">
+            <h3 className="font-heading text-xl font-extrabold text-ink">Sprint A1</h3>
+            <p className="mt-1 text-sm text-muted">Mulai dari nol dan buktikan hasil lewat misi, bukan janji level instan.</p>
+            <p className="mt-4 font-heading text-3xl font-extrabold text-ink">Rp0</p>
+            <ul className="mt-4 space-y-2 text-sm text-ink/90">
+              {["30 sesi A1 bawaan", "Misi untuk 4 tujuan belajar", "Listening, writing, speaking dengan transkrip, dan review berjarak"].map((f) => (
+                <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 shrink-0 text-success" /> {f}</li>
+              ))}
+            </ul>
+            <CTAButton href="/onboarding" className="mt-5 w-full">Mulai sprint A1</CTAButton>
           </div>
-          <p className="mt-4 text-center text-xs text-muted">*Harga placeholder untuk ilustrasi.</p>
+          <p className="mt-4 text-center text-xs text-muted">Harga paket lanjutan belum ditetapkan. Halaman ini tidak memproses pembayaran.</p>
         </div>
       </section>
 
@@ -380,7 +357,7 @@ export default function LandingPage() {
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-onprimary/80">
             Setiap hari tahu harus belajar apa. Grammar dibuat visual dan masuk akal.
-            30 hari per level — terukur, realistis, dan konsisten.
+            Sprint belajar 30 hari — terukur, realistis, dan konsisten.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link

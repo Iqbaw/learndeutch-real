@@ -531,7 +531,7 @@ function PlacementIntro({ onStart, onSkip }: { onStart: () => void; onSkip: () =
       <p className="mt-2 text-muted">
         Tes ini menyesuaikan tingkat kesulitan setiap soal dengan jawabanmu — makin tepat
         kamu menjawab, makin menantang soalnya. Hanya sekitar 7–12 soal (±3 menit) untuk
-        mengukur levelmu di berbagai keterampilan secara akurat.
+        memperkirakan titik awalmu dari beberapa keterampilan.
       </p>
       <ul className="mt-4 space-y-2 text-sm text-ink/90">
         {[
@@ -807,7 +807,7 @@ function ResultCard({
           </CTAButton>
         )}
         <p className="flex items-center justify-center gap-1.5 text-xs text-muted">
-          <LevelBadge level={outcome.estimatedLevel} /> Levelmu akan terus diperbarui otomatis seiring kamu belajar.
+          <LevelBadge level={outcome.estimatedLevel} /> Ini perkiraan awal dari jawaban tes internal, bukan sertifikat CEFR.
         </p>
       </div>
 

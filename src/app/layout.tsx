@@ -24,9 +24,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Deutsch Lernen in 30 Tagen — Belajar Bahasa Jerman 30 Hari per Level",
+  title: "Deutsch Lernen — Sprint Belajar Bahasa Jerman 30 Hari",
   description:
-    "Kurikulum terstruktur, AI tutor, latihan speaking, grammar visual, dan statistik CEFR untuk orang Indonesia yang belajar bahasa Jerman dari nol sampai percaya diri.",
+    "Kurikulum terstruktur, AI tutor, latihan speaking, grammar visual, dan bukti belajar yang jujur untuk orang Indonesia yang belajar bahasa Jerman dari nol.",
   applicationName: "Deutsch Lernen in 30 Tagen",
   keywords: [
     "belajar bahasa Jerman",

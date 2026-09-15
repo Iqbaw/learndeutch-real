@@ -25,7 +25,8 @@ export default function SpeakingPage() {
           <>
             <AIInsightCard className="mb-5">
               Ketuk mikrofon dan ucapkan kalimatnya — pengenalan suara akan mendengar bahasa
-              Jermanmu dan memberi skor pengucapan. Pilih satu roleplay untuk mulai bicara.
+              Jermanmu dan membandingkan transkrip dengan contoh. Pelafalan dan kelancaran
+              audio belum dinilai oleh fitur ini. Pilih satu roleplay untuk mulai bicara.
             </AIInsightCard>
             <h2 className="mb-3 font-heading text-lg font-extrabold text-ink">Pilih Roleplay</h2>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -46,17 +47,14 @@ function RoleplaySession({ roleplay, onBack }: { roleplay: Roleplay; onBack: () 
   const [openTurn, setOpenTurn] = useState<number | null>(null);
   const synthOk = isSpeechSynthesisSupported();
   const recordSpeaking = useAppStore((s) => s.recordSpeaking);
-  const recordAnswer = useAppStore((s) => s.recordAnswer);
   const recordError = useAppStore((s) => s.recordError);
 
-  function handleSpoken(passed: boolean) {
+  function handleSpoken() {
     recordSpeaking();
-    recordAnswer("Speaking", passed);
-    recordAnswer("Pronunciation", passed);
   }
 
   function handleSaveError(info: { userAnswer: string; correctAnswer: string; explanation: string }) {
-    recordError({ ...info, category: "Pronunciation" });
+    recordError({ ...info, category: "Speaking" });
   }
 
   return (

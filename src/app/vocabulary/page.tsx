@@ -38,7 +38,7 @@ export default function VocabularyPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard label="Total kosakata" value={vocabulary.length} hint="tersedia di kursus" icon={<Library className="h-5 w-5" />} />
           <StatCard label="Sedang dipelajari" value={started} hint="kata" accent="secondary" />
-          <StatCard label="Sudah dikuasai" value={mastered} hint="kata" accent="success" />
+          <StatCard label="Lancar di review" value={mastered} hint="kata" accent="success" />
         </div>
 
         <div className="mt-4 rounded-2xl border border-border bg-card p-4">
@@ -47,12 +47,12 @@ export default function VocabularyPage() {
             <Legend cls="bg-elevated text-muted" label="Belum dipelajari" desc="belum kamu mulai" />
             <Legend cls="bg-secondary-soft text-secondary" label="Sedang dipelajari" desc="baru masuk daftar belajarmu" />
             <Legend cls="bg-warning/15 text-warning" label="Perlu diulang" desc="pernah salah saat review" />
-            <Legend cls="bg-primary-soft text-primary" label="Hampir hafal" desc="sebentar lagi dikuasai" />
-            <Legend cls="bg-success/15 text-success" label="Dikuasai" desc="sudah melekat kuat" />
+            <Legend cls="bg-primary-soft text-primary" label="Hampir hafal" desc="sudah beberapa kali benar" />
+            <Legend cls="bg-success/15 text-success" label="Lancar di review" desc="mencapai tahap akhir kartu" />
           </div>
           <p className="mt-3 text-xs text-muted">
             Alur kemajuannya: <span className="font-bold text-ink">Belum dipelajari → Sedang dipelajari →
-            (Perlu diulang jika salah) → Hampir hafal → Dikuasai</span>. Status naik saat kamu menjawab
+            (Perlu diulang jika salah) → Hampir hafal → Lancar di review</span>. Status naik saat kamu menjawab
             benar di <span className="font-bold text-ink">Review</span>, dan turun ke &quot;Perlu diulang&quot; saat
             salah. Status bukan tombol — naikkan dengan berlatih di Review.
           </p>
