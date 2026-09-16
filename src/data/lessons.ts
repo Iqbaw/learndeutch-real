@@ -1,7 +1,9 @@
-import type { Lesson } from "@/types";
+import type { Lesson, MajorLevel } from "@/types";
 import { lessonsWeek2 } from "./lessons-a1-week2";
 import { lessonsWeek3 } from "./lessons-a1-week3";
 import { lessonsWeek4 } from "./lessons-a1-week4";
+import { getAdvancedLesson } from "./advanced-lessons";
+import { personalizeA1Lesson } from "./daily-missions";
 
 // Daily lessons — first 7 days fully fleshed out (PRD section 11.2 + 28)
 export const lessonsWeek1: Lesson[] = [
@@ -373,4 +375,17 @@ export const lessons: Lesson[] = [
 
 export function getLessonByDay(day: number): Lesson | undefined {
   return lessons.find((l) => l.day === day);
+}
+
+/** Static, playable lesson for every level and every day. */
+export function getLessonForLevel(
+  level: MajorLevel,
+  day: number,
+  goal = ""
+): Lesson | undefined {
+  if (level === "A1") {
+    const base = getLessonByDay(day);
+    return base ? personalizeA1Lesson(base, goal) : undefined;
+  }
+  return getAdvancedLesson(level, day, goal);
 }

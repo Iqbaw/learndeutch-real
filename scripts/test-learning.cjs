@@ -13,11 +13,13 @@ require.extensions['.ts'] = (m, filename) => m._compile(ts.transpileModule(fs.re
 const { assessLocally, parseAssessment, normalizeAnswer } = require('../src/lib/assessment.ts');
 const { scoreSpeech } = require('../src/services/ai.ts');
 const { coerceStep, coerceLesson } = require('../src/lib/lesson-validation.ts');
-const { nextEvidence } = require('../src/lib/learning-evidence.ts');
-const { lessons } = require('../src/data/lessons.ts');
+const { nextEvidence, missionLevelFromId } = require('../src/lib/learning-evidence.ts');
+const { lessons, getLessonForLevel } = require('../src/data/lessons.ts');
 const { dailyMissions, personalizeA1Lesson, missionStep } = require('../src/data/daily-missions.ts');
 const { dailyListening } = require('../src/data/daily-listening.ts');
 const { productionExam } = require('../src/data/production-exam.ts');
+const { daysForLevel } = require('../src/data/levels.ts');
+const { advancedLessonCoverage, advancedMissionReviewStep, personalizeAdvancedLesson } = require('../src/data/advanced-lessons.ts');
 let passed=0;
 function test(name, fn) { fn(); passed++; console.log(`PASS ${name}`); }
 
@@ -91,6 +93,62 @@ test('goal tracks change applied examples and exam scenario', () => {
   assert.notEqual(productionExam('Kuliah di Jerman')[0].prompt,productionExam('Karier & Ausbildung')[0].prompt);
   assert.equal(productionExam('Travel & keseharian').filter(s=>s.type==='speaking').length,2);
 });
+test('A2-C2 provide 30 authored, playable static lessons per level', () => {
+  const levels=['A2','B1','B2','C1','C2'];
+  assert.deepEqual(advancedLessonCoverage(), { A2:23, B1:23, B2:23, C1:23, C2:23 });
+  for(const level of levels) {
+    const days=daysForLevel(level);
+    assert.equal(days.length,30,`${level}: roadmap length`);
+    assert.equal(new Set(days.map(d=>d.theme)).size,30,`${level}: placeholder/repeated roadmap themes`);
+    for(const day of days) {
+      const lesson=getLessonForLevel(level,day.day,'Kuliah di Jerman');
+      assert.ok(lesson,`${level} day ${day.day}: missing lesson`);
+      assert.equal(lesson.day,day.day);
+      assert.equal(lesson.subLevel,day.subLevel);
+      assert.equal(lesson.title,day.theme);
+      assert.ok(lesson.application?.criteria.length>=3);
+      assert.ok(lesson.steps.some(s=>s.type==='writing' && s.assessment==='open' && s.missionId));
+      assert.ok(lesson.steps.some(s=>s.type==='speaking' && s.assessment==='open'));
+      assert.equal(lesson.steps.at(-1).type,'victory');
+      for(const step of lesson.steps) {
+        if(step.type==='listening') {
+          assert.ok(step.exercise?.audioText,`${level} day ${day.day}: missing listening audio`);
+          assert.ok(!step.exercise.prompt.includes(step.exercise.audioText),`${level} day ${day.day}: leaked listening transcript`);
+        }
+        if(step.exercise) {
+          assert.equal(new Set(step.exercise.options).size,step.exercise.options.length,`${level} day ${day.day}: duplicate options`);
+          assert.ok(Number.isInteger(step.exercise.correctIndex) && step.exercise.options[step.exercise.correctIndex]);
+        }
+      }
+    }
+  }
+});
+test('advanced goal tracks change the application without changing the grammar anchor', () => {
+  for(const level of ['A2','B1','B2','C1','C2']) {
+    const study=getLessonForLevel(level,1,'Kuliah di Jerman');
+    const career=getLessonForLevel(level,1,'Karier & Ausbildung');
+    assert.equal(study.steps.find(s=>s.type==='example').german,career.steps.find(s=>s.type==='example').german);
+    assert.notEqual(study.application.track,career.application.track);
+    assert.notEqual(study.application.task,career.application.task);
+    assert.notEqual(study.steps.find(s=>s.missionId).missionId,career.steps.find(s=>s.missionId).missionId);
+  }
+});
+test('advanced review and AI variants keep the original mission level', () => {
+  for(const level of ['A2','B1','B2','C1','C2']) for(let day=1;day<=30;day++) {
+    const lesson=getLessonForLevel(level,day,'Karier & Ausbildung');
+    const review=advancedMissionReviewStep(level,day,'Karier & Ausbildung');
+    assert.equal(review.expected,'');
+    assert.equal(review.assessment,'open');
+    assert.ok(review.prompt.includes(lesson.title));
+    assert.equal(missionLevelFromId(review.missionId),level);
+    const ai=personalizeAdvancedLesson({...lesson,application:undefined,steps:lesson.steps.map(s=>({...s,missionId:undefined}))},level,'Karier & Ausbildung');
+    assert.ok(ai.application);
+    assert.equal(missionLevelFromId(ai.steps.find(s=>s.missionId).missionId),level);
+    assert.deepEqual(new Set(lesson.steps.filter(s=>s.type==='drill').map(s=>s.exercise.correctIndex)),new Set([0,1,2]));
+  }
+  assert.equal(missionLevelFromId('a1-study-1'),'A1');
+  assert.equal(missionLevelFromId('legacy-mission'),'A1');
+});
 test('same-day repetition cannot manufacture delayed mastery', () => {
   const input={id:'a1-study-1',day:1,goal:'Kuliah di Jerman',answer:'x',status:'correct',source:'ai',feedback:'ok',attemptedAt:'2026-09-15T00:00:00.000Z'};
   let first=nextEvidence(undefined,input,false);
@@ -104,4 +162,4 @@ test('same-day repetition cannot manufacture delayed mastery', () => {
   let unknown=nextEvidence(first,{...input,status:'ungraded',attemptedAt:'2026-09-16T02:00:00.000Z'},true);
   assert.equal(unknown.delayedPasses,0);
 });
-console.log(`${passed} learning regression groups passed; 120 personalized lesson variants validated.`);
+console.log(`${passed} learning regression groups passed; A1 plus 150 advanced course days validated.`);

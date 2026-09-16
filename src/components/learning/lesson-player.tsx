@@ -323,13 +323,13 @@ function MistakeStep({ step }: { step: LessonStep }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-danger/30 bg-danger/10 p-4">
           <p className="flex items-center gap-1.5 text-xs font-bold text-danger">
-            <X className="h-4 w-4" /> Sering salah
+            <X className="h-4 w-4" /> {step.contrastLabels?.before ?? "Sering salah"}
           </p>
           <p className="mt-1 font-body text-ink">{step.wrong}</p>
         </div>
         <div className="rounded-2xl border border-success/30 bg-success/10 p-4">
           <p className="flex items-center gap-1.5 text-xs font-bold text-success">
-            <Check className="h-4 w-4" /> Yang benar
+            <Check className="h-4 w-4" /> {step.contrastLabels?.after ?? "Yang benar"}
           </p>
           <p className="mt-1 font-body font-bold text-ink">{step.correct}</p>
         </div>

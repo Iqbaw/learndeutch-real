@@ -5,8 +5,7 @@ import { ArrowRight, BookOpen, Flame, Trophy, Mic, RefreshCw, ChevronRight, Cloc
 import { AppShell } from "@/components/layout/app-shell";
 import { AppGuard } from "@/components/app-guard";
 import { useAppStore } from "@/lib/store";
-import { getLessonByDay } from "@/data/lessons";
-import { personalizeA1Lesson } from "@/data/daily-missions";
+import { getLessonForLevel } from "@/data/lessons";
 import { daysForLevel } from "@/data/levels";
 import { buildReviewQueue } from "@/lib/derive";
 import { CTAButton } from "@/components/ui/cta-button";
@@ -20,8 +19,7 @@ export default function DashboardPage() {
   const vocabStatus = useAppStore((s) => s.vocabStatus);
   const activeLevel = useAppStore((s) => s.activeLevel);
   const dailyTarget = useAppStore((s) => s.dailyTargetMinutes);
-  const baseLesson = getLessonByDay(activeLevel === "A1" ? currentDay : -1);
-  const lesson = baseLesson ? personalizeA1Lesson(baseLesson, profile?.goal ?? "") : undefined;
+  const lesson = getLessonForLevel(activeLevel, currentDay, profile?.goal ?? "");
   const dayMeta = daysForLevel(activeLevel).find((d) => d.day === currentDay);
   const reviewDue = buildReviewQueue(vocabStatus).length;
   const progress = Math.min(100, Math.round(completedDays.length / 30 * 100));

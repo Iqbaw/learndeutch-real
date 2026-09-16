@@ -106,6 +106,7 @@ export interface LessonStep {
   // mistake explanation
   wrong?: string;
   correct?: string;
+  contrastLabels?: { before: string; after: string };
   // victory summary bullets
   achievements?: string[];
 }

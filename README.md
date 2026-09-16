@@ -14,8 +14,8 @@ Website belajar bahasa Jerman **Sprint belajar 30 hari** untuk orang Indonesia, 
 | **Landing** (`/`) | Hero, problem/solution, roadmap sprint, metode belajar, alur harian, bukti belajar, akses saat ini, dan FAQ. |
 | **Onboarding** (`/onboarding`) | Konsultasi 5 pertanyaan → Personal German Roadmap. |
 | **Dashboard** (`/dashboard`) | Misi hari ini, peta 30 sesi, area latihan, antrean review, dan streak. |
-| **Belajar Hari Ini** (`/lesson`) | Lesson player step-by-step: story → pattern → contoh → drill → listening → speaking → writing → mistake → victory. |
-| **Roadmap** (`/roadmap`) | Peta 30 hari A1 + overview semua level A1–C2. |
+| **Belajar Hari Ini** (`/lesson`) | Lesson player A1–C2: story → pattern → contoh → drill → listening → speaking → writing → mistake → victory. Semua level punya versi bawaan; AI hanya variasi opsional. |
+| **Roadmap** (`/roadmap`) | Enam peta belajar 30 hari yang ditulis khusus untuk A1, A2, B1, B2, C1, dan C2. |
 | **Review** (`/review`) | Spaced repetition: pilih arti, ketik arti, pilih artikel, susun & perbaiki kalimat. |
 | **Speaking Lab** (`/speaking`) | Roleplay situasi nyata dengan pencocokan transkrip; penilaian audio tetap memerlukan pengajar atau sistem akustik khusus. |
 | **Vocabulary** (`/vocabulary`) | Kamus pribadi 50+ kata dengan artikel, plural, contoh, status hafalan. |
@@ -28,6 +28,16 @@ Website belajar bahasa Jerman **Sprint belajar 30 hari** untuk orang Indonesia, 
 ## 🧠 German King Method
 
 Sentence Lego · Verb Position Radar · Der Die Das Memory System · Case Compass · Redemittel Bank · Error Notebook.
+
+## 📚 Cakupan Kurikulum
+
+- **180 sesi harian A1–C2**: 30 sesi per level, termasuk review mingguan, evaluasi sublevel, remedial, simulasi, dan evaluasi akhir sprint.
+- **150 pelajaran interaktif A2–C2** tersedia sebagai materi bawaan dan tetap bisa dimainkan tanpa API AI.
+- Setiap sesi lanjutan memuat pola, contoh Jerman–Indonesia, tiga latihan terkontrol, listening dengan transkrip tersembunyi, tugas writing, speaking, koreksi kesalahan, dan latihan transfer.
+- Misi A2–C2 menyesuaikan konteks tujuan belajar (kuliah, karier/Ausbildung, travel/keseharian, atau umum) tanpa mengubah target grammar utama.
+- Materi menyelesaikan satu **sprint latihan**, bukan menyatakan pengguna otomatis menguasai atau tersertifikasi pada level CEFR tersebut.
+
+Silabus dan contoh adalah konten internal produk, bukan silabus resmi atau replika ujian. Rujukan pemeriksaan: [deskriptor CEFR (Council of Europe)](https://www.coe.int/en/web/common-european-framework-reference-languages/cefr-descriptors), [Konjunktiv dan bentuk pengganti (IDS grammis)](https://grammis.ids-mannheim.de/sgt/2233), serta [verba bantu dan Perfekt Passiv (IDS grammis)](https://grammis.ids-mannheim.de/progr@mm/1695).
 
 ## 🛠️ Tech Stack
 
@@ -78,6 +88,9 @@ npm run start
 # Lint & typecheck
 npm run lint
 npm run typecheck
+
+# Regresi alur belajar dan cakupan 180 hari
+npm run test:learning
 ```
 
 ## 🔌 Integrasi AI dengan DeepSeek (V4)

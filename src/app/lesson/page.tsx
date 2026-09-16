@@ -14,8 +14,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { LessonPlayer } from "@/components/learning/lesson-player";
-import { getLessonByDay, lessons } from "@/data/lessons";
+import { getLessonForLevel } from "@/data/lessons";
 import { personalizeA1Lesson } from "@/data/daily-missions";
+import { personalizeAdvancedLesson } from "@/data/advanced-lessons";
 import { useLearningEvidence } from "@/lib/learning-evidence";
 import { daysForLevel } from "@/data/levels";
 import { CTAButton } from "@/components/ui/cta-button";
@@ -81,11 +82,7 @@ function LessonInner() {
   }, []);
 
   const staticLesson = useMemo(() => {
-    // Hand-authored lessons exist only for A1; other levels use AI generation.
-    if (activeLevel !== "A1") return undefined;
-    const lastAvailableDay = lessons[lessons.length - 1]?.day ?? 1;
-    const base = getLessonByDay(targetDay) ?? getLessonByDay(Math.min(targetDay, lastAvailableDay));
-    return base ? personalizeA1Lesson(base, profile?.goal ?? "") : undefined;
+    return getLessonForLevel(activeLevel, targetDay, profile?.goal ?? "");
   }, [targetDay, activeLevel, profile?.goal]);
 
   const dayMeta = useMemo(
@@ -136,7 +133,11 @@ function LessonInner() {
     const lesson = await fetchPersonalizedLesson(buildRequest());
     setGenerating(false);
     if (lesson) {
-      setActiveLesson(activeLevel === "A1" ? personalizeA1Lesson(lesson, profile?.goal ?? "") : lesson);
+      setActiveLesson(
+        activeLevel === "A1"
+          ? personalizeA1Lesson(lesson, profile?.goal ?? "")
+          : personalizeAdvancedLesson(lesson, activeLevel, profile?.goal ?? "")
+      );
       setStarted(true);
     } else if (staticLesson) {
       // graceful fallback to the bundled lesson
@@ -266,7 +267,7 @@ function LessonInner() {
               <p className="mt-2 text-sm text-ink">{staticLesson.application.task}</p>
               <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">{staticLesson.application.criteria.map((c) => <li key={c}>{c}</li>)}</ul>
               <p className="mt-3 text-sm text-muted">Target waktumu {dailyMinutes} menit per hari. Boleh membagi sesi ini menjadi beberapa kali belajar; posisi dan draf jawaban tersimpan di browser ini.</p>
-              {Object.values(missions).filter((m) => m.day === targetDay && m.goal === profile.goal).map((m) => <p key={m.id} className="mt-3 text-sm font-bold text-ink">
+              {Object.values(missions).filter((m) => m.day === targetDay && m.goal === profile.goal && m.id.startsWith(`${activeLevel.toLowerCase()}-`)).map((m) => <p key={m.id} className="mt-3 text-sm font-bold text-ink">
                 Misi: {m.status === "correct" ? "tugas teks terpenuhi" : m.status === "needs-work" ? "perlu latihan lagi" : "perlu ditinjau"} · {m.delayedPasses} uji ulang berhasil setelah jeda.
               </p>)}
             </section>}
@@ -278,7 +279,7 @@ function LessonInner() {
                 </p>
                 <p className="mt-1 text-sm text-muted">
                   Versi AI membuat variasi penjelasan dan soal sesuai tujuan serta area latihanmu.
-                  Pada A1, kedua versi tetap memiliki misi harian sesuai tujuanmu. Versi bawaan
+                  Di semua level, kedua versi tetap memiliki misi harian sesuai tujuanmu. Versi bawaan
                   menyediakan materi tetap yang bisa diulang dengan konsisten. Hasil AI perlu ditinjau jika terasa keliru.
                 </p>
               </div>

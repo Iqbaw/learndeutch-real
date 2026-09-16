@@ -161,11 +161,9 @@ export const a1Days: A1Day[] = [
 
 
 // ============================================================
-// Generic per-day course metadata used by the roadmap & lessons
-// for every major level. A1 keeps its detailed hand-authored
-// curriculum (a1Days); A2 is fully authored below; B1–C2 are
-// generated from each level's sub-level focus so the roadmap and
-// AI lessons always have a sensible theme to work from.
+// Per-day course metadata used by the roadmap and lessons for every
+// major level. Every level is explicitly authored; none of the B1-C2
+// roadmaps are repeated placeholders generated from a short focus string.
 // ============================================================
 
 export interface CourseDay {
@@ -215,61 +213,158 @@ export const a2Days: CourseDay[] = ([
   { day: 30, subLevel: "A2.2", theme: "Evaluasi akhir sprint A2", skill: "Evaluasi internal" },
 ] as Omit<CourseDay, "estimatedMinutes">[]).map(withMinutes);
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+type DayPlan = readonly [theme: string, skill: string];
+
+function authoredPlan(level: "B1" | "B2" | "C1" | "C2", plan: readonly DayPlan[]): CourseDay[] {
+  return plan.map(([theme, skill], index) =>
+    withMinutes({
+      day: index + 1,
+      subLevel: `${level}.${index < 15 ? "1" : "2"}` as CEFRLevel,
+      theme,
+      skill,
+    })
+  );
 }
 
-/** Build a sensible 30-day plan for levels without a hand-authored curriculum. */
-function genericDays(level: Level): CourseDay[] {
-  const [s1, s2] = level.subLevels;
-  const split = (focus: string) =>
-    focus
-      .replace(/\.$/, "")
-      .split(/[,&]/)
-      .map((t) => t.trim())
-      .filter(Boolean);
-  const topics1 = split(s1.focus);
-  const topics2 = split(s2.focus);
+export const b1Days = authoredPlan("B1", [
+  ["Jembatan dari A2: bercerita lebih runtut", "Narrative review"],
+  ["Präteritum sein & haben", "Past tense"],
+  ["Präteritum modalverben", "Modalverben"],
+  ["weil, dass, wenn: posisi verba", "Nebensätze"],
+  ["obwohl & trotzdem: menyatakan kontras", "Konnektoren"],
+  ["bevor, nachdem, während: urutan waktu", "Temporalsätze"],
+  ["Review minggu 1: cerita masa lalu", "Mini test"],
+  ["Adjektivdeklination Nominativ & Akkusativ", "Adjektivendungen"],
+  ["Adjektivdeklination Dativ", "Adjektivendungen"],
+  ["Relativsatz Nominativ", "Relativsätze"],
+  ["Relativsatz Akkusativ & Dativ", "Relativsätze"],
+  ["Passiv Präsens dengan werden", "Passiv"],
+  ["Vorgangspassiv vs Zustandspassiv", "werden vs sein"],
+  ["Review minggu 2: deskripsi & proses", "Speaking test"],
+  ["Evaluasi B1.1", "Reading, listening, writing, speaking"],
+  ["Menyatakan dan membatasi opini", "Meinung äußern"],
+  ["Menyusun argumen: zunächst, außerdem, schließlich", "Argumentation"],
+  ["würde + Infinitiv untuk situasi hipotesis", "Konjunktiv II"],
+  ["wäre, hätte, könnte: saran & keinginan", "Konjunktiv II"],
+  ["Infinitiv mit zu & um ... zu", "Infinitivsätze"],
+  ["Review grammar B1.2", "Pattern drill"],
+  ["wegen & trotz: alasan dan kontras", "Präpositionen"],
+  ["Verben mit Präpositionen", "Rektion"],
+  ["Pertanyaan tidak langsung yang sopan", "Indirekte Fragen"],
+  ["Menulis keluhan formal", "Formelles Schreiben"],
+  ["Presentasi singkat yang terstruktur", "Präsentation"],
+  ["Merencanakan sesuatu bersama", "Diskussion & Interaktion"],
+  ["Simulasi tugas B1", "Mock test"],
+  ["Remedial B1 berbasis kesalahan", "Latihan kelemahan"],
+  ["Evaluasi akhir sprint B1", "Evaluasi internal"],
+] as const);
 
-  return Array.from({ length: 30 }, (_, i) => {
-    const day = i + 1;
-    const sub = day <= 15 ? s1 : s2;
-    const topics = day <= 15 ? topics1 : topics2;
-    let theme: string;
-    let skill: string;
-    if (day === 7 || day === 14 || day === 21) {
-      theme = "Review & konsolidasi";
-      skill = "Mini test";
-    } else if (day === 15) {
-      theme = `Ujian ${s1.id}`;
-      skill = "Reading, listening, speaking";
-    } else if (day === 28) {
-      theme = `Simulasi ujian ${level.id}`;
-      skill = "Mock test";
-    } else if (day === 29) {
-      theme = "Remedial otomatis";
-      skill = "Latihan kelemahan";
-    } else if (day === 30) {
-      theme = `Final ${level.id} Test`;
-      skill = "Evaluasi internal";
-    } else {
-      const topic = topics.length ? topics[(day - 1) % topics.length] : level.focus;
-      theme = capitalize(topic);
-      skill = sub.label;
-    }
-    return withMinutes({ day, subLevel: sub.id, theme, skill });
-  });
-}
+export const b2Days = authoredPlan("B2", [
+  ["Jembatan B1-B2: dari opini ke argumen", "Diagnostic review"],
+  ["einerseits ... andererseits", "Konnektoren"],
+  ["zwar ... aber & je ... desto", "Doppelkonnektoren"],
+  ["Passiv dalam berbagai kala", "Passiv"],
+  ["Alternatif pasif: man & sich lassen", "Passiversatz"],
+  ["Nominalisierung dari verba", "Nominalstil"],
+  ["Review minggu 1: hubungan logis", "Mini test"],
+  ["Nominalisierung dari adjektiva", "Nominalstil"],
+  ["Funktionsverbgefüge dalam teks formal", "Kollokationen"],
+  ["Konjunktiv II Vergangenheit", "Irreale Vergangenheit"],
+  ["Indirekte Rede: pengantar Konjunktiv I", "Redewiedergabe"],
+  ["Relativsatz dengan preposisi", "Relativsätze"],
+  ["Partizip I & II sebagai atribut", "Partizipialattribute"],
+  ["Review minggu 2: gaya formal", "Writing test"],
+  ["Evaluasi B2.1", "Reading, listening, writing, speaking"],
+  ["Tesis, alasan, bukti, dan contoh", "Argumentation"],
+  ["Konsesi & sanggahan: dennoch, hingegen", "Diskursmarker"],
+  ["Kohesi teks dan rujukan", "Textkohärenz"],
+  ["Register akademik dan profesional", "Register"],
+  ["Menulis laporan dan email formal", "Bericht & E-Mail"],
+  ["Review menulis B2.2", "Pattern drill"],
+  ["Membuka dan menutup presentasi", "Präsentation"],
+  ["Mendeskripsikan grafik tanpa klaim berlebihan", "Datenbeschreibung"],
+  ["Memediasi dan memparafrase informasi", "Sprachmittlung"],
+  ["Debat: menanggapi argumen lawan", "Diskussion"],
+  ["Membaca implikasi dalam teks opini", "Leseverstehen"],
+  ["Menulis kesimpulan esai", "Erörterung"],
+  ["Simulasi tugas B2", "Mock test"],
+  ["Remedial B2 berbasis kesalahan", "Latihan kelemahan"],
+  ["Evaluasi akhir sprint B2", "Evaluasi internal"],
+] as const);
 
-const genericCache: Partial<Record<string, CourseDay[]>> = {};
+export const c1Days = authoredPlan("C1", [
+  ["Jembatan B2-C1: memilih register", "Diagnostic review"],
+  ["Urutan kata kompleks & Nachfeld", "Satzbau"],
+  ["Konektor tingkat lanjut", "Konnektoren"],
+  ["Nominalstil akademik", "Wissenschaftssprache"],
+  ["Mengubah nominalstil menjadi verbalstil", "Stilvariation"],
+  ["Konstruksi partisipial yang padat", "Partizipialkonstruktionen"],
+  ["Review minggu 1: struktur & register", "Mini test"],
+  ["Konjunktiv I untuk laporan tidak langsung", "Indirekte Rede"],
+  ["Bentuk pengganti Konjunktiv I", "Redewiedergabe"],
+  ["Modalitas dan tingkat kepastian", "Modalität"],
+  ["Kolokasi & ungkapan idiomatis formal", "Phraseologie"],
+  ["Hedging dalam tulisan akademik", "Wissenschaftssprache"],
+  ["Membaca sikap dan bias penulis", "Kritisches Lesen"],
+  ["Review minggu 2: laporan & analisis", "Writing test"],
+  ["Evaluasi C1.1", "Reading, listening, writing, speaking"],
+  ["Meringkas tanpa menyalin", "Zusammenfassung"],
+  ["Mensintesis dua sumber", "Synthese"],
+  ["Esai argumentatif bernuansa", "Erörterung"],
+  ["Proposal profesional", "Berufliches Schreiben"],
+  ["Alur retoris presentasi", "Präsentation"],
+  ["Review produksi C1.2", "Pattern drill"],
+  ["Debat dengan persetujuan parsial", "Diskussion"],
+  ["Ironi, implikatur, dan makna tersirat", "Pragmatik"],
+  ["Mengkritik data dan metodologi", "Datenkritik"],
+  ["Menyunting gaya dan redundansi", "Textrevision"],
+  ["Memediasi lintas register", "Sprachmittlung"],
+  ["Pidato formal yang persuasif", "Rhetorik"],
+  ["Simulasi tugas C1", "Mock test"],
+  ["Remedial C1 berbasis kesalahan", "Latihan kelemahan"],
+  ["Evaluasi akhir sprint C1", "Evaluasi internal"],
+] as const);
 
-/** Day-by-day plan for any major level (A1, A2 authored; others generated). */
+export const c2Days = authoredPlan("C2", [
+  ["Diagnosis presisi: benar belum tentu paling tepat", "Diagnostic review"],
+  ["Sinonim dekat dan batas makna", "Semantik"],
+  ["Konotasi, asosiasi, dan sikap", "Nuansa makna"],
+  ["Idiom lintas register", "Phraseologie"],
+  ["Kolokasi tingkat mahir", "Kollokationen"],
+  ["Pembentukan kata dan neologisme", "Wortbildung"],
+  ["Review minggu 1: presisi leksikal", "Mini test"],
+  ["Implikatur dalam percakapan", "Pragmatik"],
+  ["Ironi dan sarkasme", "Pragmatik"],
+  ["Referensi budaya tanpa overinterpretasi", "Kulturkompetenz"],
+  ["Elipsis dan kepadatan informasi", "Stilistik"],
+  ["Ritme kalimat & struktur informasi", "Informationsstruktur"],
+  ["Mengurai ambiguitas kompleks", "Textanalyse"],
+  ["Review minggu 2: makna tersirat", "Speaking test"],
+  ["Evaluasi C2.1", "Reading, listening, writing, speaking"],
+  ["Meniru konvensi genre secara sadar", "Genrekompetenz"],
+  ["Metafora, paralelisme, dan antitesis", "Rhetorik"],
+  ["Argumen kompleks tanpa kehilangan fokus", "Argumentation"],
+  ["Evaluasi dan hedging yang presisi", "Epistemische Nuance"],
+  ["Mediasi dengan mempertahankan nuansa", "Sprachmittlung"],
+  ["Review produksi C2.2", "Pattern drill"],
+  ["Menulis editorial yang tajam", "Journalistischer Stil"],
+  ["Menafsirkan teks sastra secara terukur", "Literaturanalyse"],
+  ["Sanggahan akademik tingkat lanjut", "Wissenschaftliche Debatte"],
+  ["Beralih register secara spontan", "Registerwechsel"],
+  ["Memadatkan dan memperluas teks", "Texttransformation"],
+  ["Polishing: diksi, ritme, dan koherensi", "Feinredaktion"],
+  ["Simulasi tugas C2", "Mock test"],
+  ["Remedial C2 berbasis kesalahan", "Latihan kelemahan"],
+  ["Evaluasi akhir sprint C2", "Evaluasi internal"],
+] as const);
+
+/** Day-by-day authored plan for every major level. */
 export function daysForLevel(level: string): CourseDay[] {
   if (level === "A1") return a1Days as CourseDay[];
   if (level === "A2") return a2Days;
-  if (genericCache[level]) return genericCache[level]!;
-  const lvl = levels.find((l) => l.id === level);
-  const days = lvl ? genericDays(lvl) : (a1Days as CourseDay[]);
-  genericCache[level] = days;
-  return days;
+  if (level === "B1") return b1Days;
+  if (level === "B2") return b2Days;
+  if (level === "C1") return c1Days;
+  if (level === "C2") return c2Days;
+  return a1Days as CourseDay[];
 }

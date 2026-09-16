@@ -3,6 +3,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AssessmentResult } from "./assessment";
+import type { MajorLevel } from "@/types";
+
+export function missionLevelFromId(id: string): MajorLevel {
+  const prefix = id.split("-")[0].toUpperCase();
+  return ["A2", "B1", "B2", "C1", "C2"].includes(prefix) ? prefix as MajorLevel : "A1";
+}
 
 export interface MissionEvidence {
   id: string;
