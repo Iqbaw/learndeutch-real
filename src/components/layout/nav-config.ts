@@ -10,6 +10,7 @@ import {
   NotebookText,
   BarChart3,
   ClipboardCheck,
+  GraduationCap,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -24,6 +25,8 @@ export interface NavItem {
 export const sidebarNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Belajar Hari Ini", href: "/lesson", icon: BookOpen },
+  { label: "Kursus B1–C2", href: "/course", icon: GraduationCap },
+  { label: "Latihan Ujian", href: "/exam", icon: ClipboardCheck },
   { label: "Roadmap 30 Hari", href: "/roadmap", icon: Map },
   { label: "Review", href: "/review", icon: RefreshCw },
   { label: "Speaking Lab", href: "/speaking", icon: Mic },
@@ -32,7 +35,7 @@ export const sidebarNav: NavItem[] = [
   { label: "Error Notebook", href: "/errors", icon: NotebookPen },
   { label: "Catatan", href: "/notes", icon: NotebookText },
   { label: "Statistics", href: "/statistics", icon: BarChart3 },
-  { label: "Mock Test", href: "/mock-test", icon: ClipboardCheck },
+  { label: "Mock Test A1", href: "/mock-test", icon: ClipboardCheck },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 

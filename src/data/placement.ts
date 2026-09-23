@@ -130,7 +130,7 @@ export function evaluatePlacement(correct: boolean[], selfLevel?: string): Place
       scorePct,
       correctCount,
       summary:
-        "Kemampuanmu sudah di atas A1 dasar. Materi A2 sedang disiapkan — sementara itu kita perkuat A1.2 agar fondasimu benar-benar solid.",
+        "Hasil awalmu menunjukkan dasar A1 yang kuat. Kamu bisa meninjau A1.2 atau melanjutkan ke materi A2 dan memeriksa kesiapan lewat tugas baru.",
     };
   }
 

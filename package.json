@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test:learning": "node scripts/test-learning.cjs",
+    "test:course": "node scripts/test-course.cjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

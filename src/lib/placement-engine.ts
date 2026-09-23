@@ -326,5 +326,5 @@ function defaultSummary(estimated: PlacementBand, startLevel: CEFRLevel, scorePc
   if (startLevel === "A1.2" && (estimated === "A1.2")) {
     return `Kamu sudah menguasai dasar A1.1 (skor ${scorePct}%). Kamu bisa langsung lompat ke A1.2, atau mengulang fondasi dari Hari 1.`;
   }
-  return `Estimasi kemampuanmu di sekitar ${estimated} (skor ${scorePct}%). Materi di atas A1 sedang disiapkan — sementara itu kita perkuat A1.2 agar fondasimu benar-benar solid.`;
+  return `Estimasi awalmu di sekitar ${estimated} (skor ${scorePct}%). Kamu bisa memulai dari materi level itu atau memperkuat prasyarat lebih dulu. Uji kesiapan lagi melalui tugas membaca, mendengar, menulis, dan berbicara.`;
 }
