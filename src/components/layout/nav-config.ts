@@ -39,6 +39,16 @@ export const sidebarNav: NavItem[] = [
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
+const navItems = (paths: string[]) => paths.map((path) => sidebarNav.find((item) => item.href === path)!);
+
+export const primarySidebarNav = navItems(["/dashboard", "/lesson", "/course", "/exam"]);
+export const sidebarGroups = [
+  { id: "practice", label: "Latihan mandiri", description: "Bicara, kosakata & tata bahasa", icon: BookOpen,
+    items: navItems(["/review", "/speaking", "/vocabulary", "/grammar", "/mock-test"]) },
+  { id: "journey", label: "Perjalanan belajar", description: "Roadmap, progres & catatan", icon: Map,
+    items: navItems(["/roadmap", "/statistics", "/errors", "/notes"]) },
+];
+
 // Mobile bottom navigation (PRD section 15.5)
 export const bottomNav: NavItem[] = [
   { label: "Beranda", href: "/dashboard", icon: LayoutDashboard },
