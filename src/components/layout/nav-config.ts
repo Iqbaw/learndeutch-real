@@ -30,7 +30,7 @@ export const sidebarNav: NavItem[] = [
   { label: "Roadmap 30 Hari", href: "/roadmap", icon: Map },
   { label: "Review", href: "/review", icon: RefreshCw },
   { label: "Speaking Lab", href: "/speaking", icon: Mic },
-  { label: "Vocabulary", href: "/vocabulary", icon: Library },
+  { label: "Kosakata", href: "/vocabulary", icon: Library },
   { label: "Grammar Map", href: "/grammar", icon: Network },
   { label: "Error Notebook", href: "/errors", icon: NotebookPen },
   { label: "Catatan", href: "/notes", icon: NotebookText },

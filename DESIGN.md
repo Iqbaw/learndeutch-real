@@ -23,3 +23,9 @@ Type: retain Manrope headings and readable Atkinson body. App headings 24–30px
 - Safe areas and dynamic viewport height; allow vertical overflow for keyboard, zoom and short screens rather than clipping content.
 - 160ms press feedback and 250ms directional step transitions; reduced-motion setting disables spatial transitions.
 - Validate first visit, returning visit, guest persistence, navigation, small phone and desktop, and production build.
+
+## Vocabulary learning surface
+
+Vocabulary is a focused daily study flow. Show six clear level choices (A1–C2), one word and original contextual sentence at a time, a deliberate meaning reveal, then Previous/Next. Keep the next-word control reachable above the mobile dock. Search and topic filters narrow the active level; the optional list shows twelve words per page. Progress counts refer to words actually added to Review or mastered there, never to cards merely viewed. Preserve existing word IDs so saved review progress remains intact.
+
+The bank is an internally curated selection of useful words and expressions, not a complete or official exam list and not a measured frequency ranking. Select A1–B1 topics from everyday communication and B2–C2 material from argumentation, specialist and idiomatic language, reflecting the [CEFR vocabulary range descriptors](https://rm.coe.int/cefr-companion-volume-with-new-descriptors-2020/16809ea0d4). The [Goethe A1 word-list introduction](https://www.goethe.de/pro/relaunch/prf/de/A1_SD1_Wortliste_02.pdf) distinguishes passive recognition from active use and recommends didactically structured materials for retention; keep example, reveal, and Review as distinct steps. Continue to use warm paper, yellow for the active level and reveal, restrained card motion, and reduced-motion support.

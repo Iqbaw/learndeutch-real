@@ -359,11 +359,17 @@ export function buildReviewQueue(vocabStatus: Record<string, MemoryStatus>): Rev
     const status = vocabStatus[w.id];
     return status === "learning" || status === "review" || status === "almost";
   });
+  if (inProgress.length === 0) return [];
+  // Rotate the active pool by day so later additions are not stuck behind
+  // the first twelve words forever. Reserve space for words answered wrongly.
+  const offset = Math.floor(Date.now() / 86_400_000) % inProgress.length;
+  const rotated = [...inProgress.slice(offset), ...inProgress.slice(0, offset)];
+  const weak = rotated.filter((w) => vocabStatus[w.id] === "review");
+  const other = rotated.filter((w) => vocabStatus[w.id] !== "review");
+  const selected = [...weak.slice(0, 6), ...other.slice(0, 12 - Math.min(6, weak.length)), ...weak.slice(6)].slice(0, 12);
 
-  const allMeanings = vocabulary.map((w) => w.indonesian);
-
-  return inProgress.slice(0, 12).map((w, i) => {
-    if (w.article) {
+  return selected.map((w, i) => {
+    if (w.article && i % 2 === 0) {
       const options = ["der", "die", "das"];
       return {
         id: w.id,
@@ -375,10 +381,14 @@ export function buildReviewQueue(vocabStatus: Record<string, MemoryStatus>): Rev
         due: "Hari ini",
       };
     }
-    // meaning multiple choice with deterministic distractors
-    const distractors = allMeanings
-      .filter((m) => m !== w.indonesian)
-      .slice(i, i + 3);
+    // Use meanings from the same topic and level first; unrelated A1 answers
+    // would make an advanced vocabulary question misleadingly easy.
+    const major = w.level.slice(0, 2);
+    const peers = vocabulary.filter((item) => item.id !== w.id && item.level.startsWith(major));
+    const ordered = [...peers.filter((item) => item.category === w.category), ...peers.filter((item) => item.category !== w.category)];
+    const meanings = [...new Set(ordered.map((item) => item.indonesian).filter((meaning) => meaning !== w.indonesian))];
+    const start = i % Math.max(1, meanings.length);
+    const distractors = [...meanings.slice(start), ...meanings.slice(0, start)].slice(0, 3);
     while (distractors.length < 3) distractors.push("—");
     const correctIndex = i % 4 < 3 ? i % 4 : 0;
     const options = [...distractors];

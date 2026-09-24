@@ -1,6 +1,10 @@
 import type { VocabularyItem } from "@/types";
+import { elementaryVocabulary } from "./vocabulary-a1-a2";
+import { independentVocabulary } from "./vocabulary-b1-b2";
+import { proficientVocabulary } from "./vocabulary-c1-c2";
 
-// 50+ A1 vocabulary items — course CONTENT only.
+// Original, curated learning bank. Level labels indicate teaching order, not
+// an official exam word list or a corpus-based frequency ranking.
 // Each user's memory status (new/learning/review/almost/mastered) is tracked
 // per-user in the store and merged in at render time (see lib/derive.ts).
 export const vocabulary: VocabularyItem[] = [
@@ -21,11 +25,11 @@ export const vocabulary: VocabularyItem[] = [
   { id: "v15", german: "der Stuhl", article: "der", plural: "die Stühle", indonesian: "kursi", exampleA1: "Der Stuhl ist bequem.", exampleTranslation: "Kursi itu nyaman.", level: "A1.1", category: "Benda", emoji: "🪑" },
   { id: "v16", german: "das Buch", article: "das", plural: "die Bücher", indonesian: "buku", exampleA1: "Ich habe ein Buch.", exampleTranslation: "Saya punya sebuah buku.", level: "A1.1", category: "Benda", emoji: "📕" },
   { id: "v17", german: "die Tasche", article: "die", plural: "die Taschen", indonesian: "tas", exampleA1: "Die Tasche ist schwer.", exampleTranslation: "Tas itu berat.", level: "A1.1", category: "Benda", emoji: "👜" },
-  { id: "v18", german: "das Wasser", article: "das", plural: "die Wasser", indonesian: "air", exampleA1: "Ich möchte Wasser.", exampleTranslation: "Saya mau air.", level: "A1.1", category: "Makanan", emoji: "💧" },
+  { id: "v18", german: "das Wasser", article: "das", indonesian: "air", exampleA1: "Ich möchte Wasser.", exampleTranslation: "Saya mau air.", level: "A1.1", category: "Makanan", emoji: "💧" },
   { id: "v19", german: "der Kaffee", article: "der", plural: "die Kaffees", indonesian: "kopi", exampleA1: "Ich trinke Kaffee.", exampleTranslation: "Saya minum kopi.", level: "A1.1", category: "Makanan", emoji: "☕" },
   { id: "v20", german: "das Brot", article: "das", plural: "die Brote", indonesian: "roti", exampleA1: "Das Brot ist frisch.", exampleTranslation: "Rotinya segar.", level: "A1.1", category: "Makanan", emoji: "🍞" },
   { id: "v21", german: "der Apfel", article: "der", plural: "die Äpfel", indonesian: "apel", exampleA1: "Ich esse einen Apfel.", exampleTranslation: "Saya makan sebuah apel.", level: "A1.1", category: "Makanan", emoji: "🍎" },
-  { id: "v22", german: "die Milch", article: "die", plural: "die Milch", indonesian: "susu", exampleA1: "Die Milch ist kalt.", exampleTranslation: "Susunya dingin.", level: "A1.1", category: "Makanan", emoji: "🥛" },
+  { id: "v22", german: "die Milch", article: "die", indonesian: "susu", exampleA1: "Die Milch ist kalt.", exampleTranslation: "Susunya dingin.", level: "A1.1", category: "Makanan", emoji: "🥛" },
   { id: "v23", german: "der Bahnhof", article: "der", plural: "die Bahnhöfe", indonesian: "stasiun kereta", exampleA1: "Ich bin am Bahnhof.", exampleTranslation: "Saya di stasiun.", level: "A1.2", category: "Tempat", emoji: "🚉", mnemonic: "Bahn = kereta, Hof = area/tempat." },
   { id: "v24", german: "die Schule", article: "die", plural: "die Schulen", indonesian: "sekolah", exampleA1: "Ich gehe zur Schule.", exampleTranslation: "Saya pergi ke sekolah.", level: "A1.2", category: "Tempat", emoji: "🏫" },
   { id: "v25", german: "das Haus", article: "das", plural: "die Häuser", indonesian: "rumah", exampleA1: "Ich gehe nach Hause.", exampleTranslation: "Saya pulang ke rumah.", level: "A1.1", category: "Tempat", emoji: "🏠" },
@@ -58,4 +62,7 @@ export const vocabulary: VocabularyItem[] = [
   { id: "v52", german: "der Freund", article: "der", plural: "die Freunde", indonesian: "teman (lk)", exampleA1: "Mein Freund kommt heute.", exampleTranslation: "Teman saya datang hari ini.", level: "A1.2", category: "Orang", emoji: "🧑‍🤝‍🧑" },
   { id: "v53", german: "möchten", indonesian: "ingin / mau", exampleA1: "Ich möchte Wasser.", exampleTranslation: "Saya mau air.", level: "A1.2", category: "Kata kerja", emoji: "🙋" },
   { id: "v54", german: "die Frage", article: "die", plural: "die Fragen", indonesian: "pertanyaan", exampleA1: "Ich habe eine Frage.", exampleTranslation: "Saya punya satu pertanyaan.", level: "A1.2", category: "Kehidupan", emoji: "❓" },
+  ...elementaryVocabulary,
+  ...independentVocabulary,
+  ...proficientVocabulary,
 ];
